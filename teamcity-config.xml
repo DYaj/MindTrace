@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://www.jetbrains.com/teamcity/schemas/2020.2/project-config.xsd">
+  
+  <name>MindTrace for Playwright</name>
+  <description>AI-Governed Test Automation with Self-Healing</description>
+  
+  <build-type>
+    <id>MindTrace_Native</id>
+    <name>Style 1 - Playwright Native</name>
+    
+    <settings>
+      <property name="artifactRules" value="
+        test-results/** => test-results.zip
+        playwright-report/** => playwright-report.zip
+        mindtrace-artifacts/** => mindtrace-artifacts.zip
+        screenshots/** => screenshots.zip
+      "/>
+      
+      <property name="buildNumberPattern" value="%build.counter%"/>
+      <property name="checkoutDir" value="."/>
+      <property name="executionTimeoutMin" value="60"/>
+    </settings>
+    
+    <vcs-settings>
+      <vcs-entry-ref root-id="MindTrace_GitRoot"/>
+    </vcs-settings>
+    
+    <requirements>
+      <equals name="env.NODE_VERSION" value="18.x"/>
+    </requirements>
+    
+    <build-runners>
+      <!-- Step 1: Install Dependencies -->
+      <runner id="npm_install" name="Install Dependencies" type="simpleRunner">
+        <parameters>
+          <param name="script.content" value="
+            npm ci
+            npx playwright install --with-deps
+          "/>
+          <param name="teamcity.step.mode" value="default"/>
+          <param name="use.custom.script" value="true"/>
+        </parameters>
+      </runner>
+      
+      <!-- Step 2: Run MCP-Enhanced Tests -->
+      <runner id="mcp_tests" name="Run MCP Tests" type="simpleRunner">
+        <parameters>
+          <param name="script.content" value="
+            cd frameworks/style1-native
+            npm install
+            npx mcp-playwright run
+          "/>
+          <param name="teamcity.step.mode" value="default"/>
+          <param name="use.custom.script" value="true"/>
+        </parameters>
+      </runner>
+      
+      <!-- Step 3: Generate AI Report -->
+      <runner id="generate_report" name="Generate AI Report" type="simpleRunner">
+        <parameters>
+          <param name="script.content" value="
+            cd mindtrace-runtime
+            npx mcp-playwright report
+          "/>
+          <param name="teamcity.step.mode" value="execute_if_success"/>
+          <param name="use.custom.script" value="true"/>
+        </parameters>
+      </runner>
+    </build-runners>
+    
+    <build-triggers>
+      <build-trigger id="vcsTrigger" type="vcsTrigger">
+        <parameters>
+          <param name="enableQueueOptimization" value="true"/>
+          <param name="quietPeriodMode" value="DO_NOT_USE"/>
+        </parameters>
+      </build-trigger>
+      
+      <build-trigger id="scheduleTrigger" type="schedulingTrigger">
+        <parameters>
+          <param name="cronExpression_dm" value="*"/>
+          <param name="cronExpression_dw" value="*"/>
+          <param name="cronExpression_hour" value="2"/>
+          <param name="cronExpression_min" value="0"/>
+          <param name="cronExpression_month" value="*"/>
+          <param name="cronExpression_sec" value="0"/>
+          <param name="cronExpression_year" value="*"/>
+          <param name="dayOfWeek" value="Sunday"/>
+          <param name="hour" value="2"/>
+          <param name="minute" value="0"/>
+          <param name="timezone" value="SERVER"/>
+          <param name="triggerBuildOnlyIfAttachedRepository" value="false"/>
+        </parameters>
+      </build-trigger>
+    </build-triggers>
+    
+    <build-extensions>
+      <!-- Failure Conditions -->
+      <extension id="BuildFailureOnMessage" type="BuildFailureOnMessage">
+        <parameters>
+          <param name="buildFailureOnMessage.conditionType" value="contains"/>
+          <param name="buildFailureOnMessage.messagePattern" value="FATAL ERROR"/>
+        </parameters>
+      </extension>
+      
+      <!-- Success Criteria -->
+      <extension id="commit-status-publisher" type="commit-status-publisher">
+        <parameters>
+          <param name="github_authentication_type" value="token"/>
+          <param name="github_host" value="https://api.github.com"/>
+          <param name="publisherId" value="githubStatusPublisher"/>
+        </parameters>
+      </extension>
+    </build-extensions>
+    
+    <cleanup>
+      <policy>
+        <option name="artifactDays" value="7"/>
+        <option name="artifactPatterns" value="+:**"/>
+      </policy>
+    </cleanup>
+  </build-type>
+  
+  <build-type>
+    <id>MindTrace_BDD</id>
+    <name>Style 2 - Playwright BDD</name>
+    <!-- Similar configuration for BDD style -->
+  </build-type>
+  
+  <build-type>
+    <id>MindTrace_POM_BDD</id>
+    <name>Style 3 - Playwright POM + BDD</name>
+    <!-- Similar configuration for POM+BDD style -->
+  </build-type>
+  
+  <parameters>
+    <param name="env.OPENAI_API_KEY" value="%vault:openai/api-key%"/>
+    <param name="env.BASE_URL" value="https://app.staging.company.com"/>
+    <param name="env.CI" value="true"/>
+    <param name="env.HEADLESS" value="true"/>
+    <param name="env.PARALLEL_WORKERS" value="4"/>
+    <param name="env.HEALING_ENABLED" value="true"/>
+    <param name="env.FAILURE_CLASSIFICATION_ENABLED" value="true"/>
+    <param name="env.SLACK_WEBHOOK_URL" value="%vault:slack/webhook-url%"/>
+    <param name="env.JIRA_API_TOKEN" value="%vault:jira/api-token%"/>
+  </parameters>
+  
+</project>

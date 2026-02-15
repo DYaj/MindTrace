@@ -1,0 +1,221 @@
+{
+  "url": "https://example.com/login",
+  "timestamp": "2026-02-14T10:30:00.000Z",
+  "metadata": {
+    "title": "Login - Example App",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+  },
+  "elements": [
+    {
+      "tagName": "input",
+      "attributes": {
+        "id": "email-input",
+        "type": "email",
+        "name": "email",
+        "data-testid": "email-input",
+        "placeholder": "Enter your email",
+        "aria-label": "Email address",
+        "required": "true"
+      },
+      "xpath": "/html/body/div[1]/main/form/div[1]/input",
+      "cssPath": "#email-input",
+      "role": "textbox",
+      "ariaLabel": "Email address",
+      "dataTestId": "email-input",
+      "boundingBox": {
+        "x": 100,
+        "y": 200,
+        "width": 300,
+        "height": 40
+      },
+      "selectorSuggestions": {
+        "recommended": "[data-testid='email-input']",
+        "alternatives": [
+          {
+            "selector": "input[name='email']",
+            "stability": 70,
+            "reasoning": "Depends on form field name"
+          },
+          {
+            "selector": "#email-input",
+            "stability": 30,
+            "reasoning": "ID can change"
+          },
+          {
+            "selector": "//input[@type='email']",
+            "stability": 40,
+            "reasoning": "XPath - brittle to DOM changes"
+          }
+        ]
+      }
+    },
+    {
+      "tagName": "input",
+      "attributes": {
+        "id": "password-input",
+        "type": "password",
+        "name": "password",
+        "data-testid": "password-input",
+        "placeholder": "Enter your password",
+        "aria-label": "Password",
+        "required": "true"
+      },
+      "xpath": "/html/body/div[1]/main/form/div[2]/input",
+      "cssPath": "#password-input",
+      "role": "textbox",
+      "ariaLabel": "Password",
+      "dataTestId": "password-input",
+      "boundingBox": {
+        "x": 100,
+        "y": 260,
+        "width": 300,
+        "height": 40
+      },
+      "selectorSuggestions": {
+        "recommended": "[data-testid='password-input']",
+        "alternatives": [
+          {
+            "selector": "input[type='password']",
+            "stability": 60,
+            "reasoning": "Type is stable but not unique"
+          },
+          {
+            "selector": "input[aria-label='Password']",
+            "stability": 75,
+            "reasoning": "Aria labels are fairly stable"
+          }
+        ]
+      }
+    },
+    {
+      "tagName": "button",
+      "attributes": {
+        "id": "login-btn",
+        "type": "submit",
+        "data-testid": "login-button",
+        "class": "btn btn-primary"
+      },
+      "textContent": "Log In",
+      "xpath": "/html/body/div[1]/main/form/button",
+      "cssPath": "#login-btn",
+      "role": "button",
+      "dataTestId": "login-button",
+      "boundingBox": {
+        "x": 100,
+        "y": 320,
+        "width": 300,
+        "height": 45
+      },
+      "selectorSuggestions": {
+        "recommended": "[data-testid='login-button']",
+        "alternatives": [
+          {
+            "selector": "button[type='submit']",
+            "stability": 50,
+            "reasoning": "Multiple submit buttons may exist"
+          },
+          {
+            "selector": "role=button[name='Log In']",
+            "stability": 85,
+            "reasoning": "Role + text is very stable"
+          },
+          {
+            "selector": "text='Log In'",
+            "stability": 70,
+            "reasoning": "Text can change with i18n"
+          }
+        ]
+      }
+    },
+    {
+      "tagName": "a",
+      "attributes": {
+        "href": "/forgot-password",
+        "data-testid": "forgot-password-link",
+        "class": "link-secondary"
+      },
+      "textContent": "Forgot password?",
+      "xpath": "/html/body/div[1]/main/form/div[3]/a",
+      "cssPath": "a.link-secondary",
+      "role": "link",
+      "dataTestId": "forgot-password-link",
+      "boundingBox": {
+        "x": 100,
+        "y": 380,
+        "width": 150,
+        "height": 20
+      },
+      "selectorSuggestions": {
+        "recommended": "[data-testid='forgot-password-link']",
+        "alternatives": [
+          {
+            "selector": "a[href='/forgot-password']",
+            "stability": 65,
+            "reasoning": "URL path may change"
+          },
+          {
+            "selector": "role=link[name='Forgot password?']",
+            "stability": 80,
+            "reasoning": "Semantic role with text"
+          }
+        ]
+      }
+    }
+  ],
+  "selectorRanking": {
+    "bestPractices": [
+      {
+        "rank": 1,
+        "strategy": "data-testid",
+        "selector": "[data-testid='element-id']",
+        "stability": 100,
+        "pros": ["Explicitly for testing", "Won't change with UI updates", "Unique and specific"],
+        "cons": ["Requires developer cooperation"]
+      },
+      {
+        "rank": 2,
+        "strategy": "role",
+        "selector": "role=button[name='Click']",
+        "stability": 90,
+        "pros": ["Semantic", "Accessibility-friendly", "Stable"],
+        "cons": ["Requires proper ARIA attributes"]
+      },
+      {
+        "rank": 3,
+        "strategy": "aria-label",
+        "selector": "[aria-label='Submit form']",
+        "stability": 80,
+        "pros": ["Good for accessibility", "Descriptive"],
+        "cons": ["Can change with UX updates"]
+      },
+      {
+        "rank": 4,
+        "strategy": "text",
+        "selector": "text='Submit'",
+        "stability": 70,
+        "pros": ["User-visible", "Easy to understand"],
+        "cons": ["i18n changes", "Multiple matches possible"]
+      },
+      {
+        "rank": 5,
+        "strategy": "css",
+        "selector": ".submit-button",
+        "stability": 40,
+        "pros": ["Fast", "Familiar to developers"],
+        "cons": ["Styling changes break tests", "Not semantic"]
+      },
+      {
+        "rank": 6,
+        "strategy": "xpath",
+        "selector": "//button[@type='submit']",
+        "stability": 30,
+        "pros": ["Powerful", "Can traverse DOM"],
+        "cons": ["Brittle to DOM changes", "Hard to read", "Slow"]
+      }
+    ]
+  }
+}
