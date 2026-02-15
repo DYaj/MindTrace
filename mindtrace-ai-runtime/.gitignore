@@ -1,0 +1,23 @@
+# Node
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Playwright
+playwright-report/
+test-results/
+screenshots/
+trace.zip
+*.trace
+
+# MindTrace Runtime
+runs/
+mindtrace-artifacts/
+history/
+reports/
+
+# OS
+.DS_Store
+
+# VSCode
+.vscode/

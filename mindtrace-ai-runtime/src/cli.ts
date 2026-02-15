@@ -6,9 +6,19 @@
 
 import { Command } from 'commander';
 import { spawn } from 'child_process';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { existsSync } from 'fs';
+import { resolve } from 'path';
 import { config } from 'dotenv';
+
+import {
+  ensureRunLayout,
+  postRunGenerateArtifacts,
+  validateArtifacts,
+  governanceGate,
+  finalizeAuditTrail,
+  indexHistoricalRun,
+  generateReportBundle,
+} from './runtime/runtimePipeline';
 
 config();
 
@@ -23,166 +33,214 @@ program
   .command('run')
   .description('Run Playwright tests with MindTrace intelligence')
   .option('-s, --style <style>', 'Framework style (native|bdd|pom-bdd)', 'native')
-  .option('-p, --project <n>', 'Project name to run')
+  .option('-p, --project <n>', 'Playwright project name to run')
   .option('-g, --grep <pattern>', 'Run tests matching pattern')
   .option('--headed', 'Run tests in headed mode')
   .option('--debug', 'Run tests in debug mode')
   .option('--ui', 'Run tests in UI mode')
+  .option('--workers <n>', 'Override Playwright workers')
+  .option('--run-name <name>', 'Deterministic run name (recommended for CI)')
+  .option('--adapter <name>', 'Adapter name (reserved)', 'playwright')
   .option('--no-healing', 'Disable MindTrace Heal module')
   .option('--no-classification', 'Disable MindTrace RCA module')
+  .option('--no-governance', 'Disable governance gate (not recommended)')
+  .option('--no-audit', 'Disable audit trail (not recommended)')
+  .option('--no-history', 'Disable historical indexing (not recommended)')
   .action(async (options) => {
+    const cwd = process.cwd();
+    const runName =
+      options.runName ||
+      process.env.MINDTRACE_RUN_NAME ||
+      `local-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+
     console.log('🧠 Starting MindTrace-Enhanced Playwright Tests...\n');
+    console.log('CWD:', cwd);
     console.log('Framework Style:', options.style);
+    console.log('Run Name:', runName);
     console.log('MindTrace Heal:', options.healing ? '✅ Enabled' : '❌ Disabled');
     console.log('MindTrace RCA:', options.classification ? '✅ Enabled' : '❌ Disabled');
+    console.log('Governance Gate:', options.governance ? '✅ Enabled' : '❌ Disabled');
+    console.log('Audit Trail:', options.audit ? '✅ Enabled' : '❌ Disabled');
+    console.log('History Index:', options.history ? '✅ Enabled' : '❌ Disabled');
     console.log('');
 
+    // Ensure run folders exist up-front (governance + audit + history depends on it)
+    const layout = ensureRunLayout({ cwd, runName });
+
     // Build Playwright command
-    const playwrightArgs = ['test'];
-    
+    const playwrightArgs: string[] = ['test'];
+
     if (options.project) {
       playwrightArgs.push('--project', options.project);
     }
-    
+
     if (options.grep) {
       playwrightArgs.push('--grep', options.grep);
     }
-    
+
     if (options.headed) {
       playwrightArgs.push('--headed');
     }
-    
+
     if (options.debug) {
       playwrightArgs.push('--debug');
     }
-    
+
     if (options.ui) {
       playwrightArgs.push('--ui');
     }
 
-    // Set environment variables for MindTrace
+    if (options.workers) {
+      playwrightArgs.push('--workers', String(options.workers));
+    }
+
+    // Set environment variables for MindTrace modules
     const env = {
       ...process.env,
+      CI: process.env.CI || 'false',
+      CI_PROVIDER: process.env.CI_PROVIDER || (process.env.TEAMCITY_VERSION ? 'teamcity' : 'local'),
       MINDTRACE_ENABLED: 'true',
       MINDTRACE_STYLE: options.style,
+      MINDTRACE_RUN_NAME: runName,
+      MINDTRACE_RUN_DIR: layout.runDir,
+      MINDTRACE_ARTIFACTS_DIR: layout.artifactsDir,
       MINDTRACE_HEAL_ENABLED: options.healing ? 'true' : 'false',
       MINDTRACE_RCA_ENABLED: options.classification ? 'true' : 'false',
+      MINDTRACE_GOVERNANCE_ENABLED: options.governance ? 'true' : 'false',
+      MINDTRACE_AUDIT_ENABLED: options.audit ? 'true' : 'false',
+      MINDTRACE_HISTORY_ENABLED: options.history ? 'true' : 'false',
     };
 
-    // Run Playwright with MindTrace wrapper
+    const hasPlaywrightConfig =
+      existsSync(resolve(cwd, 'playwright.config.ts')) ||
+      existsSync(resolve(cwd, 'playwright.config.js')) ||
+      existsSync(resolve(cwd, 'playwright.config.mjs'));
+
+    if (!hasPlaywrightConfig) {
+      console.log('⚠️  No playwright.config.* found in this directory.');
+      console.log('    If your Playwright config is elsewhere, run from that folder.\n');
+    }
+
+    // Run Playwright
     const playwrightProcess = spawn('npx', ['playwright', ...playwrightArgs], {
       stdio: 'inherit',
       env,
     });
 
-    playwrightProcess.on('close', (code) => {
-      console.log('');
-      if (code === 0) {
-        console.log('✅ Tests completed successfully!');
-        console.log('');
-        console.log('📊 MindTrace Artifacts generated:');
-        console.log('   - Healed selectors: mindtrace-artifacts/healed-selectors.json');
-        console.log('   - Failure analysis: mindtrace-artifacts/failure-narrative.md');
-        console.log('   - RCA summary: mindtrace-artifacts/root-cause-summary.json');
-        console.log('   - Suggestions: mindtrace-artifacts/automation-suggestions.md');
-      } else {
-        console.log('❌ Tests failed. Check MindTrace artifacts for detailed analysis.');
+    playwrightProcess.on('close', async (code) => {
+      const exitCode = typeof code === 'number' ? code : 1;
+
+      // Post-run pipeline: artifacts -> validation -> governance -> audit -> history -> report
+      try {
+        await postRunGenerateArtifacts({
+          cwd,
+          runName,
+          exitCode,
+          style: options.style,
+          healingEnabled: options.healing,
+          rcaEnabled: options.classification,
+        });
+
+        // Always validate artifacts in CI by default (can be skipped via env toggle)
+        await validateArtifacts({ cwd, runName });
+
+        if (options.governance) {
+          await governanceGate({ cwd, runName, exitCode });
+        }
+
+        if (options.audit) {
+          await finalizeAuditTrail({ cwd, runName });
+        }
+
+        if (options.history) {
+          await indexHistoricalRun({ cwd, runName });
+        }
+
+        await generateReportBundle({ cwd, runName });
+      } catch (e: any) {
+        console.log('\n❌ MindTrace post-run pipeline failed:');
+        console.log(e?.message || e);
+        // If MindTrace governance/validation fails, treat as build failure
+        process.exit(2);
       }
-      process.exit(code || 0);
+
+      console.log('');
+      if (exitCode === 0) {
+        console.log('✅ Tests completed successfully!');
+      } else {
+        console.log('❌ Tests failed (Playwright exit code != 0).');
+      }
+
+      console.log('');
+      console.log('📦 MindTrace outputs:');
+      console.log(`   - Run folder: ${ensureRunLayout({ cwd, runName }).runDir}`);
+      console.log(`   - Artifacts:   ${ensureRunLayout({ cwd, runName }).artifactsDir}`);
+      console.log('   - Required artifacts:');
+      console.log('     - healed-selectors.json');
+      console.log('     - root-cause-summary.json');
+      console.log('     - failure-narrative.md');
+      console.log('     - execution-trace-map.json');
+      console.log('   - Governance + audit + history:');
+      console.log('     - audit/events.ndjson');
+      console.log('     - audit/final.json');
+      console.log('     - history/run-index.jsonl');
+
+      process.exit(exitCode);
     });
   });
 
 program
-  .command('analyze')
-  .description('Analyze test results with MindTrace AI')
-  .option('-r, --run <n>', 'Run name to analyze')
-  .option('-f, --file <path>', 'Results file to analyze')
+  .command('validate-artifacts')
+  .description('Validate required MindTrace artifacts exist and are well-formed')
+  .requiredOption('--run <name>', 'Run name')
   .action(async (options) => {
-    console.log('🔍 Analyzing test results with MindTrace AI...\n');
-    
-    console.log('Analysis complete. See mindtrace-artifacts/root-cause-summary.json');
+    await validateArtifacts({ cwd: process.cwd(), runName: options.run });
+    console.log('✅ Artifact validation passed');
   });
 
 program
-  .command('heal')
-  .description('Heal broken selectors using MindTrace Heal module')
-  .option('-f, --file <path>', 'Test file to heal')
-  .option('-s, --selector <selector>', 'Specific selector to heal')
-  .option('--auto-apply', 'Automatically apply healing suggestions')
+  .command('gate')
+  .description('Apply pipeline governance gate based on RCA + policy')
+  .requiredOption('--run <name>', 'Run name')
+  .option('--allow-flaky-only', 'Pass if only flaky failures exist', true)
   .action(async (options) => {
-    console.log('🔧 Running MindTrace Heal...\n');
-    
-    if (options.selector) {
-      console.log('Analyzing selector:', options.selector);
-      console.log('');
-      console.log('Suggested alternatives (ranked by stability):');
-      console.log('  1. [data-testid="element"] (stability: 100)');
-      console.log('  2. role=button[name="Click"] (stability: 90)');
-      console.log('  3. text="Click here" (stability: 70)');
-      console.log('');
-      
-      if (options.autoApply) {
-        console.log('✅ Applied healing: [data-testid="element"]');
-      } else {
-        console.log('💡 Use --auto-apply to apply the best suggestion');
-      }
-    }
+    await governanceGate({ cwd: process.cwd(), runName: options.run, exitCode: 0 });
+    console.log('✅ Governance gate passed');
   });
 
 program
-  .command('validate')
-  .description('Validate test architecture against framework contracts')
-  .option('-s, --style <style>', 'Framework style to validate', 'native')
-  .option('-f, --fix', 'Auto-fix violations')
+  .command('finalize-run')
+  .description('Finalize immutable audit trail (hash-chained events) for a run')
+  .requiredOption('--run <name>', 'Run name')
   .action(async (options) => {
-    console.log('📋 Validating test architecture...\n');
-    console.log('Framework Style:', options.style);
-    console.log('');
-    
-    console.log('✅ All architecture contracts validated');
-    console.log('   - 0 errors');
-    console.log('   - 0 warnings');
-    console.log('');
+    await finalizeAuditTrail({ cwd: process.cwd(), runName: options.run });
+    console.log('✅ Audit trail finalized');
+  });
+
+program
+  .command('index-run')
+  .description('Append a run summary into historical index (run-index.jsonl)')
+  .requiredOption('--run <name>', 'Run name')
+  .action(async (options) => {
+    await indexHistoricalRun({ cwd: process.cwd(), runName: options.run });
+    console.log('✅ Run indexed into history');
   });
 
 program
   .command('report')
-  .description('Generate comprehensive test report with MindTrace AI insights')
-  .option('-r, --run <n>', 'Run name')
+  .description('Generate a simple report bundle from existing artifacts')
+  .option('-r, --run <name>', 'Run name')
   .option('-o, --output <path>', 'Output directory', 'reports')
-  .option('--format <type>', 'Report format (html|pdf|markdown)', 'html')
+  .option('--format <type>', 'Report format (html|markdown)', 'markdown')
   .action(async (options) => {
-    console.log('📊 Generating MindTrace AI-enhanced test report...\n');
-    
-    console.log('Report generated:');
-    console.log(`   - Location: ${options.output}/test-report.${options.format}`);
-    console.log('   - Includes: Test results, AI analysis, healing suggestions');
-    console.log('');
-  });
-
-program
-  .command('init')
-  .description('Initialize MindTrace configuration for a new project')
-  .option('-s, --style <style>', 'Framework style (native|bdd|pom-bdd)', 'native')
-  .action(async (options) => {
-    console.log('🎬 Initializing MindTrace for Playwright project...\n');
-    console.log('Framework Style:', options.style);
-    console.log('');
-    
-    console.log('✅ Project initialized!');
-    console.log('');
-    console.log('Next steps:');
-    console.log('  1. Configure .env file with LLM API keys');
-    console.log('  2. Run: npm install');
-    console.log('  3. Run: npx playwright install');
-    console.log('  4. Start testing: mindtrace run');
-    console.log('');
-    console.log('🧠 MindTrace Modules:');
-    console.log('  ✅ MindTrace AI - LLM reasoning');
-    console.log('  ✅ MindTrace Heal - Selector repair');
-    console.log('  ✅ MindTrace RCA - Root cause analysis');
-    console.log('  ✅ MindTrace CI - Integration support');
-    console.log('');
+    // This report generator is intentionally lightweight & deterministic
+    await generateReportBundle({
+      cwd: process.cwd(),
+      runName: options.run || process.env.MINDTRACE_RUN_NAME || 'latest',
+      outputDir: options.output,
+      format: options.format,
+    });
+    console.log('✅ Report generated');
   });
 
 program.parse();
