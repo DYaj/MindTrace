@@ -1,45 +1,67 @@
 {
   "name": "@mindtrace/ai-runtime",
   "version": "1.0.0",
-  "description": "MindTrace AI Runtime - Intelligent Test Automation Platform",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "bin": {
-    "mindtrace": "./dist/cli.js"
+  "description": "MindTrace AI Runtime - Execution intelligence layer for Playwright (healing, RCA, governance, artifacts).",
+  "license": "MIT",
+  "author": "MindTrace Inc.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DYaj/mindtrace-for-playwright.git"
   },
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "start": "node dist/index.js",
-    "test": "jest",
-    "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\""
+  "bugs": {
+    "url": "https://github.com/DYaj/mindtrace-for-playwright/issues"
   },
+  "homepage": "https://github.com/DYaj/mindtrace-for-playwright#readme",
   "keywords": [
     "mindtrace",
     "playwright",
     "testing",
     "automation",
+    "mcp",
     "self-healing",
-    "ai",
-    "test-intelligence"
+    "rca",
+    "observability",
+    "ci",
+    "teamcity"
   ],
-  "author": "MindTrace Inc.",
-  "license": "MIT",
+
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mindtrace": "./dist/cli.js"
+  },
+
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "jest",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
+  },
+
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
-    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@playwright/test": "^1.49.0",
     "axios": "^1.7.9",
     "cheerio": "^1.0.0",
     "commander": "^12.1.0",
     "dotenv": "^16.4.7",
     "fs-extra": "^11.2.0",
-    "glob": "^11.0.0",
     "openai": "^4.67.3",
     "winston": "^3.17.0",
     "zod": "^3.24.1"
   },
+
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
@@ -52,6 +74,7 @@
     "ts-jest": "^29.2.5",
     "typescript": "^5.9.3"
   },
+
   "engines": {
     "node": ">=18.0.0"
   }

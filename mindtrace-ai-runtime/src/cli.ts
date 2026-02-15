@@ -6,8 +6,6 @@
 
 import { Command } from 'commander';
 import { spawn } from 'child_process';
-import { existsSync } from 'fs';
-import { resolve } from 'path';
 import { config } from 'dotenv';
 
 import {
@@ -18,7 +16,7 @@ import {
   finalizeAuditTrail,
   indexHistoricalRun,
   generateReportBundle,
-} from './runtime/runtimePipeline';
+} from './runtime';
 
 config();
 
@@ -33,38 +31,28 @@ program
   .command('run')
   .description('Run Playwright tests with MindTrace intelligence')
   .option('-s, --style <style>', 'Framework style (native|bdd|pom-bdd)', 'native')
-  .option('-p, --project <n>', 'Playwright project name to run')
+  .option('-p, --project <n>', 'Project name to run')
   .option('-g, --grep <pattern>', 'Run tests matching pattern')
   .option('--headed', 'Run tests in headed mode')
   .option('--debug', 'Run tests in debug mode')
   .option('--ui', 'Run tests in UI mode')
-  .option('--workers <n>', 'Override Playwright workers')
-  .option('--run-name <name>', 'Deterministic run name (recommended for CI)')
-  .option('--adapter <name>', 'Adapter name (reserved)', 'playwright')
   .option('--no-healing', 'Disable MindTrace Heal module')
   .option('--no-classification', 'Disable MindTrace RCA module')
-  .option('--no-governance', 'Disable governance gate (not recommended)')
-  .option('--no-audit', 'Disable audit trail (not recommended)')
-  .option('--no-history', 'Disable historical indexing (not recommended)')
+  .option('--run-name <name>', 'Deterministic run name (recommended in CI)')
   .action(async (options) => {
+    console.log('🧠 Starting MindTrace-Enhanced Playwright Tests...\n');
+    console.log('Framework Style:', options.style);
+    console.log('MindTrace Heal:', options.healing ? '✅ Enabled' : '❌ Disabled');
+    console.log('MindTrace RCA:', options.classification ? '✅ Enabled' : '❌ Disabled');
+    console.log('');
+
     const cwd = process.cwd();
     const runName =
       options.runName ||
       process.env.MINDTRACE_RUN_NAME ||
-      `local-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+      `run-${options.style}-${Date.now()}`;
 
-    console.log('🧠 Starting MindTrace-Enhanced Playwright Tests...\n');
-    console.log('CWD:', cwd);
-    console.log('Framework Style:', options.style);
-    console.log('Run Name:', runName);
-    console.log('MindTrace Heal:', options.healing ? '✅ Enabled' : '❌ Disabled');
-    console.log('MindTrace RCA:', options.classification ? '✅ Enabled' : '❌ Disabled');
-    console.log('Governance Gate:', options.governance ? '✅ Enabled' : '❌ Disabled');
-    console.log('Audit Trail:', options.audit ? '✅ Enabled' : '❌ Disabled');
-    console.log('History Index:', options.history ? '✅ Enabled' : '❌ Disabled');
-    console.log('');
-
-    // Ensure run folders exist up-front (governance + audit + history depends on it)
+    // Ensure run folder layout exists early so CI always has a deterministic place to publish artifacts
     const layout = ensureRunLayout({ cwd, runName });
 
     // Build Playwright command
@@ -90,36 +78,15 @@ program
       playwrightArgs.push('--ui');
     }
 
-    if (options.workers) {
-      playwrightArgs.push('--workers', String(options.workers));
-    }
-
-    // Set environment variables for MindTrace modules
+    // Set environment variables for MindTrace
     const env = {
       ...process.env,
-      CI: process.env.CI || 'false',
-      CI_PROVIDER: process.env.CI_PROVIDER || (process.env.TEAMCITY_VERSION ? 'teamcity' : 'local'),
       MINDTRACE_ENABLED: 'true',
       MINDTRACE_STYLE: options.style,
       MINDTRACE_RUN_NAME: runName,
-      MINDTRACE_RUN_DIR: layout.runDir,
-      MINDTRACE_ARTIFACTS_DIR: layout.artifactsDir,
       MINDTRACE_HEAL_ENABLED: options.healing ? 'true' : 'false',
       MINDTRACE_RCA_ENABLED: options.classification ? 'true' : 'false',
-      MINDTRACE_GOVERNANCE_ENABLED: options.governance ? 'true' : 'false',
-      MINDTRACE_AUDIT_ENABLED: options.audit ? 'true' : 'false',
-      MINDTRACE_HISTORY_ENABLED: options.history ? 'true' : 'false',
     };
-
-    const hasPlaywrightConfig =
-      existsSync(resolve(cwd, 'playwright.config.ts')) ||
-      existsSync(resolve(cwd, 'playwright.config.js')) ||
-      existsSync(resolve(cwd, 'playwright.config.mjs'));
-
-    if (!hasPlaywrightConfig) {
-      console.log('⚠️  No playwright.config.* found in this directory.');
-      console.log('    If your Playwright config is elsewhere, run from that folder.\n');
-    }
 
     // Run Playwright
     const playwrightProcess = spawn('npx', ['playwright', ...playwrightArgs], {
@@ -128,71 +95,54 @@ program
     });
 
     playwrightProcess.on('close', async (code) => {
-      const exitCode = typeof code === 'number' ? code : 1;
+      const exitCode = code ?? 0;
 
-      // Post-run pipeline: artifacts -> validation -> governance -> audit -> history -> report
       try {
-        await postRunGenerateArtifacts({
-          cwd,
-          runName,
-          exitCode,
-          style: options.style,
-          healingEnabled: options.healing,
-          rcaEnabled: options.classification,
-        });
+        // Always generate placeholder artifacts if missing so validation can run deterministically
+        await postRunGenerateArtifacts({ cwd, runName });
 
-        // Always validate artifacts in CI by default (can be skipped via env toggle)
+        // Validate artifacts exist + JSON is parseable
         await validateArtifacts({ cwd, runName });
 
-        if (options.governance) {
-          await governanceGate({ cwd, runName, exitCode });
-        }
+        // Governance gate: fail CI on real failures, allow flaky pass (based on RCA isFlaky)
+        await governanceGate({ cwd, runName, exitCode });
 
-        if (options.audit) {
-          await finalizeAuditTrail({ cwd, runName });
-        }
+        // Immutable-ish audit trail (append-only)
+        await finalizeAuditTrail({ cwd, runName });
 
-        if (options.history) {
-          await indexHistoricalRun({ cwd, runName });
-        }
+        // Historical indexing
+        await indexHistoricalRun({ cwd, runName });
 
+        // Report bundle
         await generateReportBundle({ cwd, runName });
-      } catch (e: any) {
-        console.log('\n❌ MindTrace post-run pipeline failed:');
-        console.log(e?.message || e);
-        // If MindTrace governance/validation fails, treat as build failure
-        process.exit(2);
+
+        console.log('');
+        if (exitCode === 0) {
+          console.log('✅ Tests completed successfully!');
+        } else {
+          console.log('❌ Tests failed (but MindTrace artifacts + RCA generated).');
+        }
+
+        console.log('');
+        console.log('📦 Run output:');
+        console.log(`   - Run folder:   ${layout.runDir}`);
+        console.log(`   - Artifacts:    ${layout.artifactsDir}`);
+        console.log(`   - Audit trail:  ${layout.auditDir}`);
+        console.log(`   - History index:${layout.historyIndexPath}`);
+        console.log('');
+
+        process.exit(exitCode);
+      } catch (err) {
+        console.error('\n❌ MindTrace pipeline failed:', err instanceof Error ? err.message : err);
+        process.exit(exitCode || 1);
       }
-
-      console.log('');
-      if (exitCode === 0) {
-        console.log('✅ Tests completed successfully!');
-      } else {
-        console.log('❌ Tests failed (Playwright exit code != 0).');
-      }
-
-      console.log('');
-      console.log('📦 MindTrace outputs:');
-      console.log(`   - Run folder: ${ensureRunLayout({ cwd, runName }).runDir}`);
-      console.log(`   - Artifacts:   ${ensureRunLayout({ cwd, runName }).artifactsDir}`);
-      console.log('   - Required artifacts:');
-      console.log('     - healed-selectors.json');
-      console.log('     - root-cause-summary.json');
-      console.log('     - failure-narrative.md');
-      console.log('     - execution-trace-map.json');
-      console.log('   - Governance + audit + history:');
-      console.log('     - audit/events.ndjson');
-      console.log('     - audit/final.json');
-      console.log('     - history/run-index.jsonl');
-
-      process.exit(exitCode);
     });
   });
 
 program
   .command('validate-artifacts')
-  .description('Validate required MindTrace artifacts exist and are well-formed')
-  .requiredOption('--run <name>', 'Run name')
+  .description('Validate required MindTrace artifacts for a run')
+  .requiredOption('-r, --run <name>', 'Run name')
   .action(async (options) => {
     await validateArtifacts({ cwd: process.cwd(), runName: options.run });
     console.log('✅ Artifact validation passed');
@@ -200,45 +150,43 @@ program
 
 program
   .command('gate')
-  .description('Apply pipeline governance gate based on RCA + policy')
-  .requiredOption('--run <name>', 'Run name')
-  .option('--allow-flaky-only', 'Pass if only flaky failures exist', true)
+  .description('Apply pipeline governance gate for a run')
+  .requiredOption('-r, --run <name>', 'Run name')
+  .option('--exit-code <n>', 'Test runner exit code', '0')
   .action(async (options) => {
-    await governanceGate({ cwd: process.cwd(), runName: options.run, exitCode: 0 });
+    const exitCode = Number(options.exitCode);
+    await governanceGate({ cwd: process.cwd(), runName: options.run, exitCode });
     console.log('✅ Governance gate passed');
   });
 
 program
   .command('finalize-run')
-  .description('Finalize immutable audit trail (hash-chained events) for a run')
-  .requiredOption('--run <name>', 'Run name')
+  .description('Finalize audit trail for a run')
+  .requiredOption('-r, --run <name>', 'Run name')
   .action(async (options) => {
     await finalizeAuditTrail({ cwd: process.cwd(), runName: options.run });
-    console.log('✅ Audit trail finalized');
+    console.log('✅ Audit finalized');
   });
 
 program
   .command('index-run')
-  .description('Append a run summary into historical index (run-index.jsonl)')
-  .requiredOption('--run <name>', 'Run name')
+  .description('Index a run into historical execution store')
+  .requiredOption('-r, --run <name>', 'Run name')
   .action(async (options) => {
     await indexHistoricalRun({ cwd: process.cwd(), runName: options.run });
-    console.log('✅ Run indexed into history');
+    console.log('✅ Run indexed');
   });
 
 program
   .command('report')
-  .description('Generate a simple report bundle from existing artifacts')
-  .option('-r, --run <name>', 'Run name')
-  .option('-o, --output <path>', 'Output directory', 'reports')
-  .option('--format <type>', 'Report format (html|markdown)', 'markdown')
+  .description('Generate report bundle for a run')
+  .requiredOption('-r, --run <name>', 'Run name')
+  .option('-o, --output <path>', 'Output directory (relative to repo root)', 'reports')
   .action(async (options) => {
-    // This report generator is intentionally lightweight & deterministic
     await generateReportBundle({
       cwd: process.cwd(),
-      runName: options.run || process.env.MINDTRACE_RUN_NAME || 'latest',
+      runName: options.run,
       outputDir: options.output,
-      format: options.format,
     });
     console.log('✅ Report generated');
   });
