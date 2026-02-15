@@ -684,7 +684,7 @@ cat > docs/SETUP.md << 'EOF'
 
 ### 1. Install MCP Server
 \`\`\`bash
-cd mindtrace-runtime
+cd mindtrace-ai-runtime
 npm install
 npm run build
 \`\`\`
@@ -874,7 +874,7 @@ EOF
 echo "✅ Project generation complete!"
 echo ""
 echo "Next steps:"
-echo "1. cd mindtrace-runtime && npm install && npm run build"
+echo "1. cd mindtrace-ai-runtime && npm install && npm run build"
 echo "2. cd frameworks/style1-native && npm install"
 echo "3. Configure .env with your LLM API keys"
 echo "4. Run: npm run test:mindtrace"

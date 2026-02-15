@@ -1,23 +1,20 @@
 # Node
 node_modules/
-npm-debug.log
-package-lock.json
 
-# Playwright
-playwright-report/
-test-results/
-screenshots/
-trace.zip
-*.trace
+# Build output
+dist/
+*.tsbuildinfo
 
-# MindTrace Runtime
-runs/
-mindtrace-artifacts/
-history/
-reports/
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
 
-# OS
+# macOS
 .DS_Store
 
-# VSCode
+# IDE
 .vscode/
+.idea/

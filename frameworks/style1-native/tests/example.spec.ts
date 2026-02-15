@@ -1,26 +1,20 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Example Test Suite', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
+test.describe('Practice Test Automation - Login', () => {
+  test('can login successfully', async ({ page }) => {
+    // With baseURL set, this resolves to:
+    // https://practicetestautomation.com/practice-test-login/
+    await page.goto('/practice-test-login/');
 
-  test('homepage loads successfully', async ({ page }) => {
-    await expect(page).toHaveTitle(/Home/);
-    await expect(page.locator('h1')).toBeVisible();
-  });
+    const username = process.env.TEST_USERNAME || 'student';
+    const password = process.env.TEST_PASSWORD || 'Password123';
 
-  test('navigation works correctly', async ({ page }) => {
-    await page.click('a[href="/about"]');
-    await expect(page).toHaveURL(/about/);
-  });
+    await page.locator('input#username').fill(username);
+    await page.locator('input#password').fill(password);
+    await page.locator('button#submit').click();
 
-  test('form submission with MCP healing', async ({ page }) => {
-    // This selector might break - MCP will heal it
-    await page.fill('#email-input', 'test@example.com');
-    await page.fill('#password-input', 'password123');
-    await page.click('button[type="submit"]');
-    
-    await expect(page.locator('.success-message')).toBeVisible();
+    await expect(page).toHaveURL(/.*practicetestautomation\.com\/logged-in-successfully\/?/);
+    await expect(page.getByRole('heading', { name: /Logged In Successfully/i })).toBeVisible();
+    await expect(page.getByText(/Congratulations|successfully logged in/i)).toBeVisible();
   });
 });

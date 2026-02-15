@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import type { Page } from "@playwright/test";
 
 export class BasePage {
   protected page: Page;
@@ -7,23 +7,23 @@ export class BasePage {
     this.page = page;
   }
 
-  async goto(path: string = '') {
-    await this.page.goto(path);
-  }
+  async goto(path: string) {
+    const baseUrl = (process.env.BASE_URL || "").trim();
 
-  async waitForPageLoad() {
-    await this.page.waitForLoadState('networkidle');
-  }
+    // If caller passes an absolute URL, keep it.
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      await this.page.goto(path);
+      return;
+    }
 
-  protected getLocator(selector: string): Locator {
-    return this.page.locator(selector);
-  }
+    // If path is relative ("/", "/login"), require BASE_URL.
+    if (!baseUrl) {
+      throw new Error(
+        "BASE_URL is not set. Please set BASE_URL in the repo root .env (or run setup.sh)."
+      );
+    }
 
-  protected async clickElement(selector: string) {
-    await this.getLocator(selector).click();
-  }
-
-  protected async fillInput(selector: string, value: string) {
-    await this.getLocator(selector).fill(value);
+    const full = path.startsWith("/") ? new URL(path, baseUrl).toString() : new URL(`/${path}`, baseUrl).toString();
+    await this.page.goto(full);
   }
 }

@@ -1,0 +1,34 @@
+# Environment (never commit)
+.env
+
+# Node / TS
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Playwright / Cucumber outputs
+**/test-results/
+**/playwright-report/
+
+# MindTrace outputs
+**/runs/
+**/history/
+**/reports/
+**/mindtrace-artifacts/
+
+# Coverage
+coverage/

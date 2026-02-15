@@ -1,37 +1,18 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
-import { LoginPage } from '../../src/pages/LoginPage';
-import { DashboardPage } from '../../src/pages/DashboardPage';
+import type { MindTraceWorld } from '../support/world';
 
-Given('I am on the login page', async function () {
-  this.loginPage = new LoginPage(this.page);
-  await this.loginPage.goto();
+Given('I am on the login page', async function (this: MindTraceWorld) {
+  // hooks.ts already navigates to BASE_URL, so just assert we're here
+  await expect(this.page).toHaveURL(/practicetestautomation\.com\/practice-test-login/);
 });
 
-When('I enter username {string}', async function (username: string) {
-  await this.loginPage.enterUsername(username);
+When('I login with username {string} and password {string}', async function (this: MindTraceWorld, username: string, password: string) {
+  await this.page.locator('#username').fill(username);
+  await this.page.locator('#password').fill(password);
+  await this.page.locator('#submit').click();
 });
 
-When('I enter password {string}', async function (password: string) {
-  await this.loginPage.enterPassword(password);
-});
-
-When('I click the login button', async function () {
-  await this.loginPage.clickLoginButton();
-});
-
-Then('I should see the dashboard', async function () {
-  this.dashboardPage = new DashboardPage(this.page);
-  const isDisplayed = await this.dashboardPage.isDisplayed();
-  expect(isDisplayed).toBeTruthy();
-});
-
-Then('I should see my username displayed', async function () {
-  const welcomeMessage = await this.dashboardPage.getWelcomeMessage();
-  expect(welcomeMessage).toBeTruthy();
-});
-
-Then('I should see an error message {string}', async function (message: string) {
-  const errorMessage = await this.loginPage.getErrorMessage();
-  expect(errorMessage).toContain(message);
+Then('I should see the logged in success page', async function (this: MindTraceWorld) {
+  await expect(this.page.locator('h1')).toContainText('Logged In Successfully');
 });

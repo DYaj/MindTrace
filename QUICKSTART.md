@@ -29,6 +29,7 @@ bash setup.sh
 ## 🎯 Choose Your Style
 
 ### Style 1: Playwright Native ⚡
+
 **Perfect for:** Small teams, fast iteration, developer-centric
 
 ```bash
@@ -39,18 +40,20 @@ npm run test:mindtrace
 ```
 
 **Example test:**
+
 ```typescript
-test('login works', async ({ page }) => {
-  await page.goto('/login');
-  await page.fill('[data-testid="email"]', 'user@example.com');
+test("login works", async ({ page }) => {
+  await page.goto("/login");
+  await page.fill('[data-testid="email"]', "user@example.com");
   await page.click('[data-testid="login-btn"]');
-  await expect(page).toHaveURL('/dashboard');
+  await expect(page).toHaveURL("/dashboard");
 });
 ```
 
 ---
 
 ### Style 2: Cucumber BDD 📝
+
 **Perfect for:** Business stakeholders, living documentation
 
 ```bash
@@ -61,6 +64,7 @@ npm run test:mindtrace
 ```
 
 **Example feature:**
+
 ```gherkin
 Feature: User Login
   Scenario: Successful login
@@ -72,6 +76,7 @@ Feature: User Login
 ---
 
 ### Style 3: POM + Cucumber 🏢
+
 **Perfect for:** Enterprise scale, 1000+ tests, multiple teams
 
 ```bash
@@ -82,6 +87,7 @@ npm run test:mindtrace
 ```
 
 **Example page object:**
+
 ```typescript
 export class LoginPage extends BasePage {
   async login(email: string, password: string) {
@@ -132,6 +138,7 @@ npm run report
 ## 🤖 What MCP Does Automatically
 
 ### 1. **Self-Healing Selectors**
+
 ```
 ❌ Test fails: Element not found with selector '#submit-btn'
 🔧 MCP analyzes DOM
@@ -140,6 +147,7 @@ npm run report
 ```
 
 ### 2. **Failure Classification**
+
 ```
 🔍 Analyzes: Error message, screenshots, logs
 📊 Classifies: "DOM Changed" (confidence: 0.92)
@@ -148,7 +156,9 @@ npm run report
 ```
 
 ### 3. **Artifact Generation**
+
 After each run, check `mindtrace-artifacts/`:
+
 - `healed-selectors.json` - Fixed locators
 - `failure-narrative.md` - Human-readable analysis
 - `root-cause-summary.json` - Structured data
@@ -162,6 +172,7 @@ After each run, check `mindtrace-artifacts/`:
 ### Quick Setup
 
 1. **Add build step:**
+
 ```xml
 <step name="MCP Tests">
   <command>npx mindtrace-playwright run</command>
@@ -169,6 +180,7 @@ After each run, check `mindtrace-artifacts/`:
 ```
 
 2. **Publish artifacts:**
+
 ```
 test-results/**/*
 mindtrace-artifacts/**/*
@@ -176,6 +188,7 @@ playwright-report/**/*
 ```
 
 3. **Set environment variables:**
+
 ```
 OPENAI_API_KEY=%vault:openai/key%
 CI=true
@@ -189,6 +202,7 @@ See [docs/TEAMCITY.md](docs/TEAMCITY.md) for complete guide.
 ## 🎯 Common Workflows
 
 ### Workflow 1: Write Test → Run → Auto-Heal
+
 ```bash
 # 1. Write test with any selector
 await page.click('#submit');
@@ -202,6 +216,7 @@ npm run test:mindtrace
 ```
 
 ### Workflow 2: Analyze Failures
+
 ```bash
 # 1. Run tests
 npm run test:mindtrace
@@ -217,6 +232,7 @@ cat mindtrace-artifacts/automation-suggestions.md
 ```
 
 ### Workflow 3: CI/CD Pipeline
+
 ```bash
 # TeamCity runs:
 1. npm install
@@ -244,25 +260,30 @@ cat mindtrace-artifacts/automation-suggestions.md
 ## 🆘 Troubleshooting
 
 ### "Module not found"
+
 ```bash
 npm install
 ```
 
 ### "Browsers not installed"
+
 ```bash
 npx playwright install --with-deps
 ```
 
 ### "LLM API errors"
+
 Check `.env` file:
+
 ```bash
 # Make sure API key is set
 echo $OPENAI_API_KEY
 ```
 
 ### "MCP server not starting"
+
 ```bash
-cd mindtrace-runtime
+cd mindtrace-ai-runtime
 npm run build
 ```
 

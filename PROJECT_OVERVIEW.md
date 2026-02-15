@@ -91,6 +91,7 @@ mindtrace-playwright.zip (53KB)
 ## 🚀 Quick Start (3 Steps)
 
 ### Step 1: Extract & Setup
+
 ```bash
 unzip mindtrace-playwright.zip
 cd mindtrace-playwright
@@ -98,7 +99,9 @@ bash setup.sh
 ```
 
 ### Step 2: Configure LLM
+
 Edit `.env` file:
+
 ```bash
 # Choose ONE:
 OPENAI_API_KEY=sk-your-key
@@ -111,6 +114,7 @@ LLM_PROVIDER=openai  # or anthropic or ollama
 ```
 
 ### Step 3: Run Tests
+
 ```bash
 cd frameworks/style1-native
 npm install
@@ -122,32 +126,35 @@ npm run test:mindtrace
 
 ## 🎯 Framework Style Comparison
 
-| Feature | Native | BDD | POM+BDD |
-|---------|--------|-----|---------|
-| **Setup Time** | 5 min | 10 min | 15 min |
-| **Learning Curve** | Low | Medium | High |
-| **Best For** | 10-500 tests | 100-1000 tests | 1000+ tests |
-| **Team Size** | 1-5 | 3-10 | 10+ |
-| **Maintainability** | Medium | High | Very High |
-| **Stakeholder Friendly** | ❌ | ✅ | ✅ |
-| **Code Reusability** | Low | Medium | High |
-| **CI Speed** | Fast | Medium | Medium |
+| Feature                  | Native       | BDD            | POM+BDD     |
+| ------------------------ | ------------ | -------------- | ----------- |
+| **Setup Time**           | 5 min        | 10 min         | 15 min      |
+| **Learning Curve**       | Low          | Medium         | High        |
+| **Best For**             | 10-500 tests | 100-1000 tests | 1000+ tests |
+| **Team Size**            | 1-5          | 3-10           | 10+         |
+| **Maintainability**      | Medium       | High           | Very High   |
+| **Stakeholder Friendly** | ❌           | ✅             | ✅          |
+| **Code Reusability**     | Low          | Medium         | High        |
+| **CI Speed**             | Fast         | Medium         | Medium      |
 
 ### When to Choose Each:
 
 **Style 1 (Native)** ⚡
+
 - Startups & small teams
 - Rapid prototyping
 - API-first testing
 - Developer-centric QA
 
 **Style 2 (BDD)** 📝
+
 - Enterprise with non-tech stakeholders
 - Regulatory compliance
 - Living documentation
 - BA-QA-PO collaboration
 
 **Style 3 (POM+BDD)** 🏢
+
 - Fortune 500 companies
 - Multi-team organizations
 - 2+ year automation strategy
@@ -160,12 +167,14 @@ npm run test:mindtrace
 ### 1. Self-Healing Selectors
 
 **Before:**
+
 ```typescript
 // Test breaks when ID changes
-await page.click('#submit-btn');
+await page.click("#submit-btn");
 ```
 
 **After (Automatic):**
+
 ```typescript
 // MCP detects failure and heals
 await page.click('[data-testid="submit-button"]');
@@ -175,6 +184,7 @@ await page.click('[data-testid="submit-button"]');
 ### 2. Failure Classification
 
 **What MCP Analyzes:**
+
 - Error messages
 - Screenshots
 - Network logs
@@ -182,16 +192,13 @@ await page.click('[data-testid="submit-button"]');
 - DOM snapshots
 
 **Output:**
+
 ```json
 {
   "category": "selector_failed",
   "confidence": 0.92,
   "reasoning": "Element ID changed in recent deployment",
-  "suggestedActions": [
-    "Use data-testid attribute",
-    "Update page object with new selector",
-    "Add explicit wait"
-  ],
+  "suggestedActions": ["Use data-testid attribute", "Update page object with new selector", "Add explicit wait"],
   "isFlaky": false,
   "rootCause": "DOM structure modified"
 }
@@ -200,6 +207,7 @@ await page.click('[data-testid="submit-button"]');
 ### 3. Continuous Learning
 
 The framework stores:
+
 - Failure patterns
 - Selector stability metrics
 - Flaky test detection
@@ -315,6 +323,7 @@ mindtrace-artifacts/
 ### Build Configuration
 
 1. **Build Steps:**
+
 ```bash
 # Step 1: Install
 npm ci
@@ -329,6 +338,7 @@ npx mindtrace-playwright report
 ```
 
 2. **Artifact Paths:**
+
 ```
 test-results/**/*
 playwright-report/**/*
@@ -336,6 +346,7 @@ mindtrace-artifacts/**/*
 ```
 
 3. **Environment Variables:**
+
 ```
 OPENAI_API_KEY=%vault:openai/key%
 BASE_URL=%env.BASE_URL%
@@ -345,6 +356,7 @@ FAILURE_CLASSIFICATION_ENABLED=true
 ```
 
 4. **Notifications:**
+
 - Slack: Test results + AI analysis
 - Jira: Auto-create tickets for failures
 - Email: Daily summary reports
@@ -356,6 +368,7 @@ See `docs/TEAMCITY.md` for complete setup.
 ## 💡 Example Workflows
 
 ### Workflow 1: Develop with AI Healing
+
 ```bash
 # 1. Write test
 await page.click('.submit-btn');
@@ -371,6 +384,7 @@ await page.click('[data-testid="submit-button"]');
 ```
 
 ### Workflow 2: Analyze Flaky Tests
+
 ```bash
 # 1. Test fails intermittently
 npm run test:mindtrace
@@ -385,6 +399,7 @@ cat mindtrace-artifacts/automation-suggestions.md
 ```
 
 ### Workflow 3: CI/CD Pipeline
+
 ```bash
 # TeamCity runs automatically on PR:
 1. npm install
@@ -404,6 +419,7 @@ cat mindtrace-artifacts/automation-suggestions.md
 ## 🎓 Learning Path
 
 ### Beginner (Week 1)
+
 1. Run `setup.sh`
 2. Configure `.env` with OpenAI key
 3. Run Style 1 (Native) tests
@@ -411,12 +427,14 @@ cat mindtrace-artifacts/automation-suggestions.md
 5. Read `QUICKSTART.md`
 
 ### Intermediate (Week 2)
+
 1. Write custom tests in Style 1
 2. Experiment with AI healing
 3. Explore Style 2 (BDD)
 4. Review `docs/ARCHITECTURE.md`
 
 ### Advanced (Week 3+)
+
 1. Implement Style 3 (POM+BDD)
 2. Integrate with TeamCity
 3. Custom healing policies
@@ -429,16 +447,19 @@ cat mindtrace-artifacts/automation-suggestions.md
 ### Common Issues
 
 **"Module not found"**
+
 ```bash
 npm install
 ```
 
 **"Browsers not installed"**
+
 ```bash
 npx playwright install --with-deps
 ```
 
 **"LLM API errors"**
+
 ```bash
 # Check .env configuration
 cat .env | grep API_KEY
@@ -449,14 +470,16 @@ curl https://api.openai.com/v1/models \
 ```
 
 **"MCP server not starting"**
+
 ```bash
-cd mindtrace-runtime
+cd mindtrace-ai-runtime
 npm install
 npm run build
 node dist/index.js
 ```
 
 **"Tests timing out"**
+
 ```bash
 # Increase timeout in .env
 TIMEOUT=60000
@@ -467,6 +490,7 @@ TIMEOUT=60000
 ## 📞 Support & Resources
 
 ### Documentation
+
 - **Main README**: `README.md`
 - **Quick Start**: `QUICKSTART.md`
 - **Setup Guide**: `docs/SETUP.md`
@@ -474,11 +498,13 @@ TIMEOUT=60000
 - **TeamCity**: `docs/TEAMCITY.md`
 
 ### Example Code
+
 - **Native Tests**: `frameworks/style1-native/tests/`
 - **BDD Features**: `frameworks/style2-bdd/features/`
 - **Page Objects**: `frameworks/style3-pom-bdd/src/pages/`
 
 ### Configuration
+
 - **Environment**: `.env.example`
 - **Playwright**: `frameworks/*/playwright.config.ts`
 - **TeamCity**: `teamcity-config.xml`
@@ -490,6 +516,7 @@ TIMEOUT=60000
 MIT License - See `LICENSE` file for details.
 
 Free to use for:
+
 - ✅ Commercial projects
 - ✅ Internal tools
 - ✅ Open source projects
@@ -530,4 +557,4 @@ npm run test:mindtrace
 
 **Built with ❤️ for QA Engineers**
 
-*Making test automation intelligent, reliable, and maintainable.*
+_Making test automation intelligent, reliable, and maintainable._

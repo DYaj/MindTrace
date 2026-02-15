@@ -1,20 +1,18 @@
 {
-  "name": "@mindtrace/playwright-bdd-adapter",
+  "name": "mindtrace-style2-bdd",
   "version": "1.0.0",
-  "description": "MindTrace for Playwright - BDD Cucumber Adapter",
+  "private": true,
   "scripts": {
     "test": "cucumber-js",
-    "test:mindtrace": "mindtrace run --adapter playwright --style bdd",
-    "report": "node generate-report.js"
+    "test:mindtrace": "npx mindtrace run --style bdd"
   },
   "dependencies": {
+    "@cucumber/cucumber": "^12.6.0",
     "@playwright/test": "^1.49.0",
-    "@cucumber/cucumber": "^11.1.0",
-    "@mindtrace/ai-runtime": "file:../../mindtrace-ai-runtime",
     "dotenv": "^16.4.7"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "typescript": "^5.7.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }

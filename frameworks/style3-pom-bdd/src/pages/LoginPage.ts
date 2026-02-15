@@ -1,50 +1,26 @@
-import { Page } from '@playwright/test';
-import { BasePage } from './BasePage';
+import { Page, expect } from "@playwright/test";
 
-export class LoginPage extends BasePage {
-  private readonly selectors = {
-    usernameInput: '[data-testid="username"]',
-    passwordInput: '[data-testid="password"]',
-    loginButton: '[data-testid="login-button"]',
-    errorMessage: '.error-message',
-    forgotPasswordLink: '[data-testid="forgot-password"]',
-  };
+export class LoginPage {
+  private page: Page;
+  private usernameInput = "#username";
+  private passwordInput = "#password";
+  private submitButton = "#submit";
 
   constructor(page: Page) {
-    super(page);
+    this.page = page;
   }
 
-  async goto() {
-    await super.goto('/login');
+  async goto(baseUrl: string) {
+    await this.page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   }
 
   async login(username: string, password: string) {
-    await this.fillInput(this.selectors.usernameInput, username);
-    await this.fillInput(this.selectors.passwordInput, password);
-    await this.clickElement(this.selectors.loginButton);
+    await this.page.locator(this.usernameInput).fill(username);
+    await this.page.locator(this.passwordInput).fill(password);
+    await this.page.locator(this.submitButton).click();
   }
 
-  async enterUsername(username: string) {
-    await this.fillInput(this.selectors.usernameInput, username);
-  }
-
-  async enterPassword(password: string) {
-    await this.fillInput(this.selectors.passwordInput, password);
-  }
-
-  async clickLoginButton() {
-    await this.clickElement(this.selectors.loginButton);
-  }
-
-  async getErrorMessage() {
-    return await this.getLocator(this.selectors.errorMessage).textContent();
-  }
-
-  async isErrorMessageVisible() {
-    return await this.getLocator(this.selectors.errorMessage).isVisible();
-  }
-
-  async clickForgotPassword() {
-    await this.clickElement(this.selectors.forgotPasswordLink);
+  async assertOnPage() {
+    await expect(this.page.locator(this.usernameInput)).toBeVisible();
   }
 }

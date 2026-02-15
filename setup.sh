@@ -49,6 +49,56 @@ NPM_VERSION=$(npm -v)
 echo "✅ npm $NPM_VERSION installed"
 echo ""
 
+# Helpers
+escape_sed_replacement() {
+    # Escape characters that can break sed replacement: \, &, and the delimiter |
+    # Note: URLs commonly contain / and ? and = — those are safe with '|' delimiter.
+    printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g'
+}
+
+ensure_env_var() {
+    local key="$1"
+    local value="$2"
+    local file="$3"
+
+    # Create file if missing
+    touch "$file"
+
+    local escaped
+    escaped="$(escape_sed_replacement "$value")"
+
+    if grep -qE "^${key}=" "$file"; then
+        if [[ "$OS" == "macos" ]]; then
+            sed -i '' -E "s|^${key}=.*|${key}=${escaped}|" "$file"
+        else
+            sed -i -E "s|^${key}=.*|${key}=${escaped}|" "$file"
+        fi
+    else
+        echo "${key}=${value}" >> "$file"
+    fi
+}
+
+prompt_base_url() {
+    echo "🌐 BASE_URL configuration"
+    echo "This is the target your tests run against."
+    echo "Examples:"
+    echo "  - http://localhost:3000"
+    echo "  - https://staging.yourapp.com"
+    echo "  - https://practicetestautomation.com/practice-test-login/"
+    echo ""
+
+    local base_url=""
+    while [[ -z "$base_url" ]]; do
+        read -r -p "Enter BASE_URL: " base_url
+        base_url="$(echo "$base_url" | xargs)"
+        if [[ -z "$base_url" ]]; then
+            echo "❌ BASE_URL cannot be empty."
+        fi
+    done
+
+    echo "$base_url"
+}
+
 # Select framework style
 echo "📦 Select Framework Style:"
 echo ""
@@ -64,49 +114,51 @@ echo ""
 echo "4) Install All Styles"
 echo ""
 
-read -p "Enter choice [1-4]: " STYLE_CHOICE
+read -r -p "Enter choice [1-4]: " STYLE_CHOICE
 
 case $STYLE_CHOICE in
-    1)
-        SELECTED_STYLE="style1-native"
-        STYLE_NAME="Playwright Native"
-        ;;
-    2)
-        SELECTED_STYLE="style2-bdd"
-        STYLE_NAME="Playwright + Cucumber BDD"
-        ;;
-    3)
-        SELECTED_STYLE="style3-pom-bdd"
-        STYLE_NAME="Playwright + POM + Cucumber"
-        ;;
-    4)
-        SELECTED_STYLE="all"
-        STYLE_NAME="All Styles"
-        ;;
-    *)
-        echo "❌ Invalid choice"
-        exit 1
-        ;;
+    1) SELECTED_STYLE="style1-native"; STYLE_NAME="Playwright Native" ;;
+    2) SELECTED_STYLE="style2-bdd"; STYLE_NAME="Playwright + Cucumber BDD" ;;
+    3) SELECTED_STYLE="style3-pom-bdd"; STYLE_NAME="Playwright + POM + Cucumber" ;;
+    4) SELECTED_STYLE="all"; STYLE_NAME="All Styles" ;;
+    *) echo "❌ Invalid choice"; exit 1 ;;
 esac
 
 echo ""
 echo "✅ Selected: $STYLE_NAME"
 echo ""
 
-# Install MCP Server
-echo "📦 Installing MCP Server..."
-cd mindtrace-runtime
+# Setup .env file (repo root)
+if [ ! -f ".env" ]; then
+    echo "⚙️  Setting up environment configuration..."
+    cp .env.example .env
+    echo "✅ Created .env file"
+    echo ""
+else
+    echo "✅ .env file already exists"
+    echo ""
+fi
+
+# Prompt BASE_URL and write it into root .env
+BASE_URL="$(prompt_base_url)"
+ensure_env_var "BASE_URL" "$BASE_URL" ".env"
+echo "✅ Saved BASE_URL into .env"
+echo ""
+
+# Install MindTrace runtime
+echo "📦 Installing MindTrace runtime..."
+cd mindtrace-ai-runtime
 npm install
 npm run build
 cd ..
-echo "✅ MCP Server installed"
+echo "✅ MindTrace runtime installed"
 echo ""
 
 # Install selected framework(s)
 if [ "$SELECTED_STYLE" == "all" ]; then
     for style in style1-native style2-bdd style3-pom-bdd; do
         echo "📦 Installing $style..."
-        cd frameworks/$style
+        cd "frameworks/$style"
         npm install
         cd ../..
         echo "✅ $style installed"
@@ -114,76 +166,39 @@ if [ "$SELECTED_STYLE" == "all" ]; then
     done
 else
     echo "📦 Installing $SELECTED_STYLE..."
-    cd frameworks/$SELECTED_STYLE
+    cd "frameworks/$SELECTED_STYLE"
     npm install
     cd ../..
     echo "✅ $SELECTED_STYLE installed"
     echo ""
 fi
 
-# Install Playwright browsers
+# Install Playwright browsers (install once is enough)
 echo "🎭 Installing Playwright browsers..."
-cd frameworks/${SELECTED_STYLE/all/style1-native}
+cd frameworks/style1-native
 npx playwright install
 cd ../..
 echo "✅ Browsers installed"
 echo ""
 
-# Setup .env file
-if [ ! -f ".env" ]; then
-    echo "⚙️  Setting up environment configuration..."
-    cp .env.example .env
-    echo "✅ Created .env file"
-    echo ""
-    echo "⚠️  IMPORTANT: Configure your LLM API keys in .env file"
-    echo "   Required: OPENAI_API_KEY or ANTHROPIC_API_KEY or OLLAMA_BASE_URL"
-    echo ""
-else
-    echo "✅ .env file already exists"
-    echo ""
-fi
-
-# Create runs directory
 mkdir -p runs
 echo "✅ Created runs directory"
 echo ""
 
-# Success message
 echo "╔═══════════════════════════════════════════════════════════════╗"
 echo "║                                                               ║"
-echo "║     ✅ Setup Complete!                                         ║"
+echo "║     ✅ Setup Complete!                                        ║"
 echo "║                                                               ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo ""
 echo "📝 Next Steps:"
 echo ""
-echo "1. Configure LLM Provider in .env:"
-echo "   $ nano .env"
-echo "   (Add your OPENAI_API_KEY or ANTHROPIC_API_KEY)"
-echo ""
-
+echo "1) Run tests:"
 if [ "$SELECTED_STYLE" == "all" ]; then
-    echo "2. Run tests (choose one):"
-    echo "   $ cd frameworks/style1-native && npm run test:mindtrace"
-    echo "   $ cd frameworks/style2-bdd && npm run test:mindtrace"
-    echo "   $ cd frameworks/style3-pom-bdd && npm run test:mindtrace"
+    echo "   cd frameworks/style1-native && npm run test:mindtrace"
+    echo "   cd frameworks/style2-bdd && npm run test:mindtrace"
+    echo "   cd frameworks/style3-pom-bdd && npm run test:mindtrace"
 else
-    echo "2. Run tests:"
-    echo "   $ cd frameworks/$SELECTED_STYLE"
-    echo "   $ npm run test:mindtrace"
+    echo "   cd frameworks/$SELECTED_STYLE && npm run test:mindtrace"
 fi
-
-echo ""
-echo "3. View results:"
-echo "   $ npm run report"
-echo ""
-echo "4. Check MCP artifacts:"
-echo "   $ ls mindtrace-artifacts/"
-echo ""
-echo "📚 Documentation:"
-echo "   - Setup Guide: docs/SETUP.md"
-echo "   - TeamCity Integration: docs/TEAMCITY.md"
-echo "   - Architecture: docs/ARCHITECTURE.md"
-echo ""
-echo "🎉 Happy Testing!"
 echo ""
