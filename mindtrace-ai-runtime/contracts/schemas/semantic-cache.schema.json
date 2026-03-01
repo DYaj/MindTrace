@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Semantic Cache",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["meta", "entries"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["schema_version"],
+      "properties": {
+        "schema_version": { "type": "string" }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["intent", "element_id"],
+        "properties": {
+          "intent": { "type": "string" },
+          "element_id": { "type": "string" }
+        }
+      }
+    }
+  }
+}

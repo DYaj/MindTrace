@@ -1,7 +1,8 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
-import { ensureRunLayout } from "./pipeline";
-import { loadAndValidateLocatorManifest, LocatorManifest } from "./contract-loader";
+import { ensureRunLayout } from "./pipeline.js";
+import { loadAndValidateLocatorManifest } from "./contract-loader.js";
+import type { LocatorManifest } from "./contract-loader.js";
 
 /**
  * Phase 2: Seed healed-selectors.json from locator-manifest snapshot.
