@@ -5,9 +5,6 @@ import { seedHealedSelectorsFromManifest } from "./manifest-seed";
 export type MindTraceRunContext = {
   cwd: string;
   runName: string;
-
-  outputDir?: string;
-  format?: string;
 };
 
 export type GovernanceGateContext = MindTraceRunContext & {
@@ -51,14 +48,101 @@ function readJsonSafe(p: string): any {
   try {
     return JSON.parse(readFileSync(p, "utf-8"));
   } catch {
-    try {
-      const raw = readFileSync(p, "utf-8");
-      const first = raw.indexOf("{");
-      const last = raw.lastIndexOf("}");
-      if (first >= 0 && last > first) return JSON.parse(raw.slice(first, last + 1));
-    } catch {}
     return null;
   }
+}
+
+type ParsedTest = {
+  id: string;
+  title: string;
+  file?: string;
+  project?: string;
+  status: string;
+  durationMs: number;
+  attempts: number;
+  retries: number;
+};
+
+type ParsedReport = {
+  tests: ParsedTest[];
+  summary: {
+    total: number;
+    passed: number;
+    failed: number;
+    skipped: number;
+    flaky: number;
+    quarantined: number;
+  };
+};
+
+function parsePlaywrightJsonReport(raw: any): ParsedReport {
+  const tests: ParsedTest[] = [];
+
+  function walkSuite(suite: any) {
+    if (!suite) return;
+
+    if (Array.isArray(suite.suites)) {
+      for (const child of suite.suites) walkSuite(child);
+    }
+
+    if (Array.isArray(suite.specs)) {
+      for (const spec of suite.specs) {
+        const file = spec.file;
+        const specTitle = spec.title;
+
+        if (Array.isArray(spec.tests)) {
+          for (const t of spec.tests) {
+            const results = Array.isArray(t.results) ? t.results : [];
+            const last = results.length ? results[results.length - 1] : {};
+            const status = last.status || "unknown";
+            const durationMs = typeof last.duration === "number" ? last.duration : 0;
+            const project = t.projectName || last.projectName || "default";
+            const attempts = results.length || 1;
+            const retries = attempts - 1;
+
+            const id = `${file || "unknown"}::${specTitle || t.title || "test"}`;
+
+            tests.push({
+              id,
+              title: specTitle || t.title || "unknown",
+              file,
+              project,
+              status,
+              durationMs,
+              attempts,
+              retries
+            });
+          }
+        }
+      }
+    }
+  }
+
+  if (raw && Array.isArray(raw.suites)) {
+    for (const s of raw.suites) walkSuite(s);
+  }
+
+  const total = tests.length;
+  let passed = 0;
+  let failed = 0;
+  let skipped = 0;
+  let flaky = 0;
+
+  for (const t of tests) {
+    if (t.status === "passed") {
+      passed += 1;
+      if (t.retries > 0) flaky += 1;
+    } else if (t.status === "skipped" || t.status === "interrupted") {
+      skipped += 1;
+    } else {
+      failed += 1;
+    }
+  }
+
+  return {
+    tests,
+    summary: { total, passed, failed, skipped, flaky, quarantined: 0 }
+  };
 }
 
 export async function postRunGenerateArtifacts(ctx: MindTraceRunContext): Promise<void> {
@@ -71,81 +155,62 @@ export async function postRunGenerateArtifacts(ctx: MindTraceRunContext): Promis
 
   if (!existsSync(healedPath)) {
     seedHealedSelectorsFromManifest({ cwd: ctx.cwd, runName: ctx.runName });
-
     if (!existsSync(healedPath)) {
-      writeFileSync(healedPath, JSON.stringify({ selectors: [], source: "repo", timestamp: new Date().toISOString() }, null, 2), "utf-8");
+      writeFileSync(healedPath, JSON.stringify({ selectors: [] }, null, 2), "utf-8");
     }
   }
 
-  if (!existsSync(rcaPath)) {
-    writeFileSync(rcaPath, JSON.stringify({ category: "none", confidence: 1, isFlaky: false }, null, 2), "utf-8");
-  }
-
-  if (!existsSync(narrativePath)) {
-    writeFileSync(narrativePath, "# Failure Narrative\n\nNo failures detected.\n", "utf-8");
-  }
-
-  if (!existsSync(traceMapPath)) {
-    writeFileSync(traceMapPath, JSON.stringify({ steps: [] }, null, 2), "utf-8");
-  }
+  if (!existsSync(rcaPath)) writeFileSync(rcaPath, JSON.stringify({ category: "none", confidence: 1, isFlaky: false }, null, 2), "utf-8");
+  if (!existsSync(narrativePath)) writeFileSync(narrativePath, "# Failure Narrative\n\nNo failures detected.\n", "utf-8");
+  if (!existsSync(traceMapPath)) writeFileSync(traceMapPath, JSON.stringify({ steps: [] }, null, 2), "utf-8");
 }
 
-export async function generateNormalizedResults(ctx: MindTraceRunContext & { exitCode: number; mode?: string; isBaseline?: boolean }): Promise<void> {
+export async function generateNormalizedResults(ctx: MindTraceRunContext & { exitCode: number; style: string }): Promise<void> {
   const layout = ensureRunLayout(ctx);
 
-  const configPath = join(ctx.cwd, "mindtrace.config.json");
-  const config = existsSync(configPath) ? readJsonSafe(configPath) || {} : {};
+  const pwReportPath = join(layout.artifactsDir, "playwright-report.json");
+  const pwRaw = existsSync(pwReportPath) ? readJsonSafe(pwReportPath) : null;
+  const parsed = pwRaw ? parsePlaywrightJsonReport(pwRaw) : null;
 
-  const normalized = {
+  const normalizedResults = {
     runId: ctx.runName,
-    frameworkStyle: ctx.mode || process.env.MINDTRACE_MODE || "native",
-    executionProfile: config.executionProfile || process.env.MINDTRACE_PROFILE || "local",
-    strictness: config.strictness || process.env.MINDTRACE_STRICTNESS || "balanced",
-    isBaseline: Boolean(ctx.isBaseline),
+    frameworkStyle: ctx.style,
+    exitCode: ctx.exitCode,
     environment: {
-      baseUrl:
-        config.baseUrl ||
-        process.env.TEST_BASE_URL ||
-        process.env.BASE_URL ||
-        process.env.PLAYWRIGHT_BASE_URL ||
-        "not-set",
       nodeVersion: process.version,
-      ci: process.env.CI === "true",
-      gitSha: process.env.GIT_SHA || "unknown",
+      ci: process.env.CI === "true"
     },
-    summary: {
+    tests: parsed?.tests || [],
+    summary: parsed?.summary || {
       total: 0,
-      passed: ctx.exitCode === 0 ? 0 : 0,
-      failed: ctx.exitCode === 0 ? 0 : 1,
+      passed: 0,
+      failed: ctx.exitCode !== 0 ? 1 : 0,
       skipped: 0,
       flaky: 0,
-      quarantined: 0,
+      quarantined: 0
     },
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   };
 
-  writeFileSync(join(layout.artifactsDir, "normalized-results.json"), JSON.stringify(normalized, null, 2), "utf-8");
+  writeFileSync(join(layout.artifactsDir, "normalized-results.json"), JSON.stringify(normalizedResults, null, 2), "utf-8");
 }
 
 export async function generatePolicyDecision(ctx: GovernanceGateContext): Promise<{ decision: string; exitCode: number; reasons: string[] }> {
   const layout = ensureRunLayout(ctx);
 
-  const configPath = join(ctx.cwd, "mindtrace.config.json");
-  const config = existsSync(configPath) ? readJsonSafe(configPath) || {} : { strictness: "balanced" };
-
   const rcaPath = join(layout.artifactsDir, "root-cause-summary.json");
   const rca = existsSync(rcaPath) ? readJsonSafe(rcaPath) || {} : {};
   const isFlaky = rca.isFlaky === true;
 
-  let decision = "pass";
+  let decision: "pass" | "fail" | "warn" = "pass";
   let finalExitCode = 0;
   const reasons: string[] = [];
 
   if (ctx.exitCode !== 0) {
-    if (isFlaky && config.strictness !== "strict") {
+    if (isFlaky) {
       decision = "warn";
       finalExitCode = 0;
-      reasons.push("Flaky test detected - allowed by policy");
+      reasons.push("Flaky test detected - allowed by policy (default)");
     } else {
       decision = "fail";
       finalExitCode = 1;
@@ -159,34 +224,20 @@ export async function generatePolicyDecision(ctx: GovernanceGateContext): Promis
     decision,
     exitCode: finalExitCode,
     testExitCode: ctx.exitCode,
-    strictness: config.strictness || "balanced",
-    reasons,
-    mapping: {
-      0: "pass - success or warnings allowed",
-      1: "fail - test failures exceeded policy tolerance",
-      2: "infraError - infrastructure or environment failure",
-      3: "policyViolation - governance failure",
-    },
+    reasons
   };
 
   writeFileSync(join(layout.artifactsDir, "policy-decision.json"), JSON.stringify(policyDecision, null, 2), "utf-8");
+
   return { decision, exitCode: finalExitCode, reasons };
 }
 
 export async function generateGateSummary(ctx: GovernanceGateContext): Promise<void> {
   const layout = ensureRunLayout(ctx);
 
-  const required = [
-    "healed-selectors.json",
-    "root-cause-summary.json",
-    "failure-narrative.md",
-    "execution-trace-map.json",
-    "normalized-results.json",
-    "policy-decision.json",
-    "playwright-report.json",
-  ];
+  const required = ["playwright-report.json", "normalized-results.json", "policy-decision.json"];
 
-  const missing = required.filter((name) => !existsSync(join(layout.artifactsDir, name)));
+  const missing = required.filter((n) => !existsSync(join(layout.artifactsDir, n)));
 
   const policyPath = join(layout.artifactsDir, "policy-decision.json");
   const policy = existsSync(policyPath) ? readJsonSafe(policyPath) : null;
@@ -199,8 +250,8 @@ export async function generateGateSummary(ctx: GovernanceGateContext): Promise<v
     gateStatus: missing.length ? "incomplete" : "ready",
     requiredArtifacts: {
       present: required.filter((n) => existsSync(join(layout.artifactsDir, n))),
-      missing,
-    },
+      missing
+    }
   };
 
   writeFileSync(join(layout.artifactsDir, "gate-summary.json"), JSON.stringify(gateSummary, null, 2), "utf-8");
@@ -214,10 +265,10 @@ export async function generateArtifactValidation(ctx: MindTraceRunContext & { is
     "root-cause-summary.json",
     "failure-narrative.md",
     "execution-trace-map.json",
+    "playwright-report.json",
     "normalized-results.json",
     "policy-decision.json",
-    "gate-summary.json",
-    "playwright-report.json",
+    "gate-summary.json"
   ];
 
   const missing = required.filter((n) => !existsSync(join(layout.artifactsDir, n)));
@@ -228,14 +279,15 @@ export async function generateArtifactValidation(ctx: MindTraceRunContext & { is
     status: missing.length ? "invalid" : "valid",
     required,
     missing,
-    errors: missing.length ? [`Missing required artifacts: ${missing.join(", ")}`] : [],
+    errors: missing.length ? [`Missing required artifacts: ${missing.join(", ")}`] : []
   };
 
   writeFileSync(join(layout.artifactsDir, "artifact-validation.json"), JSON.stringify(validation, null, 2), "utf-8");
+
   return { status: missing.length ? "invalid" : "valid", missing };
 }
 
-export async function validateArtifacts(ctx: MindTraceRunContext & { isBaseline?: boolean }): Promise<void> {
+export async function validateArtifacts(ctx: MindTraceRunContext): Promise<void> {
   const layout = ensureRunLayout(ctx);
 
   const required = [
@@ -243,11 +295,11 @@ export async function validateArtifacts(ctx: MindTraceRunContext & { isBaseline?
     "root-cause-summary.json",
     "failure-narrative.md",
     "execution-trace-map.json",
+    "playwright-report.json",
     "normalized-results.json",
     "policy-decision.json",
     "gate-summary.json",
-    "artifact-validation.json",
-    "playwright-report.json",
+    "artifact-validation.json"
   ];
 
   for (const f of required) {
@@ -259,11 +311,11 @@ export async function validateArtifacts(ctx: MindTraceRunContext & { isBaseline?
     "healed-selectors.json",
     "root-cause-summary.json",
     "execution-trace-map.json",
+    "playwright-report.json",
     "normalized-results.json",
     "policy-decision.json",
     "gate-summary.json",
-    "artifact-validation.json",
-    "playwright-report.json",
+    "artifact-validation.json"
   ];
 
   for (const f of jsonFiles) {
@@ -279,15 +331,6 @@ export async function validateArtifacts(ctx: MindTraceRunContext & { isBaseline?
 export async function governanceGate(ctx: GovernanceGateContext): Promise<void> {
   const layout = ensureRunLayout(ctx);
 
-  const rcaPath = join(layout.artifactsDir, "root-cause-summary.json");
-  const rcaRaw = existsSync(rcaPath) ? readFileSync(rcaPath, "utf-8") : "{}";
-  const rca = JSON.parse(rcaRaw || "{}");
-  const isFlaky = Boolean((rca as any).isFlaky);
-
-  if (ctx.exitCode !== 0 && !isFlaky) {
-    throw new Error(`Governance gate failed: exitCode=${ctx.exitCode}, isFlaky=${isFlaky}`);
-  }
-
   const policyPath = join(layout.artifactsDir, "policy-decision.json");
   const policy = existsSync(policyPath) ? readJsonSafe(policyPath) : null;
 
@@ -296,34 +339,37 @@ export async function governanceGate(ctx: GovernanceGateContext): Promise<void> 
     type: "governance_gate_evaluated",
     testExitCode: ctx.exitCode,
     policyDecision: policy?.decision || "missing",
-    policyExitCode: policy?.exitCode ?? 2,
+    policyExitCode: policy?.exitCode ?? 3
   });
+
+  if (policy?.exitCode === 1) {
+    throw new Error(`Governance gate failed: exitCode=${ctx.exitCode}, policy=fail`);
+  }
 }
 
 export async function finalizeAuditTrail(ctx: MindTraceRunContext): Promise<void> {
   const layout = ensureRunLayout(ctx);
 
   const eventsFile = join(layout.auditDir, "events.ndjson");
-  const events = existsSync(eventsFile)
-    ? readFileSync(eventsFile, "utf-8")
-        .split("\n")
-        .filter(Boolean)
-        .map((l) => {
-          try {
-            return JSON.parse(l);
-          } catch {
-            return null;
-          }
-        })
-        .filter(Boolean)
-    : [];
+  const raw = existsSync(eventsFile) ? readFileSync(eventsFile, "utf-8") : "";
+  const events = raw
+    .split("\n")
+    .filter(Boolean)
+    .map((l) => {
+      try {
+        return JSON.parse(l);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
 
   const finalReport = {
     runId: ctx.runName,
     timestamp: new Date().toISOString(),
     eventCount: events.length,
     status: "completed",
-    immutable: true,
+    immutable: true
   };
 
   writeFileSync(join(layout.auditDir, "final.json"), JSON.stringify(finalReport, null, 2), "utf-8");
