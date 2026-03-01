@@ -1,22 +1,7 @@
 {
-  "name": "@mindtrace/playwright-native-adapter",
-  "version": "1.0.0",
-  "description": "MindTrace for Playwright - Native Test Runner",
-  "scripts": {
-    "test": "playwright test",
-    "test:headed": "playwright test --headed",
-    "test:debug": "playwright test --debug",
-    "test:mindtrace": "mindtrace run --style native --run-name ${MINDTRACE_RUN_NAME:-local-native}",
-    "report": "playwright show-report",
-    "codegen": "playwright codegen"
-  },
-  "dependencies": {
-    "@playwright/test": "^1.49.0",
-    "@mindtrace/ai-runtime": "file:../../mindtrace-ai-runtime",
-    "dotenv": "^16.4.7"
-  },
+  "name": "style1-native",
+  "private": true,
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "typescript": "^5.7.2"
+    "@playwright/test": "^1.58.2"
   }
 }

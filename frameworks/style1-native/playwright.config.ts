@@ -1,23 +1,24 @@
-import { defineConfig, devices } from '@playwright/test';
-import * as path from 'path';
-import * as dotenv from 'dotenv';
+import { defineConfig, devices } from "@playwright/test";
 
-// Load repo-root .env (not the framework folder)
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+const baseURL =
+  process.env.TEST_BASE_URL ||
+  process.env.BASE_URL ||
+  process.env.PLAYWRIGHT_BASE_URL ||
+  "http://localhost:3000";
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: "./tests",
   fullyParallel: true,
   retries: 0,
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
-    trace: 'on-first-retry',
-    video: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    baseURL,
+    trace: "on-first-retry",
+    video: "retain-on-failure",
+    screenshot: "only-on-failure",
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
   ],
 });
