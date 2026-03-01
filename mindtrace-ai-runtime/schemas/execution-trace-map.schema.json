@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Execution Trace Map",
+  "description": "Step-by-step test execution timeline",
+  "type": "object",
+  "required": ["steps"],
+  "properties": {
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stepId", "action", "timestamp"],
+        "properties": {
+          "stepId": { "type": "string" },
+          "action": { "type": "string" },
+          "target": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "duration": { "type": "number" },
+          "screenshot": { "type": "string" },
+          "trace": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "failed", "skipped"]
+          }
+        }
+      }
+    }
+  }
+}
