@@ -20,7 +20,7 @@ MindTrace transforms Playwright into:
 • A contract-validated test runtime  
 • A deterministic artifact generator  
 • A CI-governed compliance system  
-• An audit-ready execution layer  
+• An audit-ready execution layer
 
 AI resilience features are layered on top — but governance comes first.
 
@@ -57,20 +57,20 @@ Every run generates:
 runs/<runName>/
 
 ├── artifacts/
-│   ├── playwright-report.json
-│   ├── normalized-results.json
-│   ├── policy-decision.json
-│   ├── gate-summary.json
-│   ├── artifact-validation.json
-│   ├── healed-selectors.json
-│   └── locator-manifest.snapshot.json
+│ ├── playwright-report.json
+│ ├── normalized-results.json
+│ ├── policy-decision.json
+│ ├── gate-summary.json
+│ ├── artifact-validation.json
+│ ├── healed-selectors.json
+│ └── locator-manifest.snapshot.json
 │
 ├── audit/
-│   ├── events.ndjson
-│   └── final.json
+│ ├── events.ndjson
+│ └── final.json
 │
 └── (repo root) history/
-    └── run-index.jsonl
+└── run-index.jsonl
 
 If required artifacts are missing → run fails with exit code 3.
 
@@ -80,10 +80,10 @@ If required artifacts are missing → run fails with exit code 3.
 
 MindTrace standardizes exit codes:
 
-0  → Tests passed, policy satisfied  
-1  → Test failures (expected Playwright failure)  
-2  → Infrastructure/runtime failure  
-3  → Policy violation (contract invalid or artifact missing)  
+0 → Tests passed, policy satisfied  
+1 → Test failures (expected Playwright failure)  
+2 → Infrastructure/runtime failure  
+3 → Policy violation (contract invalid or artifact missing)
 
 This allows CI/CD systems to differentiate failure types.
 
@@ -214,3 +214,4 @@ MIT License
 
 © 2026 MindTrace Inc.
 Building compliance-first test infrastructure.
+```
