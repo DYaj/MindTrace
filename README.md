@@ -1,169 +1,208 @@
 # MindTrace for Playwright
 
-## 🧠 Governance-First Test Automation Runtime
+## 🧠 Governance-First AI Test Runtime Platform
 
-**MindTrace** is an enterprise-grade compliance and governance layer for Playwright test execution.
+**MindTrace** is a modular, governance-first test automation runtime platform built around deterministic contracts, compliance enforcement, and controlled AI extensibility.
 
-It enforces deterministic artifact contracts, immutable manifest validation, policy decisions, and audit traceability — before introducing AI-based resilience features.
+It is not a wrapper around Playwright.
 
-MindTrace is not a wrapper around Playwright.
-
-It is a compliance-enforced execution runtime.
+It is a **policy-enforced execution platform** with a modular MCP architecture.
 
 ---
 
-# 🎯 What MindTrace Is (Phase 3)
+# 🎯 Core Philosophy
 
-MindTrace transforms Playwright into:
+Governance comes first.  
+AI resilience comes second.
 
-• A policy-controlled execution engine  
-• A contract-validated test runtime  
-• A deterministic artifact generator  
-• A CI-governed compliance system  
-• An audit-ready execution layer  
+MindTrace enforces:
 
-AI resilience features are layered on top — but governance comes first.
+• Deterministic artifact contracts  
+• Immutable manifest validation  
+• Schema-validated outputs  
+• Policy-based gating  
+• Exit-code standardization  
+• CI/CD compliance differentiation  
+• Audit-ready run history
+
+AI features are layered on top — never allowed to bypass governance.
 
 ---
 
-# 🏗️ Architecture (Current State)
+# 🏗️ Modular Architecture (Current State)
+
+MindTrace now operates as a multi-package MCP runtime system.
 Developer
 ↓
-MindTrace CLI
+MindTrace Orchestrator MCP
 ↓
-Contract Validation
+Frameworks MCP (Prompt Intelligence Layer)
 ↓
-Immutable Manifest Snapshot
+LLM Runtime (External / Optional)
 ↓
-Playwright Execution (JSON Reporter Captured Deterministically)
+Governance MCP (Schema + Policy Enforcement)
 ↓
-Artifact Generation
+Playwright Execution
 ↓
-Policy Decision
+Deterministic Artifact Generation
 ↓
-Governance Gate
+Policy Gate
 ↓
 Audit Trail + History Index
 
-MindTrace ensures every run produces deterministic, machine-validated artifacts.
+---
+
+# 📦 Workspace Package Structure
+
+mindtrace-for-playwright/
+
+├── frameworks-mcp/ → Prompt pack discovery + retrieval
+├── governance-mcp/ → Contract validation + compliance enforcement
+├── orchestrator-mcp/ → Runtime composition + control plane
+│
+├── shared-packages/
+│ ├── shared/ → Shared domain utilities
+│ ├── promptpacks/ → Versioned prompt distribution layer
+│ └── contracts/ → JSON schemas + compliance contracts
+│
+├── contracts/ → Source contract definitions
+├── prompts/ → Source prompt packs
+├── runs/ → Deterministic run artifacts
+├── history/ → Immutable run index
+└── reports/
+
+All runtime packages are:
+
+• NPM pack safe  
+• Workspace safe  
+• Publish-ready  
+• Contract-bundled
 
 ---
 
-# 📦 Deterministic Artifact Contract (Phase 3)
+# 📜 Deterministic Artifact Contract
 
-Every run generates:
-
-runs/<runName>/
+Each run produces:
+runs//
 
 ├── artifacts/
-│   ├── playwright-report.json
-│   ├── normalized-results.json
-│   ├── policy-decision.json
-│   ├── gate-summary.json
-│   ├── artifact-validation.json
-│   ├── healed-selectors.json
-│   └── locator-manifest.snapshot.json
+│ ├── playwright-report.json
+│ ├── normalized-results.json
+│ ├── policy-decision.json
+│ ├── gate-summary.json
+│ ├── artifact-validation.json
+│ ├── healed-selectors.json
+│ └── locator-manifest.snapshot.json
 │
 ├── audit/
-│   ├── events.ndjson
-│   └── final.json
+│ ├── events.ndjson
+│ └── final.json
 │
-└── (repo root) history/
-    └── run-index.jsonl
+└── history/
+└── run-index.jsonl
 
-If required artifacts are missing → run fails with exit code 3.
+If required artifacts are missing → exit code 3.
 
 ---
 
 # 🔐 Governance Exit Codes
 
-MindTrace standardizes exit codes:
+| Code | Meaning                                  |
+| ---- | ---------------------------------------- |
+| 0    | Tests passed, policy satisfied           |
+| 1    | Test failures (Playwright-level failure) |
+| 2    | Infrastructure/runtime failure           |
+| 3    | Governance / contract violation          |
 
-0  → Tests passed, policy satisfied  
-1  → Test failures (expected Playwright failure)  
-2  → Infrastructure/runtime failure  
-3  → Policy violation (contract invalid or artifact missing)  
-
-This allows CI/CD systems to differentiate failure types.
+CI systems can differentiate failure classes deterministically.
 
 ---
 
-# 📜 Manifest Enforcement (Phase 3)
+# 🧾 Manifest Enforcement
 
 If `locator-manifest.json` exists:
 
 1. It must validate against schema.
 2. It is snapshotted into:
-   runs/<runName>/artifacts/locator-manifest.snapshot.json
-3. The heal layer consumes only the snapshot — never the live repo manifest.
+   `runs/<runName>/artifacts/locator-manifest.snapshot.json`
+3. Heal layer consumes snapshot only (never live manifest).
 
-If validation fails → exit code 3.
+Invalid manifest → exit code 3.
 
-This ensures deterministic compliance behavior.
+This guarantees deterministic compliance behavior.
 
 ---
 
-# 🚀 Quick Start (Governance Mode)
+# 🛠 MCP Package Roles
+
+## 1️⃣ @mindtrace/frameworks-mcp
+
+Prompt intelligence + pack retrieval layer.
+
+Responsibilities:
+• Discover prompt packs  
+• Route BDD / Native / POM-BDD styles  
+• Serve versioned prompt bundles
+
+---
+
+## 2️⃣ @mindtrace/governance-mcp
+
+Schema + policy enforcement layer.
+
+Responsibilities:
+• Validate JSON contracts  
+• Enforce artifact schema compliance  
+• Gate execution based on policy
+
+---
+
+## 3️⃣ @mindtrace/mcp-orchestrator
+
+Control plane for cross-MCP coordination.
+
+Responsibilities:
+• Compose runtime flows  
+• Route execution  
+• Enforce governance loop
+
+---
+
+# 🚀 Quick Start (Workspace Mode)
 
 From repo root:
 
 ```bash
 npm install
-npm run contracts:validate
-npm run mindtrace:build
 
-# Run once (choose a unique run name)
-npm run mindtrace:run -- --run-name example-run
+# Build shared packages
+npm -w @mindtrace/shared run build
+npm -w @mindtrace/promptpacks run build
+npm -w @mindtrace/contracts run build
 
-# CI-style run (repeatable; overwrites ci-local by design)
-npm run mindtrace:ci
+# Build MCP layers
+npm -w @mindtrace/frameworks-mcp run build
+npm -w @mindtrace/governance-mcp run build
+npm -w @mindtrace/mcp-orchestrator run build
 
-MindTrace will:
 
-• Validate contract
-• Snapshot manifest
-• Execute Playwright
-• Capture JSON reporter
-• Generate governance artifacts
-• Enforce artifact validation
-• Apply policy gate
-• Index run history
-
-📂 Project Structure
-
-mindtrace-for-playwright/
-├── mindtrace-ai-runtime/
-│   ├── src/
-│   │   ├── cli.ts
-│   │   └── runtime/
-│   └── dist/
-├── frameworks/
-│   ├── style1-native/
-│   ├── style2-bdd/
-│   └── style3-pom-bdd/
-├── contracts/
-│   ├── schemas/
-│   └── examples/
-├── runs/
-├── history/
-└── reports/
 
 ⸻
 
-🛡️ Compliance Definition of Done (Locked)
+🛡 Compliance Definition of Done
 
-A run is considered compliant when:
+A run is compliant when:
 
-☑ Contract validation passes
-☑ Manifest snapshot is created (if manifest exists)
-☑ Playwright JSON report is generated deterministically
+☑ Contracts validate
+☑ Manifest snapshot created (if present)
+☑ Playwright JSON report generated deterministically
 ☑ normalized-results.json exists
 ☑ policy-decision.json exists
 ☑ gate-summary.json exists
 ☑ artifact-validation.json exists
 ☑ audit trail written
 ☑ history index updated
-☑ exit code reflects correct governance state
+☑ exit code reflects governance state
 
 Any violation → exit code 3.
 
@@ -171,12 +210,13 @@ Any violation → exit code 3.
 
 🔮 Roadmap
 
-Phase 4 — Manifest Drift Detection
-Phase 5 — Drift Scoring + Risk Levels
-Phase 6 — AI Resilience Proposal Engine
-Phase 7 — Compliance Export Bundle
+Phase 4 — Cross-MCP Runtime Enforcement
+Phase 5 — Drift Detection Engine
+Phase 6 — Risk Scoring + Governance Metrics
+Phase 7 — AI Resilience Proposal Engine
+Phase 8 — Enterprise Compliance Export Bundle
 
-Compliance remains primary.
+Governance remains primary.
 AI resilience remains secondary.
 
 ⸻
@@ -185,12 +225,13 @@ AI resilience remains secondary.
 
 MindTrace is:
 
-• A Compliance-Governed Test Execution Platform
+• A Governance-First AI Test Runtime Platform
 • A Deterministic Artifact Contract Engine
-• A CI/CD Policy Enforcement Layer
-• An Audit-Ready Automation Runtime
+• A Multi-Layer MCP Automation Architecture
+• A CI/CD Policy Enforcement System
+• An Audit-Ready Execution Layer
 
-AI-powered resilience features are layered on top — never bypassing governance.
+AI enhances the system — it does not control it.
 
 ⸻
 
@@ -198,7 +239,6 @@ AI-powered resilience features are layered on top — never bypassing governance
 
 MIT License
 
-⸻
-
 © 2026 MindTrace Inc.
-Building compliance-first test infrastructure.
+Building governance-first AI test infrastructure.
+```
