@@ -1,0 +1,183 @@
+# MindTrace Governance Policy
+# Version: 1.0.0
+# This file defines the rules for test execution gates, retry strategies, and CI/CD integration
+
+version: "1.0.0"
+policyName: "MindTrace Default Enterprise Policy"
+
+# ====================
+# Retry & Quarantine
+# ====================
+retry:
+  maxRetriesPerTest: 2
+  retryOnCategories:
+    - timeout
+    - flaky
+    - environmental
+  retryDelay: 1000  # ms
+  exponentialBackoff: true
+
+quarantine:
+  enabled: true
+  threshold: 3  # consecutive failures in last 5 runs
+  autoQuarantine: true
+  alertOnQuarantine: true
+
+# ====================
+# Failure Categories
+# ====================
+failures:
+  categories:
+    dom_changed:
+      severity: warning
+      allowInCI: true
+      requiresHealing: true
+      description: "DOM structure changed, selector needs update"
+    
+    selector_failed:
+      severity: error
+      allowInCI: false
+      requiresHealing: true
+      description: "Selector could not locate element"
+    
+    api_error:
+      severity: error
+      allowInCI: false
+      requiresHealing: false
+      description: "API returned 4xx/5xx status"
+    
+    timeout:
+      severity: warning
+      allowInCI: true
+      requiresHealing: false
+      description: "Operation exceeded timeout threshold"
+    
+    flaky:
+      severity: warning
+      allowInCI: true
+      requiresHealing: false
+      description: "Test passes/fails inconsistently"
+    
+    navigation_mismatch:
+      severity: error
+      allowInCI: false
+      requiresHealing: false
+      description: "Page navigation did not reach expected URL"
+    
+    ux_regression:
+      severity: error
+      allowInCI: false
+      requiresHealing: false
+      description: "Visual or functional regression detected"
+    
+    environmental:
+      severity: warning
+      allowInCI: true
+      requiresHealing: false
+      description: "Infrastructure or environment issue"
+    
+    test_logic_error:
+      severity: error
+      allowInCI: false
+      requiresHealing: false
+      description: "Bug in test code itself"
+
+# ====================
+# Required Artifacts
+# ====================
+artifacts:
+  required:
+    - healed-selectors.json
+    - root-cause-summary.json
+    - execution-trace-map.json
+    - failure-narrative.md
+  
+  optional:
+    - jira-ticket.json
+    - automation-suggestions.md
+    - steps-to-reproduce.md
+
+# ====================
+# CI Gate Rules
+# ====================
+gates:
+  # Fail build on these categories
+  failBuildOn:
+    - selector_failed
+    - api_error
+    - navigation_mismatch
+    - ux_regression
+    - test_logic_error
+  
+  # Warn but pass build on these
+  warnBuildOn:
+    - dom_changed
+    - timeout
+    - flaky
+    - environmental
+  
+  maxWarnings: 5
+  failOnExcessiveWarnings: true
+
+# ====================
+# Exit Codes
+# ====================
+exitCodes:
+  pass: 0
+  fail: 1
+  infraError: 2
+  policyViolation: 3
+
+# ====================
+# Architecture Rules
+# ====================
+architecture:
+  native:
+    forbidden:
+      - "features/"
+      - "step_definitions/"
+      - "*.feature"
+      - "cucumber.js"
+    required:
+      - "tests/"
+      - "playwright.config.ts"
+    description: "Pure Playwright Native - no BDD/POM"
+  
+  bdd:
+    forbidden:
+      - "src/pages/"  # No POM in pure BDD
+      - "pages/"
+    required:
+      - "features/"
+      - "step_definitions/"
+      - "*.feature"
+      - "cucumber.js"
+    description: "BDD with Cucumber - business-readable tests"
+  
+  pom-bdd:
+    required:
+      - "features/"
+      - "step_definitions/"
+      - "src/pages/"
+      - "*.feature"
+      - "cucumber.js"
+    description: "Enterprise POM + BDD - maximum maintainability"
+
+# ====================
+# Observability
+# ====================
+observability:
+  captureScreenshots: true
+  captureTraces: true
+  captureNetwork: true
+  captureLogs: true
+  otelEnabled: false  # Optional OpenTelemetry export
+
+# ====================
+# Stability Scoring
+# ====================
+stability:
+  enabled: true
+  lookbackWindow: 30  # days
+  minRunsForScore: 5
+  degradationThreshold: 10  # points drop triggers alert

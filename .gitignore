@@ -1,34 +1,40 @@
-# Environment (never commit)
-.env
-
-# Node / TS
+# Dependencies
 node_modules/
-dist/
-*.tsbuildinfo
+package-lock.json
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-*.log
+# MindTrace Runtime
+mindtrace-ai-runtime/dist/
 
-# macOS
+# Environment - NEVER commit
+.env
+.env.local
+.env.*.local
+
+# Run artifacts
+runs/
+mindtrace-artifacts/
+history/
+
+# Test results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# OS files
 .DS_Store
+Thumbs.db
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Playwright / Cucumber outputs
-**/test-results/
-**/playwright-report/
+# Logs
+*.log
+npm-debug.log*
 
-# MindTrace outputs
-**/runs/
-**/history/
-**/reports/
-**/mindtrace-artifacts/
-
-# Coverage
-coverage/
+# Temporary
+tmp/
+temp/
+*.tmp

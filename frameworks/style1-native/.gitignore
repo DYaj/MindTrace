@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Test results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Environment - NEVER commit .env files (use root .env via runtime)
+.env
+.env.local
+.env.*.local
+
+# Artifacts
+mindtrace-artifacts/
+artifacts/
+screenshots/
+traces/
+videos/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
