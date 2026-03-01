@@ -1,0 +1,37 @@
+{
+  "name": "@mindtrace/contracts",
+  "version": "0.1.0",
+  "description": "Shared contract loaders + strict schema validation helpers for MindTrace",
+  "license": "MIT",
+  "author": "MindTrace Inc.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "contracts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "prebuild": "bash scripts/prebuild-sync-contracts.sh",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@mindtrace/promptpacks",
+  "version": "0.1.0",
+  "description": "Prompt pack loader + discovery utilities for MindTrace",
+  "license": "MIT",
+  "author": "MindTrace Inc.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "prompts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "prebuild": "bash scripts/prebuild-sync-prompts.sh",
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

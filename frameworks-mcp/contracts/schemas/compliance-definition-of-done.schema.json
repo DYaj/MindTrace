@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mindtrace.dev/schemas/compliance-definition-of-done.schema.json",
+  "title": "MindTrace Compliance Definition of Done",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "updated_at", "required_artifacts", "json_must_parse", "exit_codes", "rules"],
+  "properties": {
+    "version": { "type": "string", "minLength": 1 },
+    "updated_at": { "type": "string", "minLength": 1 },
+    "required_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "json_must_parse": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "exit_codes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["0", "1", "2", "3"],
+      "properties": {
+        "0": { "type": "string" },
+        "1": { "type": "string" },
+        "2": { "type": "string" },
+        "3": { "type": "string" }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["report_must_be_deterministic", "report_must_not_print_to_terminal", "audit_files_required"],
+      "properties": {
+        "report_must_be_deterministic": { "type": "boolean" },
+        "report_must_not_print_to_terminal": { "type": "boolean" },
+        "audit_files_required": {
+          "type": "array",
+          "minItems": 0,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
