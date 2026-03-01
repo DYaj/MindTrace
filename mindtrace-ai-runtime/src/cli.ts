@@ -9,7 +9,7 @@
 import { Command } from "commander";
 import { spawn } from "child_process";
 import { config as loadDotEnv } from "dotenv";
-import { existsSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import { join, dirname, resolve } from "path";
 
 import { loadAndValidateLocatorManifest } from "./runtime/contract-loader";
@@ -108,6 +108,12 @@ program
       const manifest = loadAndValidateLocatorManifest(repoRoot);
       if (manifest) {
         console.log("📜 Locator manifest validated successfully.");
+
+        // Phase 2: snapshot manifest into the run artifacts so runtime can consume deterministically
+        const snapshotPath = join(layout.artifactsDir, "locator-manifest.snapshot.json");
+        mkdirSync(layout.artifactsDir, { recursive: true });
+        writeFileSync(snapshotPath, JSON.stringify(manifest, null, 2), "utf-8");
+        process.env.MINDTRACE_LOCATOR_MANIFEST_PATH = snapshotPath;
       } else {
         console.log("📜 No locator-manifest.json found. Skipping contract enforcement.");
       }
@@ -169,7 +175,18 @@ program
         console.log(`   - History index:${layout.historyIndexPath}`);
         console.log("");
 
-        process.exit(exitCode);
+                // Phase 2: if artifact-validation is invalid, treat as policy violation (exit=3)
+        try {
+          const vPath = join(layout.artifactsDir, "artifact-validation.json");
+          if (existsSync(vPath)) {
+            const v = JSON.parse(readFileSync(vPath, "utf-8"));
+            if (v && v.status === "invalid") {
+              process.exit(3);
+            }
+          }
+        } catch {}
+
+process.exit(exitCode);
       } catch (err: any) {
         console.error("\n❌ MindTrace pipeline failed:", err?.message || err);
         process.exit(exitCode || 1);
