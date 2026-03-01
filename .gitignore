@@ -1,32 +1,40 @@
-# Node
+# Dependencies
 node_modules/
+package-lock.json
 
-# Build artifacts
+# MindTrace Runtime
 mindtrace-ai-runtime/dist/
 
-# Runtime outputs
-runs/
-history/
-reports/
-
-# OS
-.DS_Store
-
-# local env
+# Environment - NEVER commit
 .env
+.env.local
+.env.*.local
 
-# Playwright outputs
+# Run artifacts
+runs/
+mindtrace-artifacts/
+history/
+
+# Test results
 test-results/
 playwright-report/
 playwright/.cache/
 
-# MindTrace runs/artifacts
-runs/
-history/
-reports/
+# OS files
+.DS_Store
+Thumbs.db
 
-# build outputs
-mindtrace-ai-runtime/dist/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# lockfile (ONLY ignore if you intentionally don't want it committed)
-# package-lock.json
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary
+tmp/
+temp/
+*.tmp
