@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-03-01",
+  "required_artifacts": [
+    "playwright-report.json",
+    "normalized-results.json",
+    "policy-decision.json",
+    "gate-summary.json",
+    "artifact-validation.json",
+    "healed-selectors.json",
+    "root-cause-summary.json",
+    "failure-narrative.md",
+    "execution-trace-map.json"
+  ],
+  "json_must_parse": [
+    "playwright-report.json",
+    "normalized-results.json",
+    "policy-decision.json",
+    "gate-summary.json",
+    "artifact-validation.json",
+    "healed-selectors.json",
+    "root-cause-summary.json",
+    "execution-trace-map.json"
+  ],
+  "exit_codes": {
+    "0": "pass (tests pass or policy allows)",
+    "1": "fail (tests fail + policy fail)",
+    "2": "runtime/pipeline error",
+    "3": "compliance/contract invalid"
+  },
+  "rules": {
+    "report_must_be_deterministic": true,
+    "report_must_not_print_to_terminal": true,
+    "audit_files_required": [
+      "events.ndjson",
+      "final.json"
+    ]
+  }
+}
