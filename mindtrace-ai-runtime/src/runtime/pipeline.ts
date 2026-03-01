@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync, existsSync, readFileSync, appendFileSync } from "fs";
 import { join } from "path";
+import { seedHealedSelectorsFromManifest } from "./manifest-seed";
 
 export type MindTraceRunContext = {
   cwd: string;
@@ -46,7 +47,13 @@ export async function postRunGenerateArtifacts(ctx: MindTraceRunContext): Promis
   const traceMapPath = join(layout.artifactsDir, "execution-trace-map.json");
 
   if (!existsSync(healedPath)) {
-    writeFileSync(healedPath, JSON.stringify({ selectors: [] }, null, 2), "utf-8");
+    // Phase 2: seed healed selectors from locator-manifest snapshot (repo truth)
+    seedHealedSelectorsFromManifest({ cwd: ctx.cwd, runName: ctx.runName });
+
+    // If still missing, fall back to empty selectors to keep pipeline deterministic
+    if (!existsSync(healedPath)) {
+      writeFileSync(healedPath, JSON.stringify({ selectors: [] }, null, 2), "utf-8");
+    }
   }
   if (!existsSync(rcaPath)) {
     writeFileSync(rcaPath, JSON.stringify({ category: "none", confidence: 1, isFlaky: false }, null, 2), "utf-8");
