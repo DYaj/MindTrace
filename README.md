@@ -1,186 +1,197 @@
 # MindTrace for Playwright
 
-## 🧠 AI-Governed Test Automation with Self-Healing
+## 🧠 Governance-First Test Automation Runtime
 
-**MindTrace** is an enterprise-grade test automation platform that transforms Playwright testing with AI-powered intelligence, self-healing capabilities, and continuous learning.
+**MindTrace** is an enterprise-grade compliance and governance layer for Playwright test execution.
 
----
+It enforces deterministic artifact contracts, immutable manifest validation, policy decisions, and audit traceability — before introducing AI-based resilience features.
 
-## 🎯 MindTrace Platform
+MindTrace is not a wrapper around Playwright.
 
-### Products
-
-- **MindTrace AI Runtime** - Core intelligence layer
-- **MindTrace Playwright Adapter** - Playwright integration
-- **MindTrace Cypress Adapter** - Cypress integration (coming soon)
-- **MindTrace Failure Intelligence** - Root cause analysis
-- **MindTrace Selector Engine** - Smart locator management
-
-### Platform Modules
-
-- **MindTrace AI** - LLM-powered reasoning (OpenAI, Claude, Ollama)
-- **MindTrace Heal** - Automatic selector repair
-- **MindTrace RCA** - Root cause analysis
-- **MindTrace CI** - Continuous integration support
-
-### Supported Adapters
-
-- ✅ **MindTrace for Playwright** (this package)
-- 🔜 **MindTrace for Cypress** 
-- 🔜 **MindTrace for Selenium**
+It is a compliance-enforced execution runtime.
 
 ---
 
-## 📊 Architecture Overview
+# 🎯 What MindTrace Is (Phase 3)
 
-```
-Developer → Playwright Runtime → MindTrace Listener → 
-Failure Classifier → AI Reasoning → Artifact Generator → 
-CI/CD Pipeline → Continuous Learning
-```
+MindTrace transforms Playwright into:
 
-**The system learns from every test run, becoming smarter over time.**
+• A policy-controlled execution engine  
+• A contract-validated test runtime  
+• A deterministic artifact generator  
+• A CI-governed compliance system  
+• An audit-ready execution layer  
 
----
-
-## 🚀 Three Framework Styles
-
-### **Style 1: Playwright Native** ⚡
-- **Best for:** Fast setup, 10-500 tests, dev-centric teams
-- **Setup:** 5 minutes
-- **Features:** Direct Playwright API, minimal abstraction
-
-### **Style 2: Playwright + Cucumber BDD** 📝
-- **Best for:** Business-readable tests, stakeholder alignment
-- **Setup:** 10 minutes
-- **Features:** Gherkin syntax, living documentation
-
-### **Style 3: Playwright + POM + Cucumber** 🏢
-- **Best for:** Enterprise scale, 1000+ tests, long-term maintainability
-- **Setup:** 15 minutes
-- **Features:** Page Object Model, architectural governance
+AI resilience features are layered on top — but governance comes first.
 
 ---
 
-## 🤖 AI-Powered Features
+# 🏗️ Architecture (Current State)
+Developer
+↓
+MindTrace CLI
+↓
+Contract Validation
+↓
+Immutable Manifest Snapshot
+↓
+Playwright Execution (JSON Reporter Captured Deterministically)
+↓
+Artifact Generation
+↓
+Policy Decision
+↓
+Governance Gate
+↓
+Audit Trail + History Index
 
-### Self-Healing Selectors
-Automatically repairs broken locators using DOM analysis:
-- Ranks alternatives by stability
-- Saves suggestions to `mindtrace-artifacts/healed-selectors.json`
-- Learns from historical patterns
-
-### Failure Classification
-AI analyzes test failures to determine root cause:
-- Error messages, screenshots, logs, network traces
-- Categories: DOM changed, selector failed, API error, timeout, flaky
-- Confidence scores and suggested actions
-
-### Artifact Generation
-After each run:
-- `healed-selectors.json` - Fixed locators
-- `failure-narrative.md` - Human-readable analysis
-- `root-cause-summary.json` - Structured data
-- `automation-suggestions.md` - Next steps
-- `jira-ticket.json` - Bug report template
+MindTrace ensures every run produces deterministic, machine-validated artifacts.
 
 ---
 
-## 🎯 Quick Start
+# 📦 Deterministic Artifact Contract (Phase 3)
 
-```bash
-# 1. Extract package
-unzip mindtrace-playwright.zip
-cd mindtrace-playwright
+Every run generates:
 
-# 2. Run setup
-bash setup.sh
+runs/<runName>/
 
-# 3. Configure LLM provider (.env)
-OPENAI_API_KEY=sk-your-key
-# OR
-ANTHROPIC_API_KEY=sk-ant-your-key
+├── artifacts/
+│   ├── playwright-report.json
+│   ├── normalized-results.json
+│   ├── policy-decision.json
+│   ├── gate-summary.json
+│   ├── artifact-validation.json
+│   ├── healed-selectors.json
+│   └── locator-manifest.snapshot.json
+│
+├── audit/
+│   └── audit-log.json
+│
+└── history/
+    └── run-index.jsonl
 
-# 4. Run tests with MindTrace
-cd frameworks/style1-native
+If required artifacts are missing → run fails with exit code 3.
+
+---
+
+# 🔐 Governance Exit Codes
+
+MindTrace standardizes exit codes:
+
+0  → Tests passed, policy satisfied  
+1  → Test failures (expected Playwright failure)  
+2  → Infrastructure/runtime failure  
+3  → Policy violation (contract invalid or artifact missing)  
+
+This allows CI/CD systems to differentiate failure types.
+
+---
+
+# 📜 Manifest Enforcement (Phase 3)
+
+If `locator-manifest.json` exists:
+
+1. It must validate against schema.
+2. It is snapshotted into:
+   runs/<runName>/artifacts/locator-manifest.snapshot.json
+3. The heal layer consumes only the snapshot — never the live repo manifest.
+
+If validation fails → exit code 3.
+
+This ensures deterministic compliance behavior.
+
+---
+
+# 🚀 Quick Start (Governance Mode)
+cd mindtrace-ai-runtime
 npm install
-npx playwright install
-npm run test:mindtrace
-```
+npm run build
+cd ..
+
+node mindtrace-ai-runtime/dist/cli.js run –run-name example-run
+
+MindTrace will:
+
+• Validate contract  
+• Snapshot manifest  
+• Execute Playwright  
+• Capture JSON reporter  
+• Generate governance artifacts  
+• Enforce artifact validation  
+• Apply policy gate  
+• Index run history  
 
 ---
 
-## 📚 Documentation
-
-- **Quick Start:** [QUICKSTART.md](QUICKSTART.md)
-- **Setup Guide:** [docs/SETUP.md](docs/SETUP.md)
-- **Architecture:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- **TeamCity Integration:** [docs/TEAMCITY.md](docs/TEAMCITY.md)
-- **Complete Overview:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
-
----
-
-## 🏗️ Project Structure
-
-```
-mindtrace-playwright/
-├── mindtrace-runtime/      # AI intelligence layer
+# 📂 Project Structure
+mindtrace-for-playwright/
+├── mindtrace-ai-runtime/
+│   ├── src/
+│   │   ├── cli.ts
+│   │   └── runtime/
+│   └── dist/
 ├── frameworks/
-│   ├── style1-native/      # Playwright Native
-│   ├── style2-bdd/         # Cucumber BDD
-│   └── style3-pom-bdd/     # POM + BDD
-├── shared/
-│   ├── selector-engine/    # Locator ranking
-│   └── page-scraper/       # DOM snapshots
-├── docs/                   # Documentation
-└── mindtrace-artifacts/    # Generated reports (auto-created)
-```
+│   ├── style1-native/
+│   ├── style2-bdd/
+│   └── style3-pom-bdd/
+├── contracts/
+│   ├── schemas/
+│   └── examples/
+├── runs/
+├── history/
+└── reports/
 
 ---
 
-## 🔧 TeamCity Integration
+# 🛡️ Compliance Definition of Done (Locked)
 
-```xml
-<build>
-  <step name="Run MindTrace Tests">
-    <command>npx mindtrace run</command>
-  </step>
-</build>
-```
+A run is considered compliant when:
 
-Automatic artifact publishing:
-- Test results
-- AI analysis reports
-- Healed selectors
-- Failure narratives
+☑ Contract validation passes  
+☑ Manifest snapshot is created (if manifest exists)  
+☑ Playwright JSON report is generated deterministically  
+☑ normalized-results.json exists  
+☑ policy-decision.json exists  
+☑ gate-summary.json exists  
+☑ artifact-validation.json exists  
+☑ audit trail written  
+☑ history index updated  
+☑ exit code reflects correct governance state  
 
----
-
-## 💡 Key Benefits
-
-✅ **80% reduction** in selector maintenance  
-✅ **Automatic failure** root cause analysis  
-✅ **Self-healing tests** reduce flakiness by 70%  
-✅ **Continuous learning** improves stability  
-✅ **Enterprise-ready** CI/CD integration  
-✅ **Three framework styles** for any team size  
+Any violation → exit code 3.
 
 ---
 
-## 📄 License
+# 🔮 Roadmap
 
-MIT License - See [LICENSE](LICENSE) file
+Phase 4 — Manifest Drift Detection  
+Phase 5 — Drift Scoring + Risk Levels  
+Phase 6 — AI Resilience Proposal Engine  
+Phase 7 — Compliance Export Bundle  
 
----
-
-## 🙏 Acknowledgments
-
-Built by **MindTrace Inc.** with:
-- Playwright
-- OpenAI / Anthropic / Ollama
-- Cucumber
-- TeamCity
+Compliance remains primary.  
+AI resilience remains secondary.
 
 ---
 
-**© 2026 MindTrace Inc. - Making test automation intelligent.**
+# 💡 Positioning
+
+MindTrace is:
+
+• A Compliance-Governed Test Execution Platform  
+• A Deterministic Artifact Contract Engine  
+• A CI/CD Policy Enforcement Layer  
+• An Audit-Ready Automation Runtime  
+
+AI-powered resilience features are layered on top — never bypassing governance.
+
+---
+
+# 📄 License
+
+MIT License
+
+---
+
+**© 2026 MindTrace Inc.**
+Building compliance-first test infrastructure.
