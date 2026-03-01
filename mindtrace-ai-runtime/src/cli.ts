@@ -13,17 +13,14 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import { join, dirname, resolve } from "path";
 
 import { loadAndValidateLocatorManifest } from "./runtime/contract-loader";
-import {
-  ensureRunLayout,
-  postRunGenerateArtifacts,
-  validateArtifacts,
-  governanceGate,
-  finalizeAuditTrail,
-  indexHistoricalRun,
-  generateReportBundle,
-} from "./runtime";
+import { ensureRunLayout, postRunGenerateArtifacts, validateArtifacts, governanceGate, finalizeAuditTrail, indexHistoricalRun, generateReportBundle } from "./runtime";
 
 loadDotEnv();
+
+if (!require("fs").existsSync(require("path").join(__dirname, "../dist"))) {
+  console.error("❌ dist/ not found. Run: npm run build inside mindtrace-ai-runtime first.");
+  process.exit(2);
+}
 
 type MindtraceConfig = {
   testRoot?: string;
@@ -55,10 +52,7 @@ function loadConfig(repoRoot: string): MindtraceConfig {
 
 const program = new Command();
 
-program
-  .name("mindtrace")
-  .description("🧠 MindTrace for Playwright - AI-Governed Test Automation")
-  .version("2.0.0");
+program.name("mindtrace").description("🧠 MindTrace for Playwright - AI-Governed Test Automation").version("2.0.0");
 
 program
   .command("run")
@@ -83,15 +77,9 @@ program
     const repoRoot = findRepoRoot(invokedFrom);
     const cfg = loadConfig(repoRoot);
 
-    const runName =
-      options.runName ||
-      process.env.MINDTRACE_RUN_NAME ||
-      `run-${options.style}-${Date.now()}`;
+    const runName = options.runName || process.env.MINDTRACE_RUN_NAME || `run-${options.style}-${Date.now()}`;
 
-    const testRoot =
-      process.env.MINDTRACE_TEST_ROOT ||
-      cfg.testRoot ||
-      "frameworks/style1-native";
+    const testRoot = process.env.MINDTRACE_TEST_ROOT || cfg.testRoot || "frameworks/style1-native";
 
     const effectiveCwd = resolve(repoRoot, testRoot);
 
@@ -139,7 +127,7 @@ program
       MINDTRACE_STYLE: options.style,
       MINDTRACE_RUN_NAME: runName,
       MINDTRACE_HEAL_ENABLED: options.healing ? "true" : "false",
-      MINDTRACE_RCA_ENABLED: options.classification ? "true" : "false",
+      MINDTRACE_RCA_ENABLED: options.classification ? "true" : "false"
     };
 
     // Run Playwright from the framework cwd (critical)
@@ -147,7 +135,7 @@ program
       stdio: "inherit",
       env,
       cwd: effectiveCwd,
-      shell: false,
+      shell: false
     });
 
     pw.on("close", async (code) => {
@@ -162,11 +150,7 @@ program
         await generateReportBundle({ cwd: repoRoot, runName });
 
         console.log("");
-        console.log(
-          exitCode === 0
-            ? "✅ Tests completed successfully!"
-            : "❌ Tests failed (artifacts + RCA generated)."
-        );
+        console.log(exitCode === 0 ? "✅ Tests completed successfully!" : "❌ Tests failed (artifacts + RCA generated).");
         console.log("");
         console.log("📦 Run output:");
         console.log(`   - Run folder:   ${layout.runDir}`);
@@ -175,7 +159,7 @@ program
         console.log(`   - History index:${layout.historyIndexPath}`);
         console.log("");
 
-                // Phase 2: if artifact-validation is invalid, treat as policy violation (exit=3)
+        // Phase 2: if artifact-validation is invalid, treat as policy violation (exit=3)
         try {
           const vPath = join(layout.artifactsDir, "artifact-validation.json");
           if (existsSync(vPath)) {
@@ -186,7 +170,7 @@ program
           }
         } catch {}
 
-process.exit(exitCode);
+        process.exit(exitCode);
       } catch (err: any) {
         console.error("\n❌ MindTrace pipeline failed:", err?.message || err);
         process.exit(exitCode || 1);
