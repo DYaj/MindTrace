@@ -1,26 +1,34 @@
 #!/usr/bin/env node
 /**
- * MindTrace CLI (Phase 2)
+ * MindTrace CLI (Phase 3)
  * - Contract validation (exit=3 on invalid)
  * - Run Playwright from framework cwd using the repo's installed @playwright/test
- * - No npx auto-installs (prevents version split)
+ * - Seeds healed-selectors.json from locator-manifest.snapshot.json (repo truth)
+ * - Captures Playwright JSON reporter stdout -> runs/<runName>/artifacts/playwright-report.json
  */
 
 import { Command } from "commander";
 import { spawn } from "child_process";
 import { config as loadDotEnv } from "dotenv";
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
+import { existsSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname, resolve } from "path";
 
 import { loadAndValidateLocatorManifest } from "./runtime/contract-loader";
-import { ensureRunLayout, postRunGenerateArtifacts, validateArtifacts, governanceGate, finalizeAuditTrail, indexHistoricalRun, generateReportBundle } from "./runtime";
+import {
+  ensureRunLayout,
+  postRunGenerateArtifacts,
+  generateNormalizedResults,
+  generatePolicyDecision,
+  generateGateSummary,
+  generateArtifactValidation,
+  validateArtifacts,
+  governanceGate,
+  finalizeAuditTrail,
+  indexHistoricalRun,
+  generateReportBundle,
+} from "./runtime";
 
 loadDotEnv();
-
-if (!require("fs").existsSync(require("path").join(__dirname, "../dist"))) {
-  console.error("❌ dist/ not found. Run: npm run build inside mindtrace-ai-runtime first.");
-  process.exit(2);
-}
 
 type MindtraceConfig = {
   testRoot?: string;
@@ -38,72 +46,92 @@ function findRepoRoot(start: string): string {
   }
 }
 
+function readJsonSafe(p: string): any {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fs = require("fs");
+    return JSON.parse(fs.readFileSync(p, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
 function loadConfig(repoRoot: string): MindtraceConfig {
   const p = join(repoRoot, "mindtrace.config.json");
   if (!existsSync(p)) return {};
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const j = require(p);
-    return j && typeof j === "object" ? j : {};
-  } catch {
-    return {};
-  }
+  const j = readJsonSafe(p);
+  return j && typeof j === "object" ? j : {};
 }
 
 const program = new Command();
 
-program.name("mindtrace").description("🧠 MindTrace for Playwright - AI-Governed Test Automation").version("2.0.0");
+program
+  .name("mindtrace")
+  .description("🧠 MindTrace for Playwright - AI-Governed Test Automation")
+  .version("3.0.2");
 
 program
   .command("run")
-  .description("Run Playwright tests with MindTrace intelligence")
-  .option("-s, --style <style>", "Framework style (native|bdd|pom-bdd)", "native")
-  .option("-p, --project <n>", "Project name to run")
-  .option("-g, --grep <pattern>", "Run tests matching pattern")
-  .option("--headed", "Run tests in headed mode")
-  .option("--debug", "Run tests in debug mode")
-  .option("--ui", "Run tests in UI mode")
-  .option("--no-healing", "Disable MindTrace Heal module")
-  .option("--no-classification", "Disable MindTrace RCA module")
+  .description("Run Playwright tests with MindTrace governance + contracts")
   .option("--run-name <name>", "Deterministic run name (recommended in CI)")
   .action(async (options) => {
-    console.log("🧠 Starting MindTrace-Enhanced Playwright Tests...\n");
-    console.log("Framework Style:", options.style);
-    console.log("MindTrace Heal:", options.healing ? "✅ Enabled" : "❌ Disabled");
-    console.log("MindTrace RCA:", options.classification ? "✅ Enabled" : "❌ Disabled");
-    console.log("");
-
     const invokedFrom = process.cwd();
     const repoRoot = findRepoRoot(invokedFrom);
     const cfg = loadConfig(repoRoot);
 
-    const runName = options.runName || process.env.MINDTRACE_RUN_NAME || `run-${options.style}-${Date.now()}`;
+    const runName =
+      options.runName ||
+      process.env.MINDTRACE_RUN_NAME ||
+      `run-native-${Date.now()}`;
 
-    const testRoot = process.env.MINDTRACE_TEST_ROOT || cfg.testRoot || "frameworks/style1-native";
+    const testRoot =
+      process.env.MINDTRACE_TEST_ROOT ||
+      cfg.testRoot ||
+      "frameworks/style1-native";
 
     const effectiveCwd = resolve(repoRoot, testRoot);
 
     if (!existsSync(effectiveCwd)) {
       console.error(`❌ testRoot folder does not exist: ${effectiveCwd}`);
-      console.error(`👉 Fix: set "testRoot" in mindtrace.config.json or export MINDTRACE_TEST_ROOT.`);
+      console.error(
+        `👉 Fix: set "testRoot" in mindtrace.config.json or export MINDTRACE_TEST_ROOT.`
+      );
       process.exit(2);
     }
 
+    console.log("🧠 Starting MindTrace-Enhanced Playwright Tests...\n");
+    console.log("Framework Style:", "native");
+    console.log("MindTrace Heal:", "✅ Enabled");
+    console.log("MindTrace RCA:", "✅ Enabled");
+    console.log("");
+
     const layout = ensureRunLayout({ cwd: repoRoot, runName });
 
-    // CONTRACT VALIDATION (Phase 2 Governance Layer)
+    // We will write the Playwright JSON reporter output here:
+    const pwJsonReportPath = join(layout.artifactsDir, "playwright-report.json");
+    mkdirSync(layout.artifactsDir, { recursive: true });
+
+    // ---------------------------------------------------------------------
+    // Phase 3: Contract validation + snapshot
+    // ---------------------------------------------------------------------
     try {
       const manifest = loadAndValidateLocatorManifest(repoRoot);
       if (manifest) {
         console.log("📜 Locator manifest validated successfully.");
 
-        // Phase 2: snapshot manifest into the run artifacts so runtime can consume deterministically
-        const snapshotPath = join(layout.artifactsDir, "locator-manifest.snapshot.json");
-        mkdirSync(layout.artifactsDir, { recursive: true });
+        const snapshotPath = join(
+          layout.artifactsDir,
+          "locator-manifest.snapshot.json"
+        );
+
         writeFileSync(snapshotPath, JSON.stringify(manifest, null, 2), "utf-8");
+
+        // Manifest-seed reads this snapshot path
         process.env.MINDTRACE_LOCATOR_MANIFEST_PATH = snapshotPath;
       } else {
-        console.log("📜 No locator-manifest.json found. Skipping contract enforcement.");
+        console.log(
+          "📜 No locator-manifest.json found. Skipping contract enforcement."
+        );
       }
     } catch (err: any) {
       console.error("❌ Contract validation failed.");
@@ -111,43 +139,80 @@ program
       process.exit(3);
     }
 
-    // Build Playwright command (NO AUTO-INSTALL)
-    const playwrightArgs: string[] = ["--no-install", "playwright", "test"];
+    // ---------------------------------------------------------------------
+    // RUN PLAYWRIGHT
+    // - Use JSON reporter (stdout)
+    // - Capture stdout -> playwright-report.json
+    // ---------------------------------------------------------------------
+    const playwrightArgs: string[] = [
+      "--no-install",
+      "playwright",
+      "test",
+      "--reporter=json",
+    ];
 
-    if (options.project) playwrightArgs.push("--project", options.project);
-    if (options.grep) playwrightArgs.push("--grep", options.grep);
-    if (options.headed) playwrightArgs.push("--headed");
-    if (options.debug) playwrightArgs.push("--debug");
-    if (options.ui) playwrightArgs.push("--ui");
-
-    // Env for MindTrace + tests
-    const env = {
+    const env: NodeJS.ProcessEnv = {
       ...process.env,
       MINDTRACE_ENABLED: "true",
-      MINDTRACE_STYLE: options.style,
+      MINDTRACE_MODE: "native",
       MINDTRACE_RUN_NAME: runName,
-      MINDTRACE_HEAL_ENABLED: options.healing ? "true" : "false",
-      MINDTRACE_RCA_ENABLED: options.classification ? "true" : "false"
     };
 
-    // Run Playwright from the framework cwd (critical)
+    const pwStdoutChunks: Buffer[] = [];
+
     const pw = spawn("npx", playwrightArgs, {
-      stdio: "inherit",
       env,
       cwd: effectiveCwd,
-      shell: false
+      shell: false,
+      stdio: ["inherit", "pipe", "inherit"], // capture stdout, keep stderr visible
+    });
+
+    pw.stdout?.on("data", (chunk: Buffer) => {
+      pwStdoutChunks.push(chunk);
+      // (silenced) json reporter output is captured to artifacts only
     });
 
     pw.on("close", async (code) => {
       const exitCode = code ?? 0;
 
+      // Write Playwright JSON report from captured stdout (best-effort)
+      try {
+        const out = Buffer.concat(pwStdoutChunks).toString("utf-8").trim();
+        if (out) {
+          // reporter=json outputs a single JSON object
+          JSON.parse(out); // validate JSON before writing
+          writeFileSync(pwJsonReportPath, out, "utf-8");
+        }
+      } catch (e) {
+        // If JSON parse fails, we still fail later via validateArtifacts()
+        // but we do not crash here.
+      }
+
       try {
         await postRunGenerateArtifacts({ cwd: repoRoot, runName });
-        await validateArtifacts({ cwd: repoRoot, runName });
-        await governanceGate({ cwd: repoRoot, runName, exitCode });
-        await finalizeAuditTrail({ cwd: repoRoot, runName });
-        await indexHistoricalRun({ cwd: repoRoot, runName });
-        await generateReportBundle({ cwd: repoRoot, runName });
+
+        await generateNormalizedResults({
+          cwd: repoRoot,
+          runName,
+          exitCode,
+          mode: "native",
+          isBaseline: false,
+        } as any);
+
+        await generatePolicyDecision({ cwd: repoRoot, runName, exitCode } as any);
+        await generateGateSummary({ cwd: repoRoot, runName, exitCode } as any);
+        await generateArtifactValidation({
+          cwd: repoRoot,
+          runName,
+          isBaseline: false,
+        } as any);
+
+        await validateArtifacts({ cwd: repoRoot, runName, isBaseline: false } as any);
+        await governanceGate({ cwd: repoRoot, runName, exitCode } as any);
+
+        await finalizeAuditTrail({ cwd: repoRoot, runName } as any);
+        await indexHistoricalRun({ cwd: repoRoot, runName } as any);
+        await generateReportBundle({ cwd: repoRoot, runName } as any);
 
         console.log("");
         console.log(exitCode === 0 ? "✅ Tests completed successfully!" : "❌ Tests failed (artifacts + RCA generated).");
@@ -159,16 +224,9 @@ program
         console.log(`   - History index:${layout.historyIndexPath}`);
         console.log("");
 
-        // Phase 2: if artifact-validation is invalid, treat as policy violation (exit=3)
-        try {
-          const vPath = join(layout.artifactsDir, "artifact-validation.json");
-          if (existsSync(vPath)) {
-            const v = JSON.parse(readFileSync(vPath, "utf-8"));
-            if (v && v.status === "invalid") {
-              process.exit(3);
-            }
-          }
-        } catch {}
+        const vPath = join(layout.artifactsDir, "artifact-validation.json");
+        const validation = existsSync(vPath) ? readJsonSafe(vPath) : null;
+        if (validation?.status === "invalid") process.exit(3);
 
         process.exit(exitCode);
       } catch (err: any) {
