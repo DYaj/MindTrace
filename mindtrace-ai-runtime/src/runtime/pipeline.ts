@@ -1,5 +1,15 @@
-import { mkdirSync, writeFileSync, existsSync, readFileSync, appendFileSync, openSync, closeSync } from "fs";
+import {
+  mkdirSync,
+  writeFileSync,
+  existsSync,
+  readFileSync,
+  appendFileSync,
+  openSync,
+  closeSync,
+} from "fs";
 import { join } from "path";
+import Ajv from "ajv/dist/2020";
+
 import { seedHealedSelectorsFromManifest } from "./manifest-seed";
 
 export type MindTraceRunContext = {
@@ -18,6 +28,62 @@ export type RunLayout = {
   historyDir: string;
   historyIndexPath: string;
 };
+
+type ComplianceDoD = {
+  version: string;
+  updated_at: string;
+  required_artifacts: string[];
+  json_must_parse: string[];
+  exit_codes: Record<"0" | "1" | "2" | "3", string>;
+  rules: {
+    report_must_be_deterministic: boolean;
+    report_must_not_print_to_terminal: boolean;
+    audit_files_required: string[];
+    [k: string]: any;
+  };
+};
+
+function readJsonSafe(p: string): any {
+  try {
+    return JSON.parse(readFileSync(p, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+function loadAndValidateComplianceDoD(repoRoot: string): ComplianceDoD {
+  const contractPath = join(repoRoot, "contracts", "compliance-definition-of-done.json");
+  const schemaPath = join(repoRoot, "contracts", "schemas", "compliance-definition-of-done.schema.json");
+
+  if (!existsSync(contractPath)) {
+    throw new Error(`Missing compliance contract: ${contractPath}`);
+  }
+  if (!existsSync(schemaPath)) {
+    throw new Error(`Missing compliance schema: ${schemaPath}`);
+  }
+
+  const schema = readJsonSafe(schemaPath);
+  const contract = readJsonSafe(contractPath);
+
+  if (!schema || typeof schema !== "object") {
+    throw new Error(`Invalid compliance schema JSON: ${schemaPath}`);
+  }
+  if (!contract || typeof contract !== "object") {
+    throw new Error(`Invalid compliance contract JSON: ${contractPath}`);
+  }
+
+  const ajv = new Ajv({ allErrors: true, strict: true });
+  const validate = ajv.compile(schema as any);
+
+  const ok = validate(contract);
+  if (!ok) {
+    throw new Error(
+      "Compliance DoD validation failed: " + JSON.stringify(validate.errors, null, 2)
+    );
+  }
+
+  return contract as ComplianceDoD;
+}
 
 export function ensureRunLayout(ctx: MindTraceRunContext): RunLayout {
   const runDir = join(ctx.cwd, "runs", ctx.runName);
@@ -41,15 +107,11 @@ export function ensureRunLayout(ctx: MindTraceRunContext): RunLayout {
 }
 
 function appendAuditEvent(layout: RunLayout, event: any) {
-  appendFileSync(join(layout.auditDir, "events.ndjson"), JSON.stringify(event) + "\n", "utf-8");
-}
-
-function readJsonSafe(p: string): any {
-  try {
-    return JSON.parse(readFileSync(p, "utf-8"));
-  } catch {
-    return null;
-  }
+  appendFileSync(
+    join(layout.auditDir, "events.ndjson"),
+    JSON.stringify(event) + "\n",
+    "utf-8"
+  );
 }
 
 type ParsedTest = {
@@ -110,7 +172,7 @@ function parsePlaywrightJsonReport(raw: any): ParsedReport {
               status,
               durationMs,
               attempts,
-              retries
+              retries,
             });
           }
         }
@@ -141,7 +203,7 @@ function parsePlaywrightJsonReport(raw: any): ParsedReport {
 
   return {
     tests,
-    summary: { total, passed, failed, skipped, flaky, quarantined: 0 }
+    summary: { total, passed, failed, skipped, flaky, quarantined: 0 },
   };
 }
 
@@ -160,25 +222,41 @@ export async function postRunGenerateArtifacts(ctx: MindTraceRunContext): Promis
     }
   }
 
-  if (!existsSync(rcaPath)) writeFileSync(rcaPath, JSON.stringify({ category: "none", confidence: 1, isFlaky: false }, null, 2), "utf-8");
-  if (!existsSync(narrativePath)) writeFileSync(narrativePath, "# Failure Narrative\n\nNo failures detected.\n", "utf-8");
-  if (!existsSync(traceMapPath)) writeFileSync(traceMapPath, JSON.stringify({ steps: [] }, null, 2), "utf-8");
+  if (!existsSync(rcaPath)) {
+    writeFileSync(
+      rcaPath,
+      JSON.stringify({ category: "none", confidence: 1, isFlaky: false }, null, 2),
+      "utf-8"
+    );
+  }
+
+  if (!existsSync(narrativePath)) {
+    writeFileSync(narrativePath, "# Failure Narrative\n\nNo failures detected.\n", "utf-8");
+  }
+
+  if (!existsSync(traceMapPath)) {
+    writeFileSync(traceMapPath, JSON.stringify({ steps: [] }, null, 2), "utf-8");
+  }
 }
 
-export async function generateNormalizedResults(ctx: MindTraceRunContext & { exitCode: number; style: string }): Promise<void> {
+export async function generateNormalizedResults(
+  ctx: MindTraceRunContext & { exitCode: number; style?: string; mode?: string }
+): Promise<void> {
   const layout = ensureRunLayout(ctx);
 
   const pwReportPath = join(layout.artifactsDir, "playwright-report.json");
   const pwRaw = existsSync(pwReportPath) ? readJsonSafe(pwReportPath) : null;
   const parsed = pwRaw ? parsePlaywrightJsonReport(pwRaw) : null;
 
+  const frameworkStyle = ctx.style || ctx.mode || "native";
+
   const normalizedResults = {
     runId: ctx.runName,
-    frameworkStyle: ctx.style,
+    frameworkStyle,
     exitCode: ctx.exitCode,
     environment: {
       nodeVersion: process.version,
-      ci: process.env.CI === "true"
+      ci: process.env.CI === "true",
     },
     tests: parsed?.tests || [],
     summary: parsed?.summary || {
@@ -187,15 +265,21 @@ export async function generateNormalizedResults(ctx: MindTraceRunContext & { exi
       failed: ctx.exitCode !== 0 ? 1 : 0,
       skipped: 0,
       flaky: 0,
-      quarantined: 0
+      quarantined: 0,
     },
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
-  writeFileSync(join(layout.artifactsDir, "normalized-results.json"), JSON.stringify(normalizedResults, null, 2), "utf-8");
+  writeFileSync(
+    join(layout.artifactsDir, "normalized-results.json"),
+    JSON.stringify(normalizedResults, null, 2),
+    "utf-8"
+  );
 }
 
-export async function generatePolicyDecision(ctx: GovernanceGateContext): Promise<{ decision: string; exitCode: number; reasons: string[] }> {
+export async function generatePolicyDecision(
+  ctx: GovernanceGateContext
+): Promise<{ decision: string; exitCode: number; reasons: string[] }> {
   const layout = ensureRunLayout(ctx);
 
   const rcaPath = join(layout.artifactsDir, "root-cause-summary.json");
@@ -224,10 +308,14 @@ export async function generatePolicyDecision(ctx: GovernanceGateContext): Promis
     decision,
     exitCode: finalExitCode,
     testExitCode: ctx.exitCode,
-    reasons
+    reasons,
   };
 
-  writeFileSync(join(layout.artifactsDir, "policy-decision.json"), JSON.stringify(policyDecision, null, 2), "utf-8");
+  writeFileSync(
+    join(layout.artifactsDir, "policy-decision.json"),
+    JSON.stringify(policyDecision, null, 2),
+    "utf-8"
+  );
 
   return { decision, exitCode: finalExitCode, reasons };
 }
@@ -235,9 +323,9 @@ export async function generatePolicyDecision(ctx: GovernanceGateContext): Promis
 export async function generateGateSummary(ctx: GovernanceGateContext): Promise<void> {
   const layout = ensureRunLayout(ctx);
 
-  const required = ["playwright-report.json", "normalized-results.json", "policy-decision.json"];
+  const minimum = ["playwright-report.json", "normalized-results.json", "policy-decision.json"];
 
-  const missing = required.filter((n) => !existsSync(join(layout.artifactsDir, n)));
+  const missing = minimum.filter((n) => !existsSync(join(layout.artifactsDir, n)));
 
   const policyPath = join(layout.artifactsDir, "policy-decision.json");
   const policy = existsSync(policyPath) ? readJsonSafe(policyPath) : null;
@@ -249,76 +337,69 @@ export async function generateGateSummary(ctx: GovernanceGateContext): Promise<v
     policyDecision: policy?.decision || "missing",
     gateStatus: missing.length ? "incomplete" : "ready",
     requiredArtifacts: {
-      present: required.filter((n) => existsSync(join(layout.artifactsDir, n))),
-      missing
-    }
+      present: minimum.filter((n) => existsSync(join(layout.artifactsDir, n))),
+      missing,
+    },
   };
 
-  writeFileSync(join(layout.artifactsDir, "gate-summary.json"), JSON.stringify(gateSummary, null, 2), "utf-8");
+  writeFileSync(
+    join(layout.artifactsDir, "gate-summary.json"),
+    JSON.stringify(gateSummary, null, 2),
+    "utf-8"
+  );
 }
 
-export async function generateArtifactValidation(ctx: MindTraceRunContext & { isBaseline?: boolean }): Promise<{ status: "valid" | "invalid"; missing: string[] }> {
+export async function generateArtifactValidation(
+  ctx: MindTraceRunContext & { isBaseline?: boolean }
+): Promise<{ status: "valid" | "invalid"; missing: string[] }> {
   const layout = ensureRunLayout(ctx);
 
-  const required = [
-    "healed-selectors.json",
-    "root-cause-summary.json",
-    "failure-narrative.md",
-    "execution-trace-map.json",
-    "playwright-report.json",
-    "normalized-results.json",
-    "policy-decision.json",
-    "gate-summary.json"
-  ];
+  const dod = loadAndValidateComplianceDoD(ctx.cwd);
 
+  const required = dod.required_artifacts || [];
   const missing = required.filter((n) => !existsSync(join(layout.artifactsDir, n)));
 
   const validation = {
     runId: ctx.runName,
     timestamp: new Date().toISOString(),
     status: missing.length ? "invalid" : "valid",
+    contract: {
+      version: dod.version,
+      updated_at: dod.updated_at,
+    },
     required,
     missing,
-    errors: missing.length ? [`Missing required artifacts: ${missing.join(", ")}`] : []
+    errors: missing.length ? [`Missing required artifacts: ${missing.join(", ")}`] : [],
   };
 
-  writeFileSync(join(layout.artifactsDir, "artifact-validation.json"), JSON.stringify(validation, null, 2), "utf-8");
+  writeFileSync(
+    join(layout.artifactsDir, "artifact-validation.json"),
+    JSON.stringify(validation, null, 2),
+    "utf-8"
+  );
 
   return { status: missing.length ? "invalid" : "valid", missing };
 }
 
-export async function validateArtifacts(ctx: MindTraceRunContext): Promise<void> {
+export async function validateArtifacts(ctx: MindTraceRunContext & { isBaseline?: boolean }): Promise<void> {
   const layout = ensureRunLayout(ctx);
 
-  const required = [
-    "healed-selectors.json",
-    "root-cause-summary.json",
-    "failure-narrative.md",
-    "execution-trace-map.json",
-    "playwright-report.json",
-    "normalized-results.json",
-    "policy-decision.json",
-    "gate-summary.json",
-    "artifact-validation.json"
-  ];
+  const dod = loadAndValidateComplianceDoD(ctx.cwd);
 
-  for (const f of required) {
+  const requiredArtifacts = dod.required_artifacts || [];
+  for (const f of requiredArtifacts) {
     const p = join(layout.artifactsDir, f);
     if (!existsSync(p)) throw new Error(`Missing required artifact: ${p}`);
   }
 
-  const jsonFiles = [
-    "healed-selectors.json",
-    "root-cause-summary.json",
-    "execution-trace-map.json",
-    "playwright-report.json",
-    "normalized-results.json",
-    "policy-decision.json",
-    "gate-summary.json",
-    "artifact-validation.json"
-  ];
+  const auditRequired = dod.rules?.audit_files_required || [];
+  for (const f of auditRequired) {
+    const p = join(layout.auditDir, f);
+    if (!existsSync(p)) throw new Error(`Missing required audit file: ${p}`);
+  }
 
-  for (const f of jsonFiles) {
+  const jsonMustParse = dod.json_must_parse || [];
+  for (const f of jsonMustParse) {
     const p = join(layout.artifactsDir, f);
     try {
       JSON.parse(readFileSync(p, "utf-8"));
@@ -339,7 +420,7 @@ export async function governanceGate(ctx: GovernanceGateContext): Promise<void> 
     type: "governance_gate_evaluated",
     testExitCode: ctx.exitCode,
     policyDecision: policy?.decision || "missing",
-    policyExitCode: policy?.exitCode ?? 3
+    policyExitCode: policy?.exitCode ?? 3,
   });
 
   if (policy?.exitCode === 1) {
@@ -369,7 +450,7 @@ export async function finalizeAuditTrail(ctx: MindTraceRunContext): Promise<void
     timestamp: new Date().toISOString(),
     eventCount: events.length,
     status: "completed",
-    immutable: true
+    immutable: true,
   };
 
   writeFileSync(join(layout.auditDir, "final.json"), JSON.stringify(finalReport, null, 2), "utf-8");
@@ -377,10 +458,18 @@ export async function finalizeAuditTrail(ctx: MindTraceRunContext): Promise<void
 
 export async function indexHistoricalRun(ctx: MindTraceRunContext): Promise<void> {
   const layout = ensureRunLayout(ctx);
-  appendFileSync(layout.historyIndexPath, JSON.stringify({ runId: ctx.runName, timestamp: new Date().toISOString() }) + "\n", "utf-8");
+  appendFileSync(
+    layout.historyIndexPath,
+    JSON.stringify({ runId: ctx.runName, timestamp: new Date().toISOString() }) + "\n",
+    "utf-8"
+  );
 }
 
 export async function generateReportBundle(ctx: MindTraceRunContext): Promise<void> {
   const layout = ensureRunLayout(ctx);
-  appendAuditEvent(layout, { ts: new Date().toISOString(), type: "report_bundle_skipped", reason: "not_implemented" });
+  appendAuditEvent(layout, {
+    ts: new Date().toISOString(),
+    type: "report_bundle_skipped",
+    reason: "not_implemented",
+  });
 }

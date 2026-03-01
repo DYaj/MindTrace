@@ -79,6 +79,11 @@ function exitCodeFromOutcome(opts: {
   return 0;
 }
 
+function safeRunName(name: any): string {
+  if (!name) return "";
+  return String(name).trim();
+}
+
 const program = new Command();
 
 program
@@ -90,14 +95,18 @@ program
   .command("run")
   .description("Run Playwright tests with MindTrace governance + contracts (stdout JSON capture)")
   .option("--run-name <name>", "Deterministic run name (recommended in CI)")
+  .option(
+    "--allow-overwrite",
+    "Allow overwriting an existing runs/<runName> folder (CI-safe). Default: false"
+  )
   .action(async (options) => {
     const invokedFrom = process.cwd();
     const repoRoot = findRepoRoot(invokedFrom);
     const cfg = loadConfig(repoRoot);
 
     const runName =
-      options.runName ||
-      process.env.MINDTRACE_RUN_NAME ||
+      safeRunName(options.runName) ||
+      safeRunName(process.env.MINDTRACE_RUN_NAME) ||
       `run-native-${Date.now()}`;
 
     const testRoot =
@@ -110,6 +119,25 @@ program
     if (!existsSync(effectiveCwd)) {
       console.error(`❌ testRoot folder does not exist: ${effectiveCwd}`);
       console.error(`👉 Fix: set "testRoot" in mindtrace.config.json or export MINDTRACE_TEST_ROOT.`);
+      process.exit(2);
+    }
+
+    // ---------------------------------------------------------------------
+    // SAFE RUN GUARD (non-destructive by default)
+    // ---------------------------------------------------------------------
+    const runDir = join(repoRoot, "runs", runName);
+    const allowOverwrite =
+      options.allowOverwrite === true || process.env.MINDTRACE_ALLOW_OVERWRITE === "true";
+
+    if (existsSync(runDir) && !allowOverwrite) {
+      console.error(`❌ Refusing to overwrite existing run folder: ${runDir}`);
+      console.error(`👉 Fix: choose a new --run-name OR re-run with --allow-overwrite`);
+      console.error(
+        `   Example: node mindtrace-ai-runtime/dist/cli.js run --run-name ${runName}-${Date.now()}`
+      );
+      console.error(
+        `   OR:      node mindtrace-ai-runtime/dist/cli.js run --run-name ${runName} --allow-overwrite`
+      );
       process.exit(2);
     }
 
@@ -149,12 +177,7 @@ program
     // ---------------------------------------------------------------------
     // RUN PLAYWRIGHT (stdout JSON capture)
     // ---------------------------------------------------------------------
-    const playwrightArgs: string[] = [
-      "--no-install",
-      "playwright",
-      "test",
-      "--reporter=json",
-    ];
+    const playwrightArgs: string[] = ["--no-install", "playwright", "test", "--reporter=json"];
 
     const env: NodeJS.ProcessEnv = {
       ...process.env,
@@ -164,7 +187,6 @@ program
     };
 
     const pwStdoutChunks: Buffer[] = [];
-
     let infraError = false;
 
     let pw: ReturnType<typeof spawn>;
@@ -197,15 +219,12 @@ program
       // 1) Always write raw capture for debugging determinism (never blocks)
       try {
         const rawOut = Buffer.concat(pwStdoutChunks).toString("utf-8");
-        if (rawOut && rawOut.trim()) {
-          writeFileSync(pwJsonRawPath, rawOut, "utf-8");
-        }
+        if (rawOut && rawOut.trim()) writeFileSync(pwJsonRawPath, rawOut, "utf-8");
       } catch {
         // ignore
       }
 
       // 2) Best-effort parse stdout as JSON and write playwright-report.json
-      //    If parse fails, policy should mark artifacts invalid => exit 3 later.
       try {
         const out = Buffer.concat(pwStdoutChunks).toString("utf-8").trim();
         if (out) {
@@ -216,7 +235,6 @@ program
         // leave missing/invalid report to compliance validation
       }
 
-      // 3) Now run the MindTrace pipeline, but enforce stable exit behavior.
       let policyInvalid = false;
       let policySaysFail = false;
 
@@ -243,28 +261,27 @@ program
           exitCode: testExitCode,
         } as any);
 
+        // ✅ finalize audit FIRST so audit/final.json exists for compliance validation
+        await finalizeAuditTrail({ cwd: repoRoot, runName } as any);
+
         await generateArtifactValidation({
           cwd: repoRoot,
           runName,
           isBaseline: false,
         } as any);
 
-        // If artifact-validation says invalid => policy violation (exit 3)
         const vPath = join(layout.artifactsDir, "artifact-validation.json");
         const validation = existsSync(vPath) ? readJsonSafe(vPath) : null;
         if (validation?.status === "invalid") policyInvalid = true;
 
-        // validateArtifacts throws if required artifacts missing/invalid JSON
         await validateArtifacts({ cwd: repoRoot, runName, isBaseline: false } as any);
 
-        // governanceGate throws if policy says block (non-flaky failures, etc.)
         try {
           await governanceGate({ cwd: repoRoot, runName, exitCode: testExitCode } as any);
         } catch {
           policySaysFail = true;
         }
 
-        await finalizeAuditTrail({ cwd: repoRoot, runName } as any);
         await indexHistoricalRun({ cwd: repoRoot, runName } as any);
         await generateReportBundle({ cwd: repoRoot, runName } as any);
 
@@ -289,13 +306,15 @@ program
       } catch (err: any) {
         console.error("\n❌ MindTrace pipeline failed:", err?.message || err);
 
-        // If the pipeline failed because artifacts are missing => treat as policy violation (3),
-        // otherwise infra/runtime (2). We keep it conservative:
         const msg = String(err?.message || "");
-        const looksLikeMissingArtifact = msg.includes("Missing required artifact") || msg.includes("Invalid JSON artifact");
+        const looksLikeMissingArtifact =
+          msg.includes("Missing required artifact") ||
+          msg.includes("Invalid JSON artifact") ||
+          msg.includes("Missing required audit file");
+
         process.exit(looksLikeMissingArtifact ? 3 : 2);
       }
     });
   });
 
-program.parse();
+program.parse(process.argv);
