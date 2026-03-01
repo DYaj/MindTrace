@@ -38,3 +38,6 @@ npm-debug.log*
 tmp/
 temp/
 *.tmp
+
+# scripts
+share-mindtrace-snapshot.sh

@@ -4,6 +4,7 @@
   "description": "MindTrace AI Runtime - Execution intelligence layer for Playwright (healing, RCA, governance, artifacts).",
   "license": "MIT",
   "author": "MindTrace Inc.",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DYaj/mindtrace-for-playwright.git"
@@ -24,25 +25,40 @@
     "ci",
     "teamcity"
   ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "default": "./dist/runtime/index.js"
+    }
+  },
   "bin": {
-    "mindtrace": "./dist/cli.js"
+    "mindtrace": "./dist/cli.js",
+    "mindtrace-mcp": "./dist/mcp/cli.js"
   },
   "files": [
     "dist",
+    "contracts",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "prompts",
+    "scripts"
   ],
   "scripts": {
+    "prebuild": "bash scripts/prebuild-sync-contracts.sh && bash scripts/prebuild-sync-prompts.sh",
     "build": "tsc -p tsconfig.json",
-    "postbuild": "node -e \"const fs=require('fs'); try{fs.chmodSync('dist/cli.js',0o755);}catch(e){}\"",
+    "postbuild": "node -e \"const fs=require('fs'); try{fs.chmodSync('dist/cli.js',0o755);}catch(e){} try{fs.chmodSync('dist/mcp/cli.js',0o755);}catch(e){}\"",
     "dev": "tsc -p tsconfig.json --watch",
-    "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "smoke:packaged": "node scripts/smoke-packaged.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
@@ -73,5 +89,8 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "private"
   }
 }

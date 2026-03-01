@@ -19,7 +19,7 @@ import { config as loadDotEnv } from "dotenv";
 import { existsSync, writeFileSync, mkdirSync, readFileSync } from "fs";
 import { join, dirname, resolve } from "path";
 
-import { loadAndValidateLocatorManifest } from "./runtime/contract-loader";
+import { loadAndValidateLocatorManifest } from "./runtime/contract-loader.js";
 import {
   ensureRunLayout,
   postRunGenerateArtifacts,
@@ -32,7 +32,7 @@ import {
   finalizeAuditTrail,
   indexHistoricalRun,
   generateReportBundle,
-} from "./runtime";
+} from "./runtime/index.js";
 
 loadDotEnv();
 

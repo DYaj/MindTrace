@@ -1,7 +1,13 @@
+// mindtrace-ai-runtime/src/runtime/contract-loader.ts
 import fs from "fs";
 import path from "path";
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
+
+// Safe interop: some builds expose CJS namespace objects under NodeNext ESM.
+import AjvImport from "ajv";
+import addFormatsImport from "ajv-formats";
+
+const Ajv: any = (AjvImport as any)?.default ?? (AjvImport as any);
+const addFormats: any = (addFormatsImport as any)?.default ?? (addFormatsImport as any);
 
 export type LocatorManifest = {
   meta: {
@@ -21,7 +27,7 @@ export function loadAndValidateLocatorManifest(repoRoot: string): LocatorManifes
   const manifestPath = path.join(repoRoot, "contracts", "examples", "locator-manifest.json");
   const schemaPath = path.join(repoRoot, "contracts", "schemas", "locator-manifest.schema.json");
 
-  // Optional feature: if manifest doesn't exist, skip enforcement (Phase 2 can tighten later)
+  // Optional: manifest may not exist in some runs; allow pipeline to proceed deterministically.
   if (!fs.existsSync(manifestPath)) return null;
 
   if (!fs.existsSync(schemaPath)) {
@@ -43,6 +49,5 @@ export function loadAndValidateLocatorManifest(repoRoot: string): LocatorManifes
     );
   }
 
-  // Safe to cast AFTER schema validation
   return manifestUnknown as LocatorManifest;
 }

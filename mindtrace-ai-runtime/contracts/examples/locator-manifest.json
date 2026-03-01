@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "schema_version": "v1.0.0",
+    "generated_at": "2026-02-28T00:00:00Z"
+  },
+  "elements": [
+    {
+      "element_id": "login.button",
+      "locators": [
+        { "strategy": "data-testid", "value": "login-btn" }
+      ]
+    }
+  ]
+}
