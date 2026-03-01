@@ -1,0 +1,39 @@
+{
+  "name": "@mindtrace/frameworks-mcp",
+  "version": "0.1.0",
+  "description": "MindTrace Frameworks MCP (promptpacks + generation) - fast-evolving, contract-aware consumer",
+  "license": "MIT",
+  "author": "MindTrace Inc.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "mindtrace-frameworks-mcp": "./dist/mcp/cli.js"
+  },
+  "files": [
+    "dist",
+    "prompts",
+    "contracts",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "prebuild": "bash scripts/prebuild-sync-prompts.sh && bash scripts/prebuild-sync-contracts.sh",
+    "build": "tsc -p tsconfig.json",
+    "postbuild": "node -e \"const fs=require('fs'); try{fs.chmodSync('dist/mcp/cli.js',0o755);}catch(e){}\"",
+    "dev": "tsc -p tsconfig.json --watch",
+    "smoke:packaged": "node scripts/smoke-packaged.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@mindtrace/shared": "^0.1.0",
+    "@mindtrace/promptpacks": "^0.1.0",
+    "@mindtrace/contracts": "^0.1.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

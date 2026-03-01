@@ -1,0 +1,40 @@
+{
+  "toolmap_version": "1.0",
+  "mcp": {
+    "name": "@mindtrace/frameworks-mcp",
+    "purpose": "Framework prompt routing, generation, and transformation",
+    "stability": "evolving",
+    "llm_required": true
+  },
+  "guarantees": {
+    "deterministic": false,
+    "best_effort": true,
+    "ci_authoritative": false
+  },
+  "tools": [
+    {
+      "name": "frameworks.list",
+      "summary": "List available frameworks and styles (native, bdd, pom-bdd, etc)."
+    },
+    {
+      "name": "prompts.list",
+      "summary": "List available prompt packs for a given framework."
+    },
+    {
+      "name": "prompts.get",
+      "summary": "Fetch the full prompt text for a given framework and prompt name."
+    },
+    {
+      "name": "generate.tests",
+      "summary": "Generate tests from a contract/manifest and chosen framework mode."
+    },
+    {
+      "name": "generate.patchPlan",
+      "summary": "Propose a contract patch-plan based on generation results."
+    },
+    {
+      "name": "explain.mapping",
+      "summary": "Explain how contract fields map into test code conventions."
+    }
+  ]
+}

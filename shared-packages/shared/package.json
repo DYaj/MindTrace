@@ -1,0 +1,31 @@
+{
+  "name": "@mindtrace/shared",
+  "version": "0.1.0",
+  "description": "Shared path + utility helpers for MindTrace packages",
+  "license": "MIT",
+  "author": "MindTrace Inc.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

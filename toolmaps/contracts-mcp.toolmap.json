@@ -1,0 +1,72 @@
+{
+  "toolmap_version": "1.0",
+  "mcp": {
+    "name": "@mindtrace/contracts-mcp",
+    "purpose": "Deterministic, auditable contracts + CI governance",
+    "stability": "strict",
+    "llm_required": false
+  },
+  "guarantees": {
+    "deterministic": true,
+    "side_effect_free": true,
+    "ci_safe": true
+  },
+  "tools": [
+    {
+      "name": "contracts.validate",
+      "summary": "Validate a payload against a named JSON schema (strict).",
+      "deterministic": true,
+      "input_schema": {
+        "type": "object",
+        "required": ["schema", "payload"],
+        "properties": {
+          "schema": { "type": "string" },
+          "payload": { "type": "object" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["ok", "errors"],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "message"],
+              "properties": {
+                "path": { "type": "string" },
+                "message": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "contracts.lint",
+      "summary": "Run structural linting rules on a contract payload.",
+      "deterministic": true
+    },
+    {
+      "name": "contracts.diff",
+      "summary": "Compare two contracts/manifests and produce a patch-plan.",
+      "deterministic": true
+    },
+    {
+      "name": "contracts.patchPlan.validate",
+      "summary": "Validate a patch-plan against schema and invariants.",
+      "deterministic": true
+    },
+    {
+      "name": "contracts.dod.evaluate",
+      "summary": "Evaluate Definition-of-Done compliance.",
+      "deterministic": true
+    },
+    {
+      "name": "contracts.export",
+      "summary": "Emit canonical contract bundle for CI artifacts.",
+      "deterministic": true
+    }
+  ]
+}

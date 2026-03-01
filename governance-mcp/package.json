@@ -1,0 +1,37 @@
+{
+  "name": "@mindtrace/governance-mcp",
+  "version": "0.1.0",
+  "description": "MindTrace Governance MCP (contracts + CI + Definition-of-Done) - deterministic, auditable, schema-first",
+  "license": "MIT",
+  "author": "MindTrace Inc.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "mindtrace-governance-mcp": "./dist/mcp/cli.js"
+  },
+  "files": [
+    "dist",
+    "contracts",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "prebuild": "bash scripts/prebuild-sync-contracts.sh",
+    "build": "tsc -p tsconfig.json",
+    "postbuild": "node -e \"const fs=require('fs'); try{fs.chmodSync('dist/mcp/cli.js',0o755);}catch(e){}\"",
+    "dev": "tsc -p tsconfig.json --watch",
+    "smoke:packaged": "node scripts/smoke-packaged.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}
