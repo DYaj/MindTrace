@@ -65,9 +65,10 @@ runs/<runName>/
 │   └── locator-manifest.snapshot.json
 │
 ├── audit/
-│   └── audit-log.json
+│   ├── events.ndjson
+│   └── final.json
 │
-└── history/
+└── (repo root) history/
     └── run-index.jsonl
 
 If required artifacts are missing → run fails with exit code 3.
@@ -103,27 +104,33 @@ This ensures deterministic compliance behavior.
 ---
 
 # 🚀 Quick Start (Governance Mode)
-cd mindtrace-ai-runtime
-npm install
-npm run build
-cd ..
 
-node mindtrace-ai-runtime/dist/cli.js run –run-name example-run
+From repo root:
+
+```bash
+npm install
+npm run contracts:validate
+npm run mindtrace:build
+
+# Run once (choose a unique run name)
+npm run mindtrace:run -- --run-name example-run
+
+# CI-style run (repeatable; overwrites ci-local by design)
+npm run mindtrace:ci
 
 MindTrace will:
 
-• Validate contract  
-• Snapshot manifest  
-• Execute Playwright  
-• Capture JSON reporter  
-• Generate governance artifacts  
-• Enforce artifact validation  
-• Apply policy gate  
-• Index run history  
+• Validate contract
+• Snapshot manifest
+• Execute Playwright
+• Capture JSON reporter
+• Generate governance artifacts
+• Enforce artifact validation
+• Apply policy gate
+• Index run history
 
----
+📂 Project Structure
 
-# 📂 Project Structure
 mindtrace-for-playwright/
 ├── mindtrace-ai-runtime/
 │   ├── src/
@@ -141,57 +148,57 @@ mindtrace-for-playwright/
 ├── history/
 └── reports/
 
----
+⸻
 
-# 🛡️ Compliance Definition of Done (Locked)
+🛡️ Compliance Definition of Done (Locked)
 
 A run is considered compliant when:
 
-☑ Contract validation passes  
-☑ Manifest snapshot is created (if manifest exists)  
-☑ Playwright JSON report is generated deterministically  
-☑ normalized-results.json exists  
-☑ policy-decision.json exists  
-☑ gate-summary.json exists  
-☑ artifact-validation.json exists  
-☑ audit trail written  
-☑ history index updated  
-☑ exit code reflects correct governance state  
+☑ Contract validation passes
+☑ Manifest snapshot is created (if manifest exists)
+☑ Playwright JSON report is generated deterministically
+☑ normalized-results.json exists
+☑ policy-decision.json exists
+☑ gate-summary.json exists
+☑ artifact-validation.json exists
+☑ audit trail written
+☑ history index updated
+☑ exit code reflects correct governance state
 
 Any violation → exit code 3.
 
----
+⸻
 
-# 🔮 Roadmap
+🔮 Roadmap
 
-Phase 4 — Manifest Drift Detection  
-Phase 5 — Drift Scoring + Risk Levels  
-Phase 6 — AI Resilience Proposal Engine  
-Phase 7 — Compliance Export Bundle  
+Phase 4 — Manifest Drift Detection
+Phase 5 — Drift Scoring + Risk Levels
+Phase 6 — AI Resilience Proposal Engine
+Phase 7 — Compliance Export Bundle
 
-Compliance remains primary.  
+Compliance remains primary.
 AI resilience remains secondary.
 
----
+⸻
 
-# 💡 Positioning
+💡 Positioning
 
 MindTrace is:
 
-• A Compliance-Governed Test Execution Platform  
-• A Deterministic Artifact Contract Engine  
-• A CI/CD Policy Enforcement Layer  
-• An Audit-Ready Automation Runtime  
+• A Compliance-Governed Test Execution Platform
+• A Deterministic Artifact Contract Engine
+• A CI/CD Policy Enforcement Layer
+• An Audit-Ready Automation Runtime
 
 AI-powered resilience features are layered on top — never bypassing governance.
 
----
+⸻
 
-# 📄 License
+📄 License
 
 MIT License
 
----
+⸻
 
-**© 2026 MindTrace Inc.**
+© 2026 MindTrace Inc.
 Building compliance-first test infrastructure.

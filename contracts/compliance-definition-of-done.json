@@ -31,9 +31,6 @@
   "rules": {
     "report_must_be_deterministic": true,
     "report_must_not_print_to_terminal": true,
-    "audit_files_required": [
-      "events.ndjson",
-      "final.json"
-    ]
+    "audit_files_required": ["events.ndjson", "final.json"]
   }
 }
