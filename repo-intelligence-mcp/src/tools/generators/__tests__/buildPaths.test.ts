@@ -36,7 +36,6 @@ describe("buildPaths", () => {
   it("creates deterministic paths structure", () => {
     const result = buildPaths({
       topology: mockTopology,
-      framework: "playwright",
       stylesDetected: ["style1-native"]
     });
 
@@ -54,7 +53,6 @@ describe("buildPaths", () => {
   it("builds style1-native entrypoints from detected test dirs", () => {
     const result = buildPaths({
       topology: mockTopology,
-      framework: "playwright",
       stylesDetected: ["style1-native"]
     });
 
@@ -65,7 +63,6 @@ describe("buildPaths", () => {
   it("builds style2-bdd entrypoints from detected feature dirs", () => {
     const result = buildPaths({
       topology: mockTopology,
-      framework: "playwright",
       stylesDetected: ["style2-bdd"]
     });
 
@@ -96,7 +93,6 @@ describe("buildPaths", () => {
   it("detects playwright config files", () => {
     const result = buildPaths({
       topology: mockTopology,
-      framework: "playwright",
       stylesDetected: ["style1-native"]
     });
 
@@ -159,7 +155,6 @@ describe("buildPaths", () => {
   it("handles multiple styles", () => {
     const result = buildPaths({
       topology: mockTopology,
-      framework: "playwright",
       stylesDetected: ["style1-native", "style2-bdd"]
     });
 
@@ -171,7 +166,6 @@ describe("buildPaths", () => {
   it("uses detected support dirs for wrappers", () => {
     const result = buildPaths({
       topology: mockTopology,
-      framework: "playwright",
       stylesDetected: ["style1-native"]
     });
 
