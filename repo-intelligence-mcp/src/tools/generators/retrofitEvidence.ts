@@ -1,17 +1,39 @@
 import type { Evidence } from "../../types/contract.js";
 import type { RepoTopologyJSON } from "../../types/topology.js";
 
+/**
+ * Contract that can be retrofitted with evidence.
+ * Contracts may have existing evidence arrays and repoSignals for mapping.
+ */
+type ContractWithEvidence = {
+  evidence?: Evidence[];
+  repoSignals?: string[];
+  [key: string]: unknown;
+};
+
+/**
+ * Retrofits evidence fields across all contract types in a bundle.
+ *
+ * Preserves existing evidence while:
+ * - Upgrading empty-file entries when new evidence provides file paths
+ * - Preventing duplicate evidence entries
+ * - Merging new evidence from repo topology signals
+ *
+ * @param contracts - Bundle containing framework, selector, and assertion contracts
+ * @param topology - Scanned repository topology with signals
+ * @returns Updated contract bundle with retrofitted evidence
+ */
 export function retrofitEvidenceBundle(
   contracts: {
-    framework: any;
-    selector: any;
-    assertion: any;
+    framework: ContractWithEvidence;
+    selector: ContractWithEvidence;
+    assertion: ContractWithEvidence;
   },
   topology: RepoTopologyJSON
 ): {
-  framework: any;
-  selector: any;
-  assertion: any;
+  framework: ContractWithEvidence;
+  selector: ContractWithEvidence;
+  assertion: ContractWithEvidence;
 } {
   return {
     framework: retrofitSingleContract(contracts.framework, topology, "framework"),
@@ -20,7 +42,11 @@ export function retrofitEvidenceBundle(
   };
 }
 
-function retrofitSingleContract(contract: any, topology: RepoTopologyJSON, type: "framework" | "selector" | "assertion"): any {
+function retrofitSingleContract(
+  contract: ContractWithEvidence,
+  topology: RepoTopologyJSON,
+  type: "framework" | "selector" | "assertion"
+): ContractWithEvidence {
   const existingEvidence = contract.evidence || [];
   const mappedEvidence = mapRepoSignalsToEvidence(contract.repoSignals || [], topology, type);
 
