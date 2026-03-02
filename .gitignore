@@ -37,3 +37,15 @@ mindtrace_snapshot_*.txt
 # One-off patch scripts / local maintainer helpers
 scripts/phase2_*.mjs
 scripts/share-mindtrace-snapshot.sh
+
+# One-off patch scripts / local maintainer helpers
+scripts/phase2_*.mjs
+scripts/share-mindtrace-snapshot.sh
+
+# Local-only config/secrets
+.env
+mindtrace.policy.json
+
+# Local snapshots / outputs
+mindtrace_snapshot_*.txt
+test-results/

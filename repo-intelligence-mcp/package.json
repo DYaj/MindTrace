@@ -1,0 +1,30 @@
+{
+  "name": "@mindtrace/repo-intelligence-mcp",
+  "version": "0.1.0",
+  "description": "MindTrace Repo Intelligence MCP (Phase 0) - deterministic repo scan + architecture signals -> contract inputs",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "mindtrace-repo-intelligence-mcp": "./dist/mcp/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "postbuild": "node -e \"const fs=require('fs'); try{fs.chmodSync('dist/mcp/cli.js',0o755);}catch(e){}\"",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "fast-glob": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}
