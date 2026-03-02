@@ -1,0 +1,50 @@
+{
+  "cacheVersion": "0.1.0",
+  "pageId": "repo-intelligence-mcp__dist__tools__buildPageCache",
+  "sourcePath": "repo-intelligence-mcp/dist/tools/buildPageCache.js",
+  "inferredName": "buildPageCache",
+  "routes": [
+    "/pageobjects/",
+    "/pages/",
+    "/something"
+  ],
+  "stableIds": [
+    "${x.value}",
+    "x"
+  ],
+  "roles": [
+    "button"
+  ],
+  "labels": [],
+  "placeholders": [],
+  "anchors": [
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    "[data-testid=\"${x.value}\"]",
+    "[data-testid=\"x\"]"
+  ],
+  "interactionTargets": [
+    {
+      "kind": "locator",
+      "value": "${x.value}",
+      "evidence": "stableId",
+      "confidence": 0.85
+    },
+    {
+      "kind": "locator",
+      "value": "x",
+      "evidence": "stableId",
+      "confidence": 0.85
+    },
+    {
+      "kind": "role",
+      "value": "button",
+      "evidence": "getByRole()",
+      "confidence": 0.75
+    }
+  ],
+  "confidence": 0.73,
+  "warnings": []
+}

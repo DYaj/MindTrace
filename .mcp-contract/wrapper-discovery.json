@@ -1,0 +1,140 @@
+{
+  "toolVersion": "0.1.0",
+  "discoveredAt": "2026-03-02T03:33:34.402Z",
+  "repoRoot": "/Users/davidyang/Desktop/MindTrace Inc/mindtrace-for-playwright",
+  "locatorWrappers": [
+    {
+      "name": "aiGet",
+      "kind": "cypress-command",
+      "category": "locator",
+      "path": "repo-intelligence-mcp/dist/tools/discoverWrappers.js",
+      "evidence": "// Cypress custom command: Cypress.Commands.add('aiGet', ...)",
+      "confidence": 0.9
+    },
+    {
+      "name": "aiGet",
+      "kind": "js-function",
+      "category": "locator",
+      "path": "repo-intelligence-mcp/dist/tools/discoverWrappers.js",
+      "evidence": "// Heuristic helper names: function aiGet(...) / export function aiGet(...) / const aiGet = (...) =>",
+      "confidence": 0.55
+    },
+    {
+      "name": "aiGet",
+      "kind": "cypress-command",
+      "category": "locator",
+      "path": "repo-intelligence-mcp/src/tools/discoverWrappers.ts",
+      "evidence": "// Cypress custom command: Cypress.Commands.add('aiGet', ...)",
+      "confidence": 0.9
+    },
+    {
+      "name": "aiGet",
+      "kind": "ts-function",
+      "category": "locator",
+      "path": "repo-intelligence-mcp/src/tools/discoverWrappers.ts",
+      "evidence": "// Heuristic helper names: function aiGet(...) / export function aiGet(...) / const aiGet = (...) =>",
+      "confidence": 0.55
+    },
+    {
+      "name": "findRepoRoot",
+      "kind": "js-function",
+      "category": "locator",
+      "path": "mindtrace-ai-runtime/dist/cli.js",
+      "evidence": "function findRepoRoot(start) {",
+      "confidence": 0.45
+    },
+    {
+      "name": "findRepoRoot",
+      "kind": "ts-function",
+      "category": "locator",
+      "path": "mindtrace-ai-runtime/src/cli.ts",
+      "evidence": "function findRepoRoot(start: string): string {",
+      "confidence": 0.45
+    },
+    {
+      "name": "getBasePath",
+      "kind": "js-function",
+      "category": "locator",
+      "path": "mindtrace-ai-runtime/dist/mcp/server.js",
+      "evidence": "function getBasePath() {",
+      "confidence": 0.45
+    },
+    {
+      "name": "getBasePath",
+      "kind": "ts-function",
+      "category": "locator",
+      "path": "mindtrace-ai-runtime/src/mcp/server.ts",
+      "evidence": "function getBasePath() {",
+      "confidence": 0.45
+    },
+    {
+      "name": "getLocalBasePathFallback",
+      "kind": "js-function",
+      "category": "locator",
+      "path": "frameworks-mcp/dist/mcp/server.js",
+      "evidence": "function getLocalBasePathFallback() {",
+      "confidence": 0.45
+    },
+    {
+      "name": "getLocalBasePathFallback",
+      "kind": "ts-function",
+      "category": "locator",
+      "path": "frameworks-mcp/src/mcp/server.ts",
+      "evidence": "function getLocalBasePathFallback() {",
+      "confidence": 0.45
+    },
+    {
+      "name": "getPromptText",
+      "kind": "ts-function",
+      "category": "locator",
+      "path": "shared-packages/promptpacks/dist/index.d.ts",
+      "evidence": "export declare function getPromptText(promptRoot: string, framework: string, filename: string): string;",
+      "confidence": 0.45
+    },
+    {
+      "name": "getPromptText",
+      "kind": "js-function",
+      "category": "locator",
+      "path": "shared-packages/promptpacks/dist/index.js",
+      "evidence": "export function getPromptText(promptRoot, framework, filename) {",
+      "confidence": 0.55
+    },
+    {
+      "name": "getPromptText",
+      "kind": "ts-function",
+      "category": "locator",
+      "path": "shared-packages/promptpacks/src/index.ts",
+      "evidence": "export function getPromptText(promptRoot: string, framework: string, filename: string): string {",
+      "confidence": 0.55
+    }
+  ],
+  "assertionWrappers": [
+    {
+      "name": "expectVisible",
+      "kind": "js-function",
+      "category": "assertion",
+      "path": "repo-intelligence-mcp/dist/tools/discoverWrappers.js",
+      "evidence": "// export function expectVisible(...) / assertText(...) etc.",
+      "confidence": 0.7
+    },
+    {
+      "name": "expectVisible",
+      "kind": "ts-function",
+      "category": "assertion",
+      "path": "repo-intelligence-mcp/src/tools/discoverWrappers.ts",
+      "evidence": "// export function expectVisible(...) / assertText(...) etc.",
+      "confidence": 0.7
+    }
+  ],
+  "retrySignals": [
+    {
+      "name": "playwright-config-retries",
+      "kind": "ts-function",
+      "category": "retry",
+      "path": "frameworks/style1-native/playwright.config.ts",
+      "evidence": "playwright.config.* contains retries: N",
+      "confidence": 0.8
+    }
+  ],
+  "warnings": []
+}

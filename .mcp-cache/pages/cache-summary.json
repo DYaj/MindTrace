@@ -1,0 +1,16 @@
+{
+  "cacheVersion": "0.1.0",
+  "generatedAt": "2026-03-02T03:50:25.041Z",
+  "repoRoot": "/Users/davidyang/Desktop/MindTrace Inc/mindtrace-for-playwright",
+  "counts": {
+    "pages": 3,
+    "routes": 1,
+    "stableIds": 0,
+    "roles": 0,
+    "labels": 0,
+    "placeholders": 0,
+    "anchors": 3,
+    "interactionTargets": 3
+  },
+  "warnings": []
+}

@@ -1,0 +1,174 @@
+{
+  "framework": {
+    "framework": "playwright",
+    "confidence": 0.95,
+    "signalsUsed": [
+      "0520ff878a13525b441bc790fcd9d9c03c1317ba",
+      "0b8556ede8e0c97f388a12ebc065dd611c8226d7",
+      "15ac4dfb6ae51ef1aad82b54c938a2950f69b762",
+      "3fb4a138e9952e6e1b15e7f00466735efc383f95",
+      "4423c2e2317b2424ad9908734c256c2e2cfe54a4",
+      "4dc6150f0f84e358d6fddd5f7797b0271ee07cb0",
+      "5cf1ff084d0f8190fe2e0ee72811bb22c2f04d00",
+      "6be0edeac1c385875cdc05c286c7f683a7d9c0da",
+      "769a8dfbad12d3368db436299bdb3a18ac689ed3",
+      "893aeef7abe3b128264617c50f18defe69ac345e",
+      "904efe578dd3a00c4d6926ca064c8d46a84f25a8",
+      "970e9e6d3cc34910db14f449d7e3db3354a7ae39",
+      "9839ef2a1eade1f2f9e5aedc258f155e730379f0",
+      "a1efcf97bf921c3e9258047cf7e3fc429882eded",
+      "a26aea2925c5ea8b5283c4860a4f6075f82bed14",
+      "a7203df74457359060a06a4e0cf59a8482a06912",
+      "b8f9d4ac1574ca1e1b3fa3aace529172dc8fdc2c",
+      "c01afd0ba7c99e2de735562dbfb28cf5d527d50b",
+      "ca4c7ea4664c3b8e49ff664129b20bc2e76b4824",
+      "cf7d7415ff314bf976a1578638377d506b0b4491",
+      "d20e369a62b13b6590e5671a953dea46516fefb4",
+      "da0a2f5f5a2103be1f1e167dcb97aab44e750aea"
+    ],
+    "notes": [
+      "Also detected signals for cypress (score=2)"
+    ]
+  },
+  "structure": {
+    "style": "hybrid",
+    "confidence": 0.95,
+    "signalsUsed": [
+      "0794ea790ec4c36cdec1ad8b6b465463aec35943",
+      "0ab6f22131b5ed1485442d41fd2af06c31108e70",
+      "0c71b89d5b110506a9b50a29cd2a5ff8a4fbbc41",
+      "1150c70e2de41d5c762acc0263e3240e5c664f8d",
+      "165a0862fdf75f4f4bd17ecd1e64387b62821ed4",
+      "1997d3c7464d55093bf307766213abb799bbab08",
+      "1cd2e459ac5f5868c844759f3e769644470495bf",
+      "22032325b0634d5709c55e48b29cea23fa85fd26",
+      "254c6ff38d1d3ae8052229a3ab8d4ece7f505f3a",
+      "4641a514d6070cf067a3e610288eaa2f2d471d57",
+      "6a3749aaa4b65a35079884587f3aece4c79a74f1",
+      "74db846294cccfee5132fee90b0fc2ea69703a7c",
+      "74f21d5ef39609d8380b1546a2ddac7a4eaca1d7",
+      "7bf473185377451cf673367e9c00489ced65d413",
+      "7ecc0b1cbddb0e34674b358d0e607bb5ad834cdc",
+      "86d9cca1c10f65b31c12a49c7692e841ffb854bc",
+      "a8653b098686f5efe52eefd504eaf19f9a6f0aec",
+      "acae6c452decde73d70e1dae7173311b0d689684",
+      "b9718423d00bb6de459a731e7428d7da5249b964",
+      "c339a9ebc63efde6f2f807520604f82f0ab6c35f",
+      "c3fb93fec78a1e83a39ea567f782f28d45b9aba4",
+      "f79e0353a26e41e259fb73703f1bc6bf790ab2ba",
+      "fadeef87a80f8847f0da8079663646bd888c0e9f"
+    ],
+    "structure": {
+      "pageObjects": {
+        "present": true,
+        "paths": [
+          "frameworks/style3-pom-bdd/src/pages"
+        ],
+        "pattern": "unknown"
+      },
+      "bdd": {
+        "present": true,
+        "featurePaths": [
+          "frameworks/style2-bdd/features/login.feature",
+          "frameworks/style3-pom-bdd/features/login.feature"
+        ],
+        "stepDefPaths": [
+          "frameworks/style2-bdd/features/step_definitions/login.steps.ts",
+          "frameworks/style3-pom-bdd/features/step_definitions/login.steps.ts"
+        ],
+        "glueStyle": "cucumber"
+      }
+    }
+  },
+  "locatorStyle": {
+    "preferenceOrder": [
+      "data-testid",
+      "data-qa",
+      "data-cy",
+      "role",
+      "labelText",
+      "placeholder",
+      "css",
+      "xpath"
+    ],
+    "confidence": 0.7999999999999999,
+    "signalsUsed": [
+      "0a43f425b0e5332eeef179315dfb95a4330cdf52",
+      "0f91e77f008b5b59451a2b980bf23abd283806ed",
+      "10325f6f505c19534e1f0890126d913255435b4a",
+      "1678de8bac5e95714072f2804b1ba045e04eeeab",
+      "1928d4d02bd18a2a8ee68d87c6daf8fc8ea1bc03",
+      "22a7ce648aa6e1b46dfdc76bf06cee6189e89f7c",
+      "23cac256d7e42e5d014e0b2a28320c97ac5f8b1a",
+      "2ebe528fe21082ca7665c2719d23ffcedee517fc",
+      "38782c11937e78de6c36088cd54bbe062110532c",
+      "3a9648ed06e15705600293ef136ff2629398c621",
+      "44a315a1f6845032ca69e5bf95441695fb143b9e",
+      "560cb3804a50533eec4da496bbc4858d2184d5ba",
+      "68edb3cd77fdf280ea81df6a052082afb8da8efa",
+      "6c8760afd608828f49a497590b39bffd4166d260",
+      "72d0b22879b1384d9db225c75d2d43c6386d1cd3",
+      "7389ead1503abea517b255c9f03b79adcec2b4e6",
+      "7e367273f1ba46a2d2c2020a44952d9271fd4c8c",
+      "81f580409fa5720cd2adf15ed59435a5a18faaa0",
+      "98cf3f76a8dd5a13bf3dc267b6ec77364d3319fc",
+      "9bdb570cf450343a99e40991e8c568f0fccf2741",
+      "a16322fa71bbc3b8c9a9c01e1889425a1b4abf9f",
+      "a202467243246e2de0cf582639a0c6509d65dd9e",
+      "b8d761b32fa96c1c89ac9d8c7de5e516a5c5b849",
+      "c617964a301cc5c0bef1ee33a1ec5080296a5a8f",
+      "cdef668842d55c705651bce4cdfe0ed96510490c",
+      "ce038764ef6eb3e29c366a82443dd39c4187d274",
+      "ce1b7d7a08aae236632030adc6f727019ff55991",
+      "cf25835be7b2612f94171b1b0a770b8ac4e5f2e9",
+      "f3b3ba6f39b4164942c7a415dfce5ab880497395"
+    ],
+    "orgConventions": {
+      "stableAttributeKeys": [
+        "data-cy",
+        "data-qa",
+        "data-testid"
+      ],
+      "customLocatorHelpers": [
+        "Cypress.Commands.add"
+      ]
+    }
+  },
+  "assertionStyle": {
+    "primary": "expect",
+    "confidence": 0.7499999999999999,
+    "wrappers": [],
+    "signalsUsed": [
+      "10301b150fc83cecb23551f7cd912bd1b366cb2c",
+      "19f210376767f48f8416a33eeac144fd0b108f45",
+      "2cd1b31f053d555955776cabd19dbbef55d0ec4f",
+      "3f36adb85a621ed56534c3754112ba94592c5a10",
+      "43165a5fa73b9b465c0f39a19b003f2626ae833a",
+      "712088d8c41968eb0bbe3a8b95360ccd21aae58f",
+      "7e0ffc1fc38b54834d2ec1e8c1c61c41a26b0b51",
+      "7ff408ed0290a738ad7d7f2286b9432798b28c31",
+      "a2b7d51683a49b0631be422f8e79ff179a7e7c78",
+      "ad149a3e782bbc2e3bb960c1fd99954a99985a35",
+      "b7c317e8e34fd8aa53c8820a73cd4a7468496d7c",
+      "d91baf99e37310f4a1769577784150fb103c272c",
+      "dd12247d71c35a05b5b1a99fe55a762adf9f91e8",
+      "ee0221cc363a37af633ad851a610523ef5ce9b0f",
+      "ee541179313b5a63340b4cf94ca5029c365644cd"
+    ]
+  },
+  "wrappers": {
+    "locatorWrappers": 13,
+    "assertionWrappers": 2,
+    "retrySignals": 1,
+    "warnings": []
+  },
+  "written": [
+    ".mcp-contract/repo-topology.json",
+    ".mcp-contract/framework-pattern.json",
+    ".mcp-contract/selector-strategy.json",
+    ".mcp-contract/assertion-style.json",
+    ".mcp-contract/automation-contract.md",
+    ".mcp-contract/wrapper-discovery.json",
+    ".mcp-contract/wrapper-discovery.json"
+  ]
+}

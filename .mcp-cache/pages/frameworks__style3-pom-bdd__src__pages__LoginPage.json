@@ -1,0 +1,56 @@
+{
+  "cacheVersion": "0.1.0",
+  "pageId": "frameworks__style3-pom-bdd__src__pages__LoginPage",
+  "sourcePath": "frameworks/style3-pom-bdd/src/pages/LoginPage.ts",
+  "inferredName": "LoginPage",
+  "routes": [],
+  "stableIds": [],
+  "roles": [],
+  "labels": [],
+  "placeholders": [],
+  "anchors": [
+    "#password",
+    "#submit",
+    "#username"
+  ],
+  "interactionTargets": [
+    {
+      "kind": "locator",
+      "value": "#password",
+      "evidence": "anchorLiteral",
+      "confidence": 0.62
+    },
+    {
+      "kind": "locator",
+      "value": "#submit",
+      "evidence": "anchorLiteral",
+      "confidence": 0.62
+    },
+    {
+      "kind": "locator",
+      "value": "#username",
+      "evidence": "anchorLiteral",
+      "confidence": 0.62
+    }
+  ],
+  "confidence": 0.37,
+  "warnings": [],
+  "wrapperSignals": {
+    "locatorWrappers": 13,
+    "assertionWrappers": 2,
+    "retrySignals": 1
+  },
+  "selectorHints": [
+    "data-testid",
+    "data-qa",
+    "data-cy",
+    "role",
+    "labelText",
+    "placeholder",
+    "css",
+    "xpath"
+  ],
+  "assertionHints": [
+    "expect(...)"
+  ]
+}

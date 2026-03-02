@@ -13,14 +13,17 @@
  * 3 = policy violation (contract invalid OR missing/invalid required artifacts)
  */
 
-import { Command } from "commander";
+import {
+  Command } from "commander";
 import { spawn } from "child_process";
 import { config as loadDotEnv } from "dotenv";
 import { existsSync, writeFileSync, mkdirSync, readFileSync } from "fs";
 import { join, dirname, resolve } from "path";
 
 import { loadAndValidateLocatorManifest } from "./runtime/contract-loader.js";
+import { writeContractUtilizationArtifact } from "./runtime/contract-utilization.js";
 import {
+  applyRuntimeContractContextEnv,
   ensureRunLayout,
   postRunGenerateArtifacts,
   generateNormalizedResults,
@@ -32,6 +35,8 @@ import {
   finalizeAuditTrail,
   indexHistoricalRun,
   generateReportBundle,
+
+  resolveRuntimeContractContext,
 } from "./runtime/index.js";
 
 loadDotEnv();
@@ -151,6 +156,97 @@ program
     mkdirSync(layout.artifactsDir, { recursive: true });
 
     const pwJsonReportPath = join(layout.artifactsDir, "playwright-report.json");
+
+// ---------------------------------------------------------------------
+// Phase 2.2.1 (additive): contract context snapshot + plumbing
+// - Writes automation-contract-context.json into run artifacts (best-effort)
+// - Sets MINDTRACE_AUTOMATION_CONTRACT_CONTEXT_PATH for runtime consumers
+// - Does NOT enforce governance decisions
+// ---------------------------------------------------------------------
+try {
+  const contractDir = join(repoRoot, ".mcp-contract");
+  const cacheDir = join(repoRoot, ".mcp-cache", "pages");
+
+  const files: Record<string, string> = {};
+  const fileCandidates = {
+    frameworkPattern: join(contractDir, "framework-pattern.json"),
+    selectorStrategy: join(contractDir, "selector-strategy.json"),
+    assertionStyle: join(contractDir, "assertion-style.json"),
+    wrapperDiscovery: join(contractDir, "wrapper-discovery.json"),
+    automationContractMd: join(contractDir, "automation-contract.md"),
+    pageIndex: join(cacheDir, "index.json"),
+  };
+
+  // keep only existing paths
+  for (const [k, p] of Object.entries(fileCandidates)) {
+    if (existsSync(p)) files[k] = p;
+  }
+
+  const ok =
+    existsSync(contractDir) &&
+    existsSync(cacheDir) &&
+    Boolean(files["frameworkPattern"]) &&
+    Boolean(files["selectorStrategy"]) &&
+    Boolean(files["assertionStyle"]) &&
+    Boolean(files["wrapperDiscovery"]) &&
+    Boolean(files["automationContractMd"]) &&
+    Boolean(files["pageIndex"]);
+
+  const snapshot = {
+    ok,
+    repoRoot,
+    contractDir: existsSync(contractDir) ? contractDir : null,
+    cacheDir: existsSync(cacheDir) ? cacheDir : null,
+    warnings: ok ? [] : ["CONTRACT_CONTEXT_INCOMPLETE"],
+    files,
+    summary: {
+      hasFrameworkPattern: Boolean(files["frameworkPattern"]),
+      hasSelectorStrategy: Boolean(files["selectorStrategy"]),
+      hasAssertionStyle: Boolean(files["assertionStyle"]),
+      hasWrapperDiscovery: Boolean(files["wrapperDiscovery"]),
+      hasAutomationContractMd: Boolean(files["automationContractMd"]),
+      hasPageIndex: Boolean(files["pageIndex"]),
+    },
+  };
+
+  const snapshotPath = join(layout.artifactsDir, "automation-contract-context.json");
+  writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2), "utf-8");
+
+    // ---------------------------------------------------------------------
+    // Phase 2.2.3 (additive): export contract context into env (runtime plumbing)
+    // - Observability + downstream runtime consumption
+    // - NO governance/pass-fail changes
+    // ---------------------------------------------------------------------
+    try {
+      // PHASE_2_2_3_ENV_AFTER_CONTEXT
+      applyRuntimeContractContextEnv({ artifactsDir: layout.artifactsDir });
+    } catch {
+      // non-fatal
+    }
+
+
+    // ---------------------------------------------------------------------
+    // Phase 2.2.2 (additive): Contract Utilization Artifact (native CLI)
+    // - Best-effort write of contract-utilization.json for observability
+    // - NO governance or pass/fail behavior changes
+    // ---------------------------------------------------------------------
+    try {
+      // PHASE_2_2_2_CONTRACT_UTILIZATION
+      writeContractUtilizationArtifact({
+        repoRoot,
+        artifactsDir: layout.artifactsDir,
+      });
+    } catch (e) {
+      // Non-fatal (observability only)
+    }
+
+
+  // Standardize runtime plumbing entry point.
+  process.env.MINDTRACE_AUTOMATION_CONTRACT_CONTEXT_PATH = snapshotPath;
+} catch {
+  // swallow (additive only)
+}
+
     const pwJsonRawPath = join(layout.artifactsDir, "playwright-report.raw.txt");
 
     // ---------------------------------------------------------------------

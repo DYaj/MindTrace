@@ -1,0 +1,34 @@
+{
+  "contractVersion": "0.1.0",
+  "primary": "expect",
+  "wrappers": [
+    {
+      "name": "expectVisible",
+      "path": "repo-intelligence-mcp/dist/tools/discoverWrappers.js",
+      "confidence": 0.7
+    },
+    {
+      "name": "expectVisible",
+      "path": "repo-intelligence-mcp/src/tools/discoverWrappers.ts",
+      "confidence": 0.7
+    }
+  ],
+  "confidence": 0.7499999999999999,
+  "repoSignals": [
+    "10301b150fc83cecb23551f7cd912bd1b366cb2c",
+    "19f210376767f48f8416a33eeac144fd0b108f45",
+    "2cd1b31f053d555955776cabd19dbbef55d0ec4f",
+    "3f36adb85a621ed56534c3754112ba94592c5a10",
+    "43165a5fa73b9b465c0f39a19b003f2626ae833a",
+    "712088d8c41968eb0bbe3a8b95360ccd21aae58f",
+    "7e0ffc1fc38b54834d2ec1e8c1c61c41a26b0b51",
+    "7ff408ed0290a738ad7d7f2286b9432798b28c31",
+    "a2b7d51683a49b0631be422f8e79ff179a7e7c78",
+    "ad149a3e782bbc2e3bb960c1fd99954a99985a35",
+    "b7c317e8e34fd8aa53c8820a73cd4a7468496d7c",
+    "d91baf99e37310f4a1769577784150fb103c272c",
+    "dd12247d71c35a05b5b1a99fe55a762adf9f91e8",
+    "ee0221cc363a37af633ad851a610523ef5ce9b0f",
+    "ee541179313b5a63340b4cf94ca5029c365644cd"
+  ]
+}

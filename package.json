@@ -6,6 +6,7 @@
     "governance-mcp",
     "frameworks-mcp",
     "orchestrator-mcp",
-    "mindtrace-ai-runtime"
+    "mindtrace-ai-runtime",
+    "repo-intelligence-mcp"
   ]
 }

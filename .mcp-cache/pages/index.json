@@ -1,0 +1,25 @@
+{
+  "cacheVersion": "0.1.0",
+  "generatedAt": "2026-03-02T03:50:25.041Z",
+  "repoRoot": "/Users/davidyang/Desktop/MindTrace Inc/mindtrace-for-playwright",
+  "pages": [
+    {
+      "pageId": "frameworks__style3-pom-bdd__src__pages__BasePage",
+      "sourcePath": "frameworks/style3-pom-bdd/src/pages/BasePage.ts",
+      "inferredName": "BasePage",
+      "confidence": 0.37
+    },
+    {
+      "pageId": "frameworks__style3-pom-bdd__src__pages__LoginPage",
+      "sourcePath": "frameworks/style3-pom-bdd/src/pages/LoginPage.ts",
+      "inferredName": "LoginPage",
+      "confidence": 0.37
+    },
+    {
+      "pageId": "frameworks__style3-pom-bdd__src__pages__DashboardPage",
+      "sourcePath": "frameworks/style3-pom-bdd/src/pages/DashboardPage.ts",
+      "inferredName": "DashboardPage",
+      "confidence": 0.25
+    }
+  ]
+}

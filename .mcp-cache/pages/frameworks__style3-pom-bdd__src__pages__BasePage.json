@@ -1,0 +1,35 @@
+{
+  "cacheVersion": "0.1.0",
+  "pageId": "frameworks__style3-pom-bdd__src__pages__BasePage",
+  "sourcePath": "frameworks/style3-pom-bdd/src/pages/BasePage.ts",
+  "inferredName": "BasePage",
+  "routes": [
+    "/login"
+  ],
+  "stableIds": [],
+  "roles": [],
+  "labels": [],
+  "placeholders": [],
+  "anchors": [],
+  "interactionTargets": [],
+  "confidence": 0.37,
+  "warnings": [],
+  "wrapperSignals": {
+    "locatorWrappers": 13,
+    "assertionWrappers": 2,
+    "retrySignals": 1
+  },
+  "selectorHints": [
+    "data-testid",
+    "data-qa",
+    "data-cy",
+    "role",
+    "labelText",
+    "placeholder",
+    "css",
+    "xpath"
+  ],
+  "assertionHints": [
+    "expect(...)"
+  ]
+}
