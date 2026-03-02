@@ -23,6 +23,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
     "fast-glob": "^3.3.2"
   },
   "devDependencies": {
