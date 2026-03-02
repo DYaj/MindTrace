@@ -37,6 +37,7 @@ import {
   generateReportBundle,
 
     writeRuntimeContractContextArtifact,
+  getRuntimeContractContext,
 resolveRuntimeContractContext,
 } from "./runtime/index.js";
 
@@ -356,6 +357,35 @@ try {
         // ---------------------------------------------------------------------
         try {
           writeRuntimeContractContextArtifact({ artifactsDir: layout.artifactsDir });
+          // ---------------------------------------------------------------------
+          // PHASE_2_3_RUNTIME_CONTEXT_PEEK_OPTIONAL (additive)
+          // Optional debug-only peek at resolved runtime context (OFF by default).
+          // ---------------------------------------------------------------------
+          try {
+      if (process.env.MINDTRACE_DEBUG_CONTRACT_CONTEXT === "true") {
+        // PHASE_2_3_3_PEEK_NEVER_FAIL (additive)
+        // Debug-only: best-effort snapshot of runtime-resolved contract context.
+        // Must never block, never throw, never affect governance/exit codes.
+        try {
+          const ctx = await getRuntimeContractContext({ artifactsDir: layout.artifactsDir } as any);
+          const p = join(layout.artifactsDir, "runtime-contract-context.peek.json");
+          writeFileSync(
+            p,
+            JSON.stringify({ schema_version: "0.1.0", generatedAt: new Date().toISOString(), context: ctx }, null, 2),
+            "utf-8"
+          );
+        } catch {
+          // ignore
+        }
+      }
+} catch {
+        // ignore
+      }
+    }
+          } catch {
+            // ignore
+          }
+
         } catch {
           // ignore
         }
