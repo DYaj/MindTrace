@@ -33,3 +33,7 @@ frameworks/**/playwright-report/
 
 # MindTrace snapshots
 mindtrace_snapshot_*.txt
+
+# One-off patch scripts / local maintainer helpers
+scripts/phase2_*.mjs
+scripts/share-mindtrace-snapshot.sh
