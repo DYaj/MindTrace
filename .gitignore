@@ -1,50 +1,15 @@
-# Dependencies
-node_modules/
-package-lock.json
 
-# MindTrace Runtime
-mindtrace-ai-runtime/dist/
-
-# Environment - NEVER commit
-.env
-.env.local
-.env.*.local
-
-# Run artifacts
-runs/
-mindtrace-artifacts/
-history/
-
-# Test results
-test-results/
-playwright-report/
-playwright/.cache/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-npm-debug.log*
-
-# Temporary
-tmp/
-temp/
-*.tmp
-
-# scripts
-share-mindtrace-snapshot.sh
 # MindTrace generated artifacts
 .mcp-contract/
 .mcp-cache/
 runs/
 history/
+
+# Playwright artifacts
 frameworks/**/playwright-report.json
 frameworks/**/playwright-report/
+
+# Node
+node_modules/
+dist/
+
