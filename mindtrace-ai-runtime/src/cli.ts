@@ -36,7 +36,8 @@ import {
   indexHistoricalRun,
   generateReportBundle,
 
-  resolveRuntimeContractContext,
+    writeRuntimeContractContextArtifact,
+resolveRuntimeContractContext,
 } from "./runtime/index.js";
 
 loadDotEnv();
@@ -165,6 +166,19 @@ program
 // ---------------------------------------------------------------------
 try {
   const contractDir = join(repoRoot, ".mcp-contract");
+
+
+    // ---------------------------------------------------------------------
+    // PHASE_2_2_4_ENV_BEFORE_SPAWN (additive)
+    // Make Automation Contract Context available DURING the Playwright run.
+    // This is non-governance, non-fatal plumbing.
+    // ---------------------------------------------------------------------
+    try {
+      const ctxPath = join(layout.artifactsDir, "automation-contract-context.json");
+      process.env.MINDTRACE_AUTOMATION_CONTRACT_CONTEXT_PATH = ctxPath;
+    } catch {
+      // ignore
+    }
   const cacheDir = join(repoRoot, ".mcp-cache", "pages");
 
   const files: Record<string, string> = {};
@@ -336,6 +350,16 @@ try {
 
       try {
         await postRunGenerateArtifacts({ cwd: repoRoot, runName });
+        // ---------------------------------------------------------------------
+        // PHASE_2_3_RUNTIME_CONTEXT_ARTIFACT_POSTRUN (additive)
+        // Emit runtime-facing resolved contract context artifact (non-governance).
+        // ---------------------------------------------------------------------
+        try {
+          writeRuntimeContractContextArtifact({ artifactsDir: layout.artifactsDir });
+        } catch {
+          // ignore
+        }
+
 
         await generateNormalizedResults({
           cwd: repoRoot,
