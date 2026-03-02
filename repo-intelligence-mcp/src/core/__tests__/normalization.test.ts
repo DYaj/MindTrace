@@ -21,4 +21,9 @@ describe("toPosix", () => {
   it("handles already normalized paths", () => {
     expect(toPosix("src/pages/Login.ts")).toBe("src/pages/Login.ts");
   });
+
+  it("normalizes triple and more slashes", () => {
+    expect(toPosix("src///pages")).toBe("src/pages");
+    expect(toPosix("src////pages////file.ts")).toBe("src/pages/file.ts");
+  });
 });

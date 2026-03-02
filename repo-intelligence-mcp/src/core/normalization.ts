@@ -9,5 +9,5 @@ export function toPosix(path: string): string {
   return path
     .replace(/\\/g, "/")      // backslash → forward slash
     .replace(/^\.\//, "")     // strip leading ./
-    .replace(/\/\//g, "/");   // normalize // → /
+    .replace(/\/+/g, "/");    // normalize multiple slashes → /
 }

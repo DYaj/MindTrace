@@ -31,4 +31,17 @@ describe("canonicalStringify", () => {
     const obj2 = { a: 2, b: 1 };
     expect(canonicalStringify(obj1)).toBe(canonicalStringify(obj2));
   });
+
+  it("sorts keys at 3+ nesting levels", () => {
+    const obj = {
+      z: { b: { y: 1, a: 2 }, a: { z: 3, m: 4 } },
+      a: { c: { b: 5, a: 6 } }
+    };
+    const result = canonicalStringify(obj);
+    const parsed = JSON.parse(result);
+    expect(Object.keys(parsed)).toEqual(["a", "z"]);
+    expect(Object.keys(parsed.z)).toEqual(["a", "b"]);
+    expect(Object.keys(parsed.z.b)).toEqual(["a", "y"]);
+    expect(Object.keys(parsed.a.c)).toEqual(["a", "b"]);
+  });
 });
