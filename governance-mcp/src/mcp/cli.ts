@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// contracts-mcp/src/mcp/cli.ts
+// governance-mcp/src/mcp/cli.ts
 
-import { startContractsMcpStdioServer } from "./server.js";
+import { startGovernanceMcpStdioServer } from "./server.js";
 
 function printHelp() {
   console.log(`Usage: mindtrace-governance-mcp [options]
@@ -19,36 +19,23 @@ async function printVersion() {
     const { readFile } = await import("node:fs/promises");
     const { fileURLToPath } = await import("node:url");
     const { dirname, resolve } = await import("node:path");
-    const { pathToFileURL } = await import("node:url");
 
-    const here = dirname(fileURLToPath(import.meta.url)); // dist/mcp or src/mcp after compile
-    const pkgPathCandidates = [
+    const here = dirname(fileURLToPath(import.meta.url)); // dist/mcp or src/mcp
+    const candidates = [
       resolve(here, "../../package.json"),
       resolve(here, "../package.json"),
       resolve(process.cwd(), "package.json"),
     ];
 
-    for (const pkgPath of pkgPathCandidates) {
+    for (const p of candidates) {
       try {
-        const raw = await readFile(pkgPath, "utf8");
+        const raw = await readFile(p, "utf8");
         const pkg = JSON.parse(raw);
         if (pkg?.version) {
           console.log(pkg.version);
           return;
         }
-      } catch {
-        // try next
-      }
-    }
-
-    try {
-      const pkgUrl = pathToFileURL(resolve(here, "../../package.json")).href;
-      const pkg = await import(pkgUrl, { with: { type: "json" } } as any);
-      const v = (pkg as any)?.default?.version;
-      console.log(v || "unknown");
-      return;
-    } catch {
-      // ignore
+      } catch {}
     }
 
     console.log("unknown");
@@ -70,7 +57,7 @@ async function main() {
     process.exit(0);
   }
 
-  await startContractsMcpStdioServer();
+  await startGovernanceMcpStdioServer();
 }
 
 main().catch((error) => {

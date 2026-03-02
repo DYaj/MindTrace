@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // orchestrator-mcp/src/mcp/cli.ts
 
-import { startMindtraceMcpOrchestratorStdioServer } from "./server.js";
+import { startOrchestratorMcpStdioServer } from "./server.js";
 
 function printHelp() {
   console.log(`Usage: mindtrace-mcp-orchestrator [options]
@@ -20,11 +20,11 @@ async function printVersion() {
     const { fileURLToPath } = await import("node:url");
     const { dirname, resolve } = await import("node:path");
 
-    const here = dirname(fileURLToPath(import.meta.url));
+    const here = dirname(fileURLToPath(import.meta.url)); // dist/mcp or src/mcp
     const candidates = [
       resolve(here, "../../package.json"),
       resolve(here, "../package.json"),
-      resolve(process.cwd(), "package.json")
+      resolve(process.cwd(), "package.json"),
     ];
 
     for (const p of candidates) {
@@ -35,9 +35,7 @@ async function printVersion() {
           console.log(pkg.version);
           return;
         }
-      } catch {
-        // continue
-      }
+      } catch {}
     }
 
     console.log("unknown");
@@ -59,7 +57,7 @@ async function main() {
     process.exit(0);
   }
 
-  await startMindtraceMcpOrchestratorStdioServer();
+  await startOrchestratorMcpStdioServer();
 }
 
 main().catch((error) => {

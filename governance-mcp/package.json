@@ -28,7 +28,8 @@
     "@modelcontextprotocol/sdk": "^1.26.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "@mindtrace/contracts": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
