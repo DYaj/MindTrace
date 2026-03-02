@@ -13,3 +13,23 @@ frameworks/**/playwright-report/
 node_modules/
 dist/
 
+
+# MindTrace generated artifacts
+.mcp-contract/
+.mcp-cache/
+runs/
+history/
+test-results/
+
+# Playwright artifacts
+frameworks/**/playwright-report.json
+frameworks/**/playwright-report/
+
+# Env
+.env
+
+# npm noise (monorepo)
+**/package-lock.json
+
+# MindTrace snapshots
+mindtrace_snapshot_*.txt
