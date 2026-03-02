@@ -1,7 +1,7 @@
 {
   "name": "@mindtrace/mcp-orchestrator",
   "version": "0.1.0",
-  "description": "MindTrace MCP Orchestrator (thin wrapper) - optional single entrypoint that will delegate to contracts-mcp + frameworks-mcp later",
+  "description": "MindTrace MCP Orchestrator (stdio) - coordinates Frameworks + Governance",
   "license": "MIT",
   "author": "MindTrace Inc.",
   "type": "module",
@@ -12,18 +12,18 @@
   },
   "files": [
     "dist",
-    "scripts",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "postbuild": "node -e \"const fs=require('fs'); try{fs.chmodSync('dist/mcp/cli.js',0o755);}catch(e){}\"",
-    "dev": "tsc -p tsconfig.json --watch",
-    "smoke:packaged": "node scripts/smoke-packaged.mjs"
+    "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0"
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@mindtrace/promptpacks": "0.1.0",
+    "@mindtrace/contracts": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

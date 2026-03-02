@@ -1,5 +1,5 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-export declare function createMindtraceMcpOrchestratorServer(): Server<{
+export declare function createOrchestratorMcpServer(): Server<{
     method: string;
     params?: {
         [x: string]: unknown;
@@ -33,5 +33,5 @@ export declare function createMindtraceMcpOrchestratorServer(): Server<{
         } | undefined;
     } | undefined;
 }>;
-export declare function startMindtraceMcpOrchestratorStdioServer(): Promise<void>;
+export declare function startOrchestratorMcpStdioServer(): Promise<void>;
 //# sourceMappingURL=server.d.ts.map

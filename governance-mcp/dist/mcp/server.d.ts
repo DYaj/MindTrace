@@ -1,5 +1,5 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-export declare function createContractsMcpServer(): Server<{
+export declare function createGovernanceMcpServer(): Server<{
     method: string;
     params?: {
         [x: string]: unknown;
@@ -33,5 +33,5 @@ export declare function createContractsMcpServer(): Server<{
         } | undefined;
     } | undefined;
 }>;
-export declare function startContractsMcpStdioServer(): Promise<void>;
+export declare function startGovernanceMcpStdioServer(): Promise<void>;
 //# sourceMappingURL=server.d.ts.map
