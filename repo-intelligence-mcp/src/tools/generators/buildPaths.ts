@@ -1,8 +1,7 @@
 import { toPosix } from "../../core/normalization.js";
 import type { RepoTopologyJSON } from "../../types/topology.js";
-import type { Framework } from "../../types/contract.js";
 
-export function buildPaths(params: { topology: RepoTopologyJSON; framework: Framework; stylesDetected: string[] }): Record<string, unknown> {
+export function buildPaths(params: { topology: RepoTopologyJSON; stylesDetected: string[] }): Record<string, unknown> {
   const { topology, stylesDetected } = params;
 
   // Extract detected paths from topology (deterministic)
@@ -13,19 +12,16 @@ export function buildPaths(params: { topology: RepoTopologyJSON; framework: Fram
   const detectedWrappers = extractDetectedPaths(topology, "wrappers");
 
   // Build style-aware entrypoints map (normalized + sorted)
+  const styleEntrypoints: Record<string, { detected: string[]; fallback: string[] }> = {
+    "style1-native": { detected: detectedTests, fallback: ["tests"] },
+    "style2-bdd": { detected: detectedFeatures, fallback: ["features"] },
+    "style3-pom-bdd": { detected: detectedTests, fallback: ["tests"] }
+  };
+
   const entrypointsMap: Record<string, string[]> = {};
   for (const style of stylesDetected) {
-    let paths: string[];
-
-    if (style === "style1-native") {
-      paths = detectedTests.length > 0 ? detectedTests : ["tests"];
-    } else if (style === "style2-bdd") {
-      paths = detectedFeatures.length > 0 ? detectedFeatures : ["features"];
-    } else if (style === "style3-pom-bdd") {
-      paths = detectedTests.length > 0 ? detectedTests : ["tests"];
-    } else {
-      paths = detectedTests.length > 0 ? detectedTests : ["tests"];
-    }
+    const config = styleEntrypoints[style] || { detected: detectedTests, fallback: ["tests"] };
+    const paths = config.detected.length > 0 ? config.detected : config.fallback;
 
     entrypointsMap[style] = Array.from(new Set(paths.map(toPosix))).sort();
   }
