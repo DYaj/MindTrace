@@ -1,6 +1,9 @@
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, unlinkSync, renameSync } from "fs";
 import { join } from "path";
+import path from "path";
 import crypto from "crypto";
+import { canonicalStringify } from "../core/deterministic.js";
+import { toPosix as toPosixUtil } from "../core/normalization.js";
 
 function toPosix(p: string): string {
   return p.replace(/\\/g, "/");
@@ -82,4 +85,74 @@ export async function fingerprintContract(input: FingerprintContractInput): Prom
     outputPath: toPosix(outPath),
     warnings: warnings.length ? warnings : undefined
   };
+}
+
+/**
+ * Compute deterministic fingerprint of contract files.
+ *
+ * @param contractDir - Directory containing contract JSON files
+ * @param mode - "strict" (fail if files missing) or "best_effort" (use available files)
+ * @returns Success with fingerprint and file list, or failure with error message
+ */
+export function computeContractFingerprint(
+  contractDir: string,
+  mode: "strict" | "best_effort" = "best_effort"
+): { ok: true; fingerprint: string; files: string[] } | { ok: false; error: string } {
+  const required = [...FINGERPRINT_FILES];
+
+  const available: string[] = [];
+  const missing: string[] = [];
+
+  for (const file of required) {
+    const filePath = path.join(contractDir, file);
+    if (existsSync(filePath)) {
+      available.push(file);
+    } else {
+      missing.push(file);
+    }
+  }
+
+  if (mode === "strict" && missing.length > 0) {
+    return { ok: false, error: `Missing required files: ${missing.join(", ")}` };
+  }
+
+  if (available.length === 0) {
+    return { ok: false, error: "No contract files found" };
+  }
+
+  const sortedFiles = available.slice().sort((a, b) => a.localeCompare(b));
+
+  // Include filename in hash stream to bind content to specific file
+  const hasher = crypto.createHash("sha256");
+
+  for (const file of sortedFiles) {
+    const content = readFileSync(path.join(contractDir, file), "utf-8");
+    const parsed = JSON.parse(content);
+
+    hasher.update(toPosixUtil(file) + "\n"); // Bind filename
+    hasher.update(canonicalStringify(parsed) + "\n"); // Bind content
+  }
+
+  const fingerprint = hasher.digest("hex");
+
+  return { ok: true, fingerprint, files: sortedFiles };
+}
+
+/**
+ * Write fingerprint to disk atomically using temp→rename strategy.
+ *
+ * @param contractDir - Directory containing contract files
+ * @param fingerprint - The computed fingerprint hash
+ */
+export function writeFingerprintAtomic(contractDir: string, fingerprint: string): void {
+  const outPath = path.join(contractDir, "automation-contract.hash");
+  const tempHashPath = outPath + `.tmp.${crypto.randomUUID()}`;
+
+  writeFileSync(tempHashPath, fingerprint + "\n", "utf-8");
+
+  if (existsSync(outPath)) {
+    unlinkSync(outPath); // Delete stale
+  }
+
+  renameSync(tempHashPath, outPath); // Atomic rename
 }
