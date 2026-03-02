@@ -8,3 +8,6 @@ export * from "./contract-plumbing.js";
 
 // Phase 2.3 (additive): runtime-facing contract context artifact
 export * from "./runtime-contract-context.js";
+
+// Phase 2.3.2 (additive): runtime consumer API
+export * from "./get-runtime-contract-context.js";
