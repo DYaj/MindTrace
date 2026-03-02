@@ -114,3 +114,113 @@ export type GenerateContractOutput = {
     confidence: number;
   };
 };
+
+/**
+ * Architecture is the high-level test automation architecture.
+ * StyleKey is the repo style family key (style1-native / style2-bdd / style3-pom-bdd / unknown).
+ */
+export type Architecture = "native" | "pom" | "bdd" | "hybrid" | "unknown";
+export type StyleKey = `style${number}-${string}` | "unknown";
+
+export type EvidenceKind =
+  | "config"
+  | "dependency"
+  | "wrapper"
+  | "pattern"
+  | "entrypoint"
+  | "structure";
+
+export type Evidence = {
+  kind: EvidenceKind;
+  /**
+   * POSIX normalized, repo-relative. May be "" during initial retrofit stage.
+   */
+  file: string;
+  sample?: string;
+};
+
+export type Entrypoint = {
+  style: string;
+  entrypoint: string;
+  confidence?: number;
+};
+
+export type AutomationContract = {
+  schema_version: string;
+  contractVersion: string; // legacy compat
+  framework: Framework;
+
+  stylesDetected: string[];
+  primaryStyle: StyleKey;
+
+  architecture: Architecture;
+
+  entrypoints: Entrypoint[];
+
+  paths: Record<string, unknown>;
+
+  refs: {
+    selectorStrategyRef: string;
+    assertionStyleRef: string;
+    pageKeyPolicyRef: string;
+  };
+
+  page_identity: {
+    mode: "hybrid" | "detected" | "hardcoded";
+    primary: string;
+    ref: string;
+  };
+
+  generated_by: {
+    name: string;
+    version: string;
+  };
+
+  evidence: Evidence[];
+};
+
+export type PageKeyPolicy = {
+  schema_version: string;
+  mode: "hybrid" | "detected" | "hardcoded";
+
+  patterns: Record<
+    string,
+    {
+      template: string;
+      confidence: number;
+      source: "hardcoded" | "detected";
+    }
+  >;
+
+  collision_resolution: "deterministic_suffix" | "error" | "warn";
+  fallback_order: string[];
+  dynamicFallback: boolean;
+
+  evidence: Evidence[];
+
+  examples?: Array<{
+    path: string;
+    pageKey: string;
+    style: string;
+  }>;
+};
+
+export type ContractMeta = {
+  schema_version: string;
+  generated_at: string;
+
+  scan_summary: {
+    files_scanned: number;
+    directories: number;
+    signals_detected: number;
+  };
+
+  tool_versions: Record<string, string>;
+
+  /**
+   * Sorted list of contract files in the fingerprint set (excluding meta + hash).
+   */
+  contract_inputs: string[];
+
+  warnings?: string[];
+};
