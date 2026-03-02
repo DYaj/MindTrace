@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { computeContractFingerprint, FINGERPRINT_FILES } from "../fingerprintContract.js";
-import { mkdirSync, writeFileSync, rmSync } from "fs";
+import { computeContractFingerprint, writeFingerprintAtomic, FINGERPRINT_FILES } from "../fingerprintContract.js";
+import { mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from "fs";
 import path from "path";
 import { tmpdir } from "os";
 import crypto from "crypto";
@@ -79,5 +79,40 @@ describe("computeContractFingerprint", () => {
     if (result1.ok && result2.ok) {
       expect(result1.fingerprint).not.toBe(result2.fingerprint);
     }
+  });
+});
+
+describe("writeFingerprintAtomic", () => {
+  let testDir: string;
+
+  beforeEach(() => {
+    testDir = path.join(tmpdir(), `test-hash-${crypto.randomUUID()}`);
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(testDir, { recursive: true, force: true });
+  });
+
+  it("writes fingerprint with newline terminator", () => {
+    writeFingerprintAtomic(testDir, "abc123");
+    const written = readFileSync(path.join(testDir, "automation-contract.hash"), "utf-8");
+    expect(written).toBe("abc123\n");
+  });
+
+  it("replaces existing hash file", () => {
+    // Write initial hash
+    writeFileSync(path.join(testDir, "automation-contract.hash"), "old-hash\n", "utf-8");
+
+    // Replace with new hash
+    writeFingerprintAtomic(testDir, "new-hash");
+
+    const written = readFileSync(path.join(testDir, "automation-contract.hash"), "utf-8");
+    expect(written).toBe("new-hash\n");
+  });
+
+  it("creates hash file in correct location", () => {
+    writeFingerprintAtomic(testDir, "test-fingerprint");
+    expect(existsSync(path.join(testDir, "automation-contract.hash"))).toBe(true);
   });
 });

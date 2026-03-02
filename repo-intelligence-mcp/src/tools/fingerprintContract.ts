@@ -126,11 +126,18 @@ export function computeContractFingerprint(
   const hasher = crypto.createHash("sha256");
 
   for (const file of sortedFiles) {
-    const content = readFileSync(path.join(contractDir, file), "utf-8");
-    const parsed = JSON.parse(content);
+    try {
+      const content = readFileSync(path.join(contractDir, file), "utf-8");
+      const parsed = JSON.parse(content);
 
-    hasher.update(toPosixUtil(file) + "\n"); // Bind filename
-    hasher.update(canonicalStringify(parsed) + "\n"); // Bind content
+      hasher.update(toPosixUtil(file) + "\n"); // Bind filename
+      hasher.update(canonicalStringify(parsed) + "\n"); // Bind content
+    } catch (error) {
+      return {
+        ok: false,
+        error: `Failed to process ${file}: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
   }
 
   const fingerprint = hasher.digest("hex");
@@ -146,13 +153,27 @@ export function computeContractFingerprint(
  */
 export function writeFingerprintAtomic(contractDir: string, fingerprint: string): void {
   const outPath = path.join(contractDir, "automation-contract.hash");
-  const tempHashPath = outPath + `.tmp.${crypto.randomUUID()}`;
+  const tempHashPath = path.join(contractDir, `.hash.tmp.${crypto.randomUUID()}`);
 
-  writeFileSync(tempHashPath, fingerprint + "\n", "utf-8");
+  try {
+    writeFileSync(tempHashPath, fingerprint + "\n", "utf-8");
 
-  if (existsSync(outPath)) {
-    unlinkSync(outPath); // Delete stale
+    // On Windows, renameSync fails if target exists, so delete first
+    // On POSIX, renameSync is atomic even if target exists
+    if (process.platform === 'win32' && existsSync(outPath)) {
+      unlinkSync(outPath);
+    }
+
+    renameSync(tempHashPath, outPath);
+  } catch (error) {
+    // Cleanup temp file on failure
+    if (existsSync(tempHashPath)) {
+      try {
+        unlinkSync(tempHashPath);
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+    throw error;
   }
-
-  renameSync(tempHashPath, outPath); // Atomic rename
 }
