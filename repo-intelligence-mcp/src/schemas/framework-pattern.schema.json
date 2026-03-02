@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mindtrace://schemas/framework-pattern.schema.json",
+  "title": "Framework Pattern",
+  "type": "object",
+  "required": ["schema_version", "framework", "confidence"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string" },
+    "framework": { "type": "string" },
+    "confidence": { "type": "number" },
+    "evidence": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mindtrace://schemas/page-key-policy.schema.json",
+  "title": "Page Key Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mode",
+    "patterns",
+    "collision_resolution",
+    "fallback_order",
+    "dynamicFallback",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["hybrid", "detected", "hardcoded"]
+    },
+    "patterns": {
+      "type": "object",
+      "description": "StyleKey -> pattern template with confidence/source.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["template", "confidence", "source"],
+        "properties": {
+          "template": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "source": { "type": "string", "enum": ["hardcoded", "detected"] }
+        }
+      }
+    },
+    "collision_resolution": {
+      "type": "string",
+      "enum": ["deterministic_suffix", "error", "warn"]
+    },
+    "fallback_order": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "dynamicFallback": { "type": "boolean" },
+    "evidence": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "$ref": "mindtrace://schemas/shared/evidence.schema.json" }
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "pageKey", "style"],
+        "properties": {
+          "path": { "type": "string" },
+          "pageKey": { "type": "string" },
+          "style": { "type": "string" }
+        }
+      }
+    }
+  }
+}

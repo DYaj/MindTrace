@@ -1,29 +1,46 @@
 import { Before, After } from "@cucumber/cucumber";
-import { chromium, Browser, BrowserContext, Page } from "@playwright/test";
-import { BASE_URL } from "./env";
+import { chromium, Browser, Page } from "@playwright/test";
 import { MindTraceWorld } from "./world";
+import { getMindTraceContractContext } from "./contractContext";
+
+const BASE_URL =
+  process.env.BASE_URL || "https://practicetestautomation.com/practice-test-login/";
+
+let browser: Browser;
 
 Before(async function (this: MindTraceWorld) {
-  const browser: Browser = await chromium.launch();
-  const context: BrowserContext = await browser.newContext();
+  // ------------------------------------------------------------
+  // MindTrace Contract Context smoke check (non-fatal)
+  // ------------------------------------------------------------
+  try {
+    const ctx = getMindTraceContractContext();
+    if (!ctx.ok) {
+      console.log("[mindtrace][style2-bdd] contract context not available:", ctx.warnings, ctx.notes ?? []);
+    } else {
+      console.log("[mindtrace][style2-bdd] contractDir:", ctx.contractDir);
+    }
+  } catch {
+    // ignore (must never fail the run)
+  }
+
+  browser = await chromium.launch();
+  const context = await browser.newContext();
   const page: Page = await context.newPage();
 
-  this.browser = browser;
-  this.context = context;
   this.page = page;
 
-  // Always navigate to user-provided BASE_URL (supports full path like /practice-test-login/)
-  await this.page.goto(BASE_URL, { waitUntil: "load" });
+  await page.goto(BASE_URL, { waitUntil: "load" });
 });
 
 After(async function (this: MindTraceWorld) {
   try {
     await this.page?.close();
-  } catch {}
+  } catch {
+    // ignore
+  }
   try {
-    await this.context?.close();
-  } catch {}
-  try {
-    await this.browser?.close();
-  } catch {}
+    await browser?.close();
+  } catch {
+    // ignore
+  }
 });

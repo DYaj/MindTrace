@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mindtrace://schemas/shared/evidence.schema.json",
+  "title": "Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "file"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["config", "dependency", "wrapper", "pattern", "entrypoint", "structure"]
+    },
+    "file": {
+      "type": "string",
+      "description": "POSIX normalized, repo-relative. May be empty string in initial retrofit stage."
+    },
+    "sample": { "type": "string" }
+  }
+}
