@@ -3,7 +3,9 @@
     "allow": [
       "Bash(grep -n '$ref' repo-intelligence-mcp/src/schemas/*.json)",
       "Bash(npm test -- src/core/__tests__/normalization.test.ts src/core/__tests__/deterministic.test.ts)",
-      "Bash(npm test -- src/core/__tests__/validation.test.ts)"
+      "Bash(npm test -- src/core/__tests__/validation.test.ts)",
+      "Bash(npm run build)",
+      "Bash(npm test)"
     ]
   }
 }
