@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mindtrace://schemas/selector-strategy.schema.json",
+  "title": "Selector Strategy",
+  "type": "object",
+  "required": ["schema_version", "preferred"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string" },
+    "preferred": { "type": "array", "items": { "type": "string" } },
+    "wrappers": { "type": "array", "items": { "type": "object" } },
+    "evidence": { "type": "array", "items": { "type": "object" } }
+  }
+}

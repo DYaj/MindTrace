@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mindtrace://schemas/automation-contract.schema.json",
+  "title": "Automation Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contractVersion",
+    "framework",
+    "stylesDetected",
+    "primaryStyle",
+    "architecture",
+    "entrypoints",
+    "paths",
+    "refs",
+    "page_identity",
+    "generated_by",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Legacy compatibility field during transition"
+    },
+    "framework": {
+      "type": "string",
+      "enum": ["cypress", "playwright", "selenium", "unknown"]
+    },
+    "stylesDetected": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0,
+      "description": "Detected style keys (e.g., style1-native, style2-bdd, style3-pom-bdd). Can be empty for unknown repos."
+    },
+    "primaryStyle": {
+      "type": "string",
+      "description": "Primary style key (e.g., style3-pom-bdd) or 'unknown'.",
+      "pattern": "^(style\\d+-[a-z0-9-]+|unknown)$"
+    },
+    "architecture": {
+      "type": "string",
+      "enum": ["native", "pom", "bdd", "hybrid", "unknown"]
+    },
+    "entrypoints": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["style", "entrypoint"],
+        "properties": {
+          "style": { "type": "string" },
+          "entrypoint": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "description": "Repo path map used by Phase 1+ (must be deterministic). Keep flexible early; tighten later.",
+      "additionalProperties": true
+    },
+    "refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selectorStrategyRef", "assertionStyleRef", "pageKeyPolicyRef"],
+      "properties": {
+        "selectorStrategyRef": { "type": "string" },
+        "assertionStyleRef": { "type": "string" },
+        "pageKeyPolicyRef": { "type": "string" }
+      }
+    },
+    "page_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "primary", "ref"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["hybrid", "detected", "hardcoded"] },
+        "primary": { "type": "string" },
+        "ref": { "type": "string" }
+      }
+    },
+    "generated_by": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "$ref": "mindtrace://schemas/shared/evidence.schema.json" }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mindtrace://schemas/contract-meta.schema.json",
+  "title": "Contract Metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at",
+    "scan_summary",
+    "tool_versions",
+    "contract_inputs"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scan_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files_scanned", "directories", "signals_detected"],
+      "properties": {
+        "files_scanned": { "type": "integer", "minimum": 0 },
+        "directories": { "type": "integer", "minimum": 0 },
+        "signals_detected": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "tool_versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "contract_inputs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Sorted list of contract files in the fingerprint set (excluding meta + hash)."
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

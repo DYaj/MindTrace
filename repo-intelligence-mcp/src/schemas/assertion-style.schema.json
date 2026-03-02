@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mindtrace://schemas/assertion-style.schema.json",
+  "title": "Assertion Style",
+  "type": "object",
+  "required": ["schema_version", "primaryStyle"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string" },
+    "primaryStyle": { "type": "string" },
+    "wrappers": { "type": "array", "items": { "type": "string" } },
+    "evidence": { "type": "array", "items": { "type": "object" } }
+  }
+}
