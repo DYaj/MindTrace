@@ -59,14 +59,14 @@ export async function validateContractBundle(contractDir: string): Promise<Valid
   }
 
   // Verify hash file matches computed fingerprint
-  const hashPath = path.join(contractDir, "automation-contract.hash");
+  const hashPath = path.join(contractDir, "contract.fingerprint.sha256");
   try {
     const storedHash = await fs.readFile(hashPath, "utf-8");
     if (storedHash.trim() !== fpResult.fingerprint) {
       errors.push(`Hash mismatch: stored=${storedHash.trim()}, computed=${fpResult.fingerprint}`);
     }
   } catch (error) {
-    errors.push(`Missing or unreadable automation-contract.hash file: ${error instanceof Error ? error.message : String(error)}`);
+    errors.push(`Missing or unreadable contract.fingerprint.sha256 file: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   return {

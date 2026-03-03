@@ -204,7 +204,7 @@ export async function generateContractBundle(params: {
     }
 
     // Step 9: Read the fingerprint that was written by writeContractBundle
-    const hashFile = path.join(contractDir, "automation-contract.hash");
+    const hashFile = path.join(contractDir, "contract.fingerprint.sha256");
     const hashContent = await fs.readFile(hashFile, "utf-8");
     const hash = hashContent.trim();
 
@@ -213,7 +213,7 @@ export async function generateContractBundle(params: {
       hash,
       filesWritten: [
         "automation-contract.json",
-        "automation-contract.hash",
+        "contract.fingerprint.sha256",
         "contract.meta.json",
         "page-key-policy.json"
       ]

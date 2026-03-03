@@ -96,23 +96,23 @@ describe("writeFingerprintAtomic", () => {
 
   it("writes fingerprint with newline terminator", () => {
     writeFingerprintAtomic(testDir, "abc123");
-    const written = readFileSync(path.join(testDir, "automation-contract.hash"), "utf-8");
+    const written = readFileSync(path.join(testDir, "contract.fingerprint.sha256"), "utf-8");
     expect(written).toBe("abc123\n");
   });
 
   it("replaces existing hash file", () => {
     // Write initial hash
-    writeFileSync(path.join(testDir, "automation-contract.hash"), "old-hash\n", "utf-8");
+    writeFileSync(path.join(testDir, "contract.fingerprint.sha256"), "old-hash\n", "utf-8");
 
     // Replace with new hash
     writeFingerprintAtomic(testDir, "new-hash");
 
-    const written = readFileSync(path.join(testDir, "automation-contract.hash"), "utf-8");
+    const written = readFileSync(path.join(testDir, "contract.fingerprint.sha256"), "utf-8");
     expect(written).toBe("new-hash\n");
   });
 
   it("creates hash file in correct location", () => {
     writeFingerprintAtomic(testDir, "test-fingerprint");
-    expect(existsSync(path.join(testDir, "automation-contract.hash"))).toBe(true);
+    expect(existsSync(path.join(testDir, "contract.fingerprint.sha256"))).toBe(true);
   });
 });

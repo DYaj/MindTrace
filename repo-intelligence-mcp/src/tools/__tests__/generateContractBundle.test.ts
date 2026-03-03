@@ -24,7 +24,7 @@ describe("generateContractBundle", () => {
     expect(result.hash).toMatch(/^[a-f0-9]{64}$/);
     expect(result.filesWritten).toEqual([
       "automation-contract.json",
-      "automation-contract.hash",
+      "contract.fingerprint.sha256",
       "contract.meta.json",
       "page-key-policy.json"
     ]);
