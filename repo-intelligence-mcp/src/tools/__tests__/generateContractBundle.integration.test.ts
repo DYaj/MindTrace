@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { generateContractBundle } from "../generateContractBundle.js";
 import { validateContractBundle } from "../../contracts/validateContractBundle.js";
 import { computeContractFingerprint } from "../fingerprintContract.js";
+import { resolveContractDir } from "../../core/paths.js";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -100,5 +101,35 @@ describe("generateContractBundle (integration)", () => {
       expect(hashContent).toBe(fpResult.fingerprint);
       expect(result.hash).toBe(fpResult.fingerprint);
     }
+  });
+
+  it("uses real scanRepo instead of placeholder topology", async () => {
+    // Create a test file to ensure scanning works
+    await fs.writeFile(path.join(testRepoRoot, "test.spec.ts"), `
+import { test, expect } from '@playwright/test';
+
+test('example', async ({ page }) => {
+  await page.goto('https://example.com');
+  expect(await page.title()).toBe('Example');
+});
+  `);
+
+    const result = await generateContractBundle({
+      repoRoot: testRepoRoot,
+      mode: "strict"
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Should not fail");
+
+    // Read repo-topology.json (which contains the scanned topology)
+    const { dir: contractDir } = resolveContractDir(testRepoRoot);
+    const topologyPath = path.join(contractDir, "repo-topology.json");
+    const topology = JSON.parse(await fs.readFile(topologyPath, "utf-8"));
+
+    // Verify topology includes scanned files (not empty placeholder)
+    expect(topology.files).toBeDefined();
+    expect(topology.files.count).toBeGreaterThan(0);
+    expect(topology.files.paths).toContain("test.spec.ts");
   });
 });

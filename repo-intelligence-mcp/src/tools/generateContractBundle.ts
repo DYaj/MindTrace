@@ -8,6 +8,7 @@ import { writeContractBundle } from "../contracts/writeContractBundle.js";
 import { validateContractBundle } from "../contracts/validateContractBundle.js";
 import { computeContractFingerprint } from "./fingerprintContract.js";
 import { resolveContractDir } from "../core/paths.js";
+import { scanRepo } from "./scanRepo.js";
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
@@ -29,14 +30,11 @@ export async function generateContractBundle(params: {
   const mode = params.mode ?? "best_effort";
 
   try {
-    // Step 1: Scan repo (placeholder - will be replaced with real scanRepo)
-    // TODO: Replace with actual scanRepo from repo-intelligence-mcp
-    const topology: RepoTopologyJSON = {
-      repoRoot: params.repoRoot,
-      entrypoints: [],
-      files: [],
-      packages: []
-    };
+    // Step 1: Scan repo with real implementation
+    const topology = await scanRepo({
+      rootPath: params.repoRoot,
+      // Use defaults for ignore dirs/globs and limits
+    });
 
     // Step 2: Detect framework, structure, locator style, assertion style (placeholders)
     // TODO: Replace with actual detection functions
