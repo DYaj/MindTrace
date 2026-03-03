@@ -9,7 +9,7 @@ import { validateContractBundle } from "../contracts/validateContractBundle.js";
 import { computeContractFingerprint } from "./fingerprintContract.js";
 import { resolveContractDir } from "../core/paths.js";
 import { scanRepo } from "./scanRepo.js";
-import { detectFramework } from "./infer.js";
+import { detectFramework, inferStructure } from "./infer.js";
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
@@ -40,24 +40,8 @@ export async function generateContractBundle(params: {
     // Step 2: Detect framework with real implementation
     const frameworkDetection = detectFramework(topology);
 
-    const structure: import("../types/contract.js").InferStructureOutput = {
-      style: "native",
-      confidence: 0.8,
-      signalsUsed: [],
-      structure: {
-        pageObjects: {
-          present: false,
-          paths: [],
-          pattern: "unknown"
-        },
-        bdd: {
-          present: false,
-          featurePaths: [],
-          stepDefPaths: [],
-          glueStyle: "unknown"
-        }
-      }
-    };
+    // Step 3: Infer structure with real implementation
+    const structureDetection = inferStructure(topology);
 
     const locatorStyle: import("../types/contract.js").DetectLocatorStyleOutput = {
       preferenceOrder: ["role", "css"],
@@ -87,7 +71,7 @@ export async function generateContractBundle(params: {
     const automationContract = generateAutomationContract({
       topology,
       framework: frameworkDetection,
-      structure,
+      structure: structureDetection,
       locatorStyle,
       assertionStyle,
       stylesDetected,

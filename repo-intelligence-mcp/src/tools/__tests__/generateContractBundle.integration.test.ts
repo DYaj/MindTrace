@@ -178,4 +178,36 @@ export default defineConfig({});
     expect(frameworkPattern.evidence.length).toBeGreaterThan(0);
     expect(frameworkPattern.evidence).toContain("playwright.config.ts");
   });
+
+  it("infers structure from actual repository patterns", async () => {
+    // Create BDD-style structure
+    await fs.mkdir(path.join(testRepoRoot, "features"), { recursive: true });
+    await fs.writeFile(path.join(testRepoRoot, "features/login.feature"), `
+Feature: Login
+  Scenario: Successful login
+    Given I am on the login page
+    When I enter credentials
+    Then I should be logged in
+  `);
+
+    await fs.mkdir(path.join(testRepoRoot, "step_definitions"), { recursive: true });
+    await fs.writeFile(path.join(testRepoRoot, "step_definitions/login.ts"), `
+import { Given, When, Then } from '@cucumber/cucumber';
+  `);
+
+    const result = await generateContractBundle({
+      repoRoot: testRepoRoot,
+      mode: "strict"
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Should not fail");
+
+    const { dir: contractDir } = resolveContractDir(testRepoRoot);
+    const contractPath = path.join(contractDir, "automation-contract.json");
+    const contract = JSON.parse(await fs.readFile(contractPath, "utf-8"));
+
+    // Verify BDD structure detected (architecture field stores the style)
+    expect(contract.architecture).toBe("bdd");
+  });
 });
