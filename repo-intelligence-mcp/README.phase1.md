@@ -39,16 +39,17 @@ Phase 1 replaces Phase 0's placeholder detection data with real repository scann
 
 ```bash
 cd repo-intelligence-mcp
-npm run mcp:server
+npm run build
+npx mindtrace-repo-intelligence-mcp
 
-# Via MCP tool:
+# Via MCP tool (from MCP client like Claude Desktop):
 generate_contract_bundle({ repoRoot: "/path/to/repo" })
 ```
 
 ### Generate Contract + Page Cache
 
 ```bash
-# Via MCP tool:
+# Via MCP tool (from MCP client):
 generate_contract_bundle({
   repoRoot: "/path/to/repo",
   buildCache: true
