@@ -173,6 +173,5 @@ After Phase 0 completion:
 
 ## References
 
-- **Design Document**: [docs/plans/2026-03-02-phase0-contract-generators-design.md](../docs/plans/2026-03-02-phase0-contract-generators-design.md)
-- **Implementation Plan**: [docs/plans/2026-03-02-phase0-contract-generators-implementation.md](../docs/plans/2026-03-02-phase0-contract-generators-implementation.md)
-- **Phase 0 Roadmap**: [Phase0_Roadmap_EXECUTION_CHECKLIST.md](../Phase0_Roadmap_EXECUTION_CHECKLIST.md)
+- **Design Document**: [docs/plans/2026-03-02-phase0-contract-generators-design.md](../../docs/plans/2026-03-02-phase0-contract-generators-design.md)
+- **Implementation Plan**: [docs/plans/2026-03-02-phase0-contract-generators-implementation.md](../../docs/plans/2026-03-02-phase0-contract-generators-implementation.md)

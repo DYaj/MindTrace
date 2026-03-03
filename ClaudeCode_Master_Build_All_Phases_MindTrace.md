@@ -51,7 +51,7 @@ The repo already contains:
 Already generates:
 
 ```
-.mcp-contract/
+.mindtrace/contracts/
   automation-contract.md
   repo-topology.json
   framework-pattern.json
@@ -170,11 +170,11 @@ repo-intelligence-mcp/
 Must ADD:
 
 ```
-.mcp-contract/
+.mindtrace/contracts/
   automation-contract.json
   page-key-policy.json
   contract.meta.json
-  automation-contract.hash
+  contract.fingerprint.sha256
 ```
 
 automation-contract.json MUST include:
@@ -190,7 +190,7 @@ automation-contract.json MUST include:
 - refs{}
 - generated_by{}
 
-automation-contract.hash:
+contract.fingerprint.sha256:
 SHA256 over normalized JSON of:
 
 - automation-contract.json
@@ -233,7 +233,7 @@ Cache validity == contract hash
 
 Runtime must:
 
-- Load `.mcp-contract/automation-contract.json`
+- Load `.mindtrace/contracts/automation-contract.json`
 - Load `.mcp-cache/v1/*`
 - Write:
   ```
@@ -370,7 +370,7 @@ This is a **non-optional design contract** for all current and future features.
 
 | Artifact Location         | Authority Writer                | Read By                  | Mutability         |
 | ------------------------- | ------------------------------- | ------------------------ | ------------------ |
-| `.mcp-contract/*`         | repo-intelligence-mcp (Phase 0) | runtime, adapters, cache | WRITE-ONCE PER RUN |
+| `.mindtrace/contracts/*`         | repo-intelligence-mcp (Phase 0) | runtime, adapters, cache | WRITE-ONCE PER RUN |
 | `.mcp-cache/*`            | page-cache builder (Phase 1)    | runtime, healing engine  | CONTRACT-BOUND     |
 | `runs/*/artifacts/*`      | runtime                         | governance               | RUN-LOCAL          |
 | `runs/*/audit/*`          | runtime                         | governance, enterprise   | APPEND-ONLY        |
@@ -378,7 +378,7 @@ This is a **non-optional design contract** for all current and future features.
 
 ### Strict Rules
 
-- Runtime **MUST NOT write** to `.mcp-contract/*`
+- Runtime **MUST NOT write** to `.mindtrace/contracts/*`
 - Runtime **MUST NOT write** to `.mcp-cache/*`
 - Cache builder **MUST NOT mutate** contract
 - Governance **MUST NOT modify runtime artifacts**
@@ -437,7 +437,7 @@ Cache validity == Contract fingerprint
 
 ```
 .mcp-cache/meta.json.contract_hash ==
-.mcp-contract/automation-contract.hash
+.mindtrace/contracts/contract.fingerprint.sha256
 ```
 
 If mismatch:

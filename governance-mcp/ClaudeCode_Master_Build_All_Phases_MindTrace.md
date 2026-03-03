@@ -46,7 +46,7 @@ The repo already contains:
 ## Repo Intelligence MCP (Partial Phase 0 already built)
 Already generates:
 ```
-.mcp-contract/
+.mindtrace/contracts/
   automation-contract.md
   repo-topology.json
   framework-pattern.json
@@ -157,11 +157,11 @@ repo-intelligence-mcp/
 
 Must ADD:
 ```
-.mcp-contract/
+.mindtrace/contracts/
   automation-contract.json
   page-key-policy.json
   contract.meta.json
-  automation-contract.hash
+  contract.fingerprint.sha256
 ```
 
 automation-contract.json MUST include:
@@ -176,7 +176,7 @@ automation-contract.json MUST include:
 - refs{}
 - generated_by{}
 
-automation-contract.hash:
+contract.fingerprint.sha256:
 SHA256 over normalized JSON of:
 - automation-contract.json
 - repo-topology.json
@@ -214,7 +214,7 @@ Cache validity == contract hash
 # PHASE 2 — RUNTIME CONTRACT EXECUTION
 
 Runtime must:
-- Load `.mcp-contract/automation-contract.json`
+- Load `.mindtrace/contracts/automation-contract.json`
 - Load `.mcp-cache/v1/*`
 - Write:
   ```
