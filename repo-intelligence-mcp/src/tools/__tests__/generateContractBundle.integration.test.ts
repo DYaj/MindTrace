@@ -210,4 +210,33 @@ import { Given, When, Then } from '@cucumber/cucumber';
     // Verify BDD structure detected (architecture field stores the style)
     expect(contract.architecture).toBe("bdd");
   });
+
+  it("detects locator style from actual test files", async () => {
+    // Create test file with data-testid usage (scanner looks for string "data-testid")
+    await fs.writeFile(path.join(testRepoRoot, "login.spec.ts"), `
+import { test, expect } from '@playwright/test';
+
+test('login', async ({ page }) => {
+  await page.locator('[data-testid="username"]').fill('user');
+  await page.locator('[data-testid="password"]').fill('pass');
+  await page.getByRole('button', { name: 'Login' }).click();
+});
+  `);
+
+    const result = await generateContractBundle({
+      repoRoot: testRepoRoot,
+      mode: "strict"
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Should not fail");
+
+    const { dir: contractDir } = resolveContractDir(testRepoRoot);
+    const selectorStrategyPath = path.join(contractDir, "selector-strategy.json");
+    const selectorStrategy = JSON.parse(await fs.readFile(selectorStrategyPath, "utf-8"));
+
+    // Verify locator preferences detected from test patterns
+    expect(selectorStrategy.preferred).toContain("data-testid");
+    expect(selectorStrategy.preferred).toContain("role");
+  });
 });

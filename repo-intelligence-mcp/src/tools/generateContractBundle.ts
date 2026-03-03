@@ -9,7 +9,7 @@ import { validateContractBundle } from "../contracts/validateContractBundle.js";
 import { computeContractFingerprint } from "./fingerprintContract.js";
 import { resolveContractDir } from "../core/paths.js";
 import { scanRepo } from "./scanRepo.js";
-import { detectFramework, inferStructure } from "./infer.js";
+import { detectFramework, inferStructure, detectLocatorStyle } from "./infer.js";
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
@@ -43,15 +43,8 @@ export async function generateContractBundle(params: {
     // Step 3: Infer structure with real implementation
     const structureDetection = inferStructure(topology);
 
-    const locatorStyle: import("../types/contract.js").DetectLocatorStyleOutput = {
-      preferenceOrder: ["role", "css"],
-      confidence: 0.85,
-      signalsUsed: [],
-      orgConventions: {
-        stableAttributeKeys: [],
-        customLocatorHelpers: []
-      }
-    };
+    // Step 4: Detect locator style with real implementation
+    const locatorDetection = detectLocatorStyle(topology);
 
     const assertionStyle: import("../types/contract.js").DetectAssertionStyleOutput = {
       primary: "expect",
@@ -72,7 +65,7 @@ export async function generateContractBundle(params: {
       topology,
       framework: frameworkDetection,
       structure: structureDetection,
-      locatorStyle,
+      locatorStyle: locatorDetection,
       assertionStyle,
       stylesDetected,
       entrypoints,
@@ -100,7 +93,7 @@ export async function generateContractBundle(params: {
     const retrofitted = retrofitEvidenceBundle(
       {
         framework: frameworkDetection as any,
-        selector: locatorStyle as any,
+        selector: locatorDetection as any,
         assertion: assertionStyle as any
       },
       topology
@@ -146,7 +139,7 @@ export async function generateContractBundle(params: {
       path.join(contractDir, "selector-strategy.json"),
       canonicalStringify({
         schema_version: "1.0.0",
-        preferred: locatorStyle.preferenceOrder,
+        preferred: locatorDetection.preferenceOrder,
         wrappers: [],
         evidence: []
       }),
