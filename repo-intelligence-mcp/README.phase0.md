@@ -158,18 +158,19 @@ Phase 0 does NOT:
 
 After Phase 0 completion:
 
-1. **Phase 1**: Semantic page cache (contract-bound)
-   - Real repository scanning (replace placeholders)
+1. ✅ **Phase 1**: Real Detection & Page Cache (COMPLETE)
+   - Real repository scanning (replaced placeholders)
    - Real framework/locator/assertion detection
-   - Build page semantic cache from contracts
+   - Optional contract-derived page cache
+   - See: [README.phase1.md](README.phase1.md)
 
 2. **Phase 2**: Runtime contract loader
    - Load contracts during test execution
    - Contract-aware runtime context
+   - Enforce cache freshness (validate `contractSha256`)
 
 3. **Phase 3**: Healing engine upgrade (contract-aware)
-   - Use contracts for healing decisions
-   - Contract-based adaptation logic
+4. **Phase 4**: Cross-framework adapters
 
 ## References
 
