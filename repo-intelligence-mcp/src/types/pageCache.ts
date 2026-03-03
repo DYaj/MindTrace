@@ -5,6 +5,7 @@ export type PageSemanticCacheEntry = {
   pageId: string;              // stable slug derived from file path
   sourcePath: string;          // repo-relative posix path to page file
   inferredName: string;        // filename-based
+  contractSha256?: string;     // ✅ Phase 1: Link to contract for drift detection (optional for backward compat)
   routes: string[];            // '/login', '/settings', etc.
   stableIds: string[];         // data-testid/data-qa/data-cy values
   roles: string[];             // 'button', 'textbox', ...
@@ -23,8 +24,13 @@ export type PageSemanticCacheEntry = {
 
 export type PageCacheIndex = {
   cacheVersion: PageCacheVersion;
-  generatedAt: string;
-  repoRoot: string;
+  contractSha256?: string;     // ✅ Phase 1: Link to contract for drift detection (optional for backward compat)
+  generated_by?: {             // ✅ Phase 1: Provenance without timestamp (optional for backward compat)
+    name: string;
+    version: string;
+  };
+  generatedAt?: string;        // ⚠️ DEPRECATED in Phase 1 (kept optional for backward compat, removed in new code)
+  repoRoot?: string;           // ⚠️ Optional for contract-derived caches
   pages: Array<{
     pageId: string;
     sourcePath: string;

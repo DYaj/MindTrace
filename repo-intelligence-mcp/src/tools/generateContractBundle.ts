@@ -7,10 +7,13 @@ import { retrofitEvidenceBundle } from "./generators/retrofitEvidence.js";
 import { writeContractBundle } from "../contracts/writeContractBundle.js";
 import { validateContractBundle } from "../contracts/validateContractBundle.js";
 import { computeContractFingerprint } from "./fingerprintContract.js";
+import { resolveContractDir } from "../core/paths.js";
+import { scanRepo } from "./scanRepo.js";
+import { detectFramework, inferStructure, detectLocatorStyle, detectAssertionStyle } from "./infer.js";
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
-  | { ok: true; hash: string; filesWritten: string[] }
+  | { ok: true; contractSha256: string; filesWritten: string[] }
   | { ok: false; error: string };
 
 /**
@@ -18,69 +21,34 @@ export type GenerateContractBundleResult =
  *
  * Pipeline: scan → detect → generate → retrofit → write → validate → fingerprint
  *
- * @param params - { repoRoot: string; mode?: "strict" | "best_effort" }
- * @returns Result with hash and files written, or error
+ * @param params - { repoRoot: string; mode?: "strict" | "best_effort"; buildCache?: boolean }
+ * @returns Result with contractSha256 and files written, or error
  */
 export async function generateContractBundle(params: {
   repoRoot: string;
   mode?: "strict" | "best_effort";
+  buildCache?: boolean;
 }): Promise<GenerateContractBundleResult> {
   const mode = params.mode ?? "best_effort";
 
   try {
-    // Step 1: Scan repo (placeholder - will be replaced with real scanRepo)
-    // TODO: Replace with actual scanRepo from repo-intelligence-mcp
-    const topology: RepoTopologyJSON = {
-      repoRoot: params.repoRoot,
-      entrypoints: [],
-      files: [],
-      packages: []
-    };
+    // Step 1: Scan repo with real implementation
+    const topology = await scanRepo({
+      rootPath: params.repoRoot,
+      // Use defaults for ignore dirs/globs and limits
+    });
 
-    // Step 2: Detect framework, structure, locator style, assertion style (placeholders)
-    // TODO: Replace with actual detection functions
-    const framework: import("../types/contract.js").DetectFrameworkOutput = {
-      framework: "playwright",
-      confidence: 0.9,
-      signalsUsed: [],
-      notes: []
-    };
+    // Step 2: Detect framework with real implementation
+    const frameworkDetection = detectFramework(topology);
 
-    const structure: import("../types/contract.js").InferStructureOutput = {
-      style: "native",
-      confidence: 0.8,
-      signalsUsed: [],
-      structure: {
-        pageObjects: {
-          present: false,
-          paths: [],
-          pattern: "unknown"
-        },
-        bdd: {
-          present: false,
-          featurePaths: [],
-          stepDefPaths: [],
-          glueStyle: "unknown"
-        }
-      }
-    };
+    // Step 3: Infer structure with real implementation
+    const structureDetection = inferStructure(topology);
 
-    const locatorStyle: import("../types/contract.js").DetectLocatorStyleOutput = {
-      preferenceOrder: ["role", "css"],
-      confidence: 0.85,
-      signalsUsed: [],
-      orgConventions: {
-        stableAttributeKeys: [],
-        customLocatorHelpers: []
-      }
-    };
+    // Step 4: Detect locator style with real implementation
+    const locatorDetection = detectLocatorStyle(topology);
 
-    const assertionStyle: import("../types/contract.js").DetectAssertionStyleOutput = {
-      primary: "expect",
-      confidence: 0.9,
-      wrappers: [],
-      signalsUsed: []
-    };
+    // Step 5: Detect assertion style with real implementation
+    const assertionDetection = detectAssertionStyle(topology);
 
     const stylesDetected = ["style1-native"];
     const entrypoints = [];
@@ -92,10 +60,10 @@ export async function generateContractBundle(params: {
     // Step 4: Generate contracts
     const automationContract = generateAutomationContract({
       topology,
-      framework,
-      structure,
-      locatorStyle,
-      assertionStyle,
+      framework: frameworkDetection,
+      structure: structureDetection,
+      locatorStyle: locatorDetection,
+      assertionStyle: assertionDetection,
       stylesDetected,
       entrypoints,
       primaryStyle
@@ -121,25 +89,33 @@ export async function generateContractBundle(params: {
     // Step 5: Retrofit evidence (using placeholder contracts for now)
     const retrofitted = retrofitEvidenceBundle(
       {
-        framework: framework as any,
-        selector: locatorStyle as any,
-        assertion: assertionStyle as any
+        framework: frameworkDetection as any,
+        selector: locatorDetection as any,
+        assertion: assertionDetection as any
       },
       topology
     );
 
     // Step 6: Write detection artifacts (placeholders for Phase 0)
-    const contractDir = path.join(params.repoRoot, ".mindtrace", "contracts");
+    const { dir: contractDir, isLegacy } = resolveContractDir(params.repoRoot);
+
+    // Emit warning if legacy path used
+    if (isLegacy) {
+      console.warn("⚠️  Using legacy contract directory: .mindtrace/contracts/ (migrate to .mcp-contract/)");
+    }
+
     await fs.mkdir(contractDir, { recursive: true });
 
     // Write placeholder detection artifacts required for fingerprinting
     // TODO: Replace with real detection artifacts in Phase 1
     const { canonicalStringify } = await import("../core/deterministic.js");
 
-    // repo-topology.json - no schema validation for now
+    // Write repo-topology.json (exclude scannedAt for deterministic fingerprinting)
+    // Note: scannedAt is volatile (timestamp), but contract.meta.json already has generated_at
+    const { scannedAt, ...topologyForFingerprint } = topology;
     await fs.writeFile(
       path.join(contractDir, "repo-topology.json"),
-      canonicalStringify(topology),
+      canonicalStringify(topologyForFingerprint),
       "utf-8"
     );
 
@@ -148,9 +124,9 @@ export async function generateContractBundle(params: {
       path.join(contractDir, "framework-pattern.json"),
       canonicalStringify({
         schema_version: "1.0.0",
-        framework: framework.framework,
-        confidence: framework.confidence,
-        evidence: framework.signalsUsed
+        framework: frameworkDetection.framework,
+        confidence: frameworkDetection.confidence,
+        evidence: frameworkDetection.signalsUsed
       }),
       "utf-8"
     );
@@ -160,7 +136,7 @@ export async function generateContractBundle(params: {
       path.join(contractDir, "selector-strategy.json"),
       canonicalStringify({
         schema_version: "1.0.0",
-        preferred: locatorStyle.preferenceOrder,
+        preferred: locatorDetection.preferenceOrder,
         wrappers: [],
         evidence: []
       }),
@@ -172,7 +148,7 @@ export async function generateContractBundle(params: {
       path.join(contractDir, "assertion-style.json"),
       canonicalStringify({
         schema_version: "1.0.0",
-        primaryStyle: assertionStyle.primary,
+        primaryStyle: assertionDetection.primary,
         wrappers: [],
         evidence: []
       }),
@@ -206,11 +182,17 @@ export async function generateContractBundle(params: {
     // Step 9: Read the fingerprint that was written by writeContractBundle
     const hashFile = path.join(contractDir, "contract.fingerprint.sha256");
     const hashContent = await fs.readFile(hashFile, "utf-8");
-    const hash = hashContent.trim();
+    const contractSha256 = hashContent.trim();
+
+    // Step 10: Optionally build cache
+    if (params.buildCache) {
+      // TODO: Implement cache building in Task 9
+      console.log("Cache building requested but not yet implemented");
+    }
 
     return {
       ok: true,
-      hash,
+      contractSha256,
       filesWritten: [
         "automation-contract.json",
         "contract.fingerprint.sha256",
