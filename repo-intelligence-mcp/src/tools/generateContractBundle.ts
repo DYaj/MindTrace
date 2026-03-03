@@ -107,8 +107,6 @@ export async function generateContractBundle(params: {
 
     await fs.mkdir(contractDir, { recursive: true });
 
-    // Write placeholder detection artifacts required for fingerprinting
-    // TODO: Replace with real detection artifacts in Phase 1
     const { canonicalStringify } = await import("../core/deterministic.js");
 
     // Write repo-topology.json (exclude scannedAt + repoRoot for deterministic fingerprinting)

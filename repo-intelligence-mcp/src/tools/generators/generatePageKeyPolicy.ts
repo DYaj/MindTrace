@@ -51,11 +51,11 @@ export function generatePageKeyPolicy(params: { topology: RepoTopologyJSON; styl
 }
 
 function buildPageKeyEvidence(topology: RepoTopologyJSON): Evidence[] {
-  // TODO: Extract evidence from topology
+  // TODO(Phase 2+): Extract evidence from topology
   return [];
 }
 
 function buildExamples(topology: RepoTopologyJSON): Array<{ path: string; pageKey: string; style: string }> {
-  // TODO: Extract examples from topology
+  // TODO(Phase 2+): Extract examples from topology
   return [];
 }

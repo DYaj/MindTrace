@@ -80,6 +80,6 @@ function mergeEvidence(existing: Evidence[], mapped: Evidence[]): Evidence[] {
 }
 
 function mapRepoSignalsToEvidence(repoSignals: string[], topology: RepoTopologyJSON, type: string): Evidence[] {
-  // TODO: Map repoSignals hashes to Evidence objects with file paths
+  // TODO(Phase 2+): Map repoSignals hashes to Evidence objects with file paths
   return [];
 }

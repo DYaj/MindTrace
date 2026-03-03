@@ -52,6 +52,6 @@ export function generateAutomationContract(params: {
 }
 
 function mapFrameworkEvidence(framework: DetectFrameworkOutput, structure: InferStructureOutput): Evidence[] {
-  // TODO: Map repoSignals to Evidence format
+  // TODO(Phase 2+): Map repoSignals to Evidence format
   return [];
 }
