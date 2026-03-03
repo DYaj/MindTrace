@@ -36,7 +36,14 @@ export async function validateContractBundle(contractDir: string): Promise<Valid
 
       const schemaResult = validateAgainstSchema(file, data);
       if (!schemaResult.valid) {
-        errors.push(...schemaResult.errors);
+        // Phase 0: Treat missing schemas as warnings, not errors
+        const hasNoSchema = schemaResult.errors.some(e => e.includes("No schema found"));
+        if (hasNoSchema) {
+          warnings.push(...schemaResult.errors);
+        } else {
+          // Prefix errors with filename for better debugging
+          errors.push(...schemaResult.errors.map(e => `${file}: ${e}`));
+        }
       }
     } catch (error) {
       errors.push(`Failed to read/parse ${file}: ${error instanceof Error ? error.message : String(error)}`);

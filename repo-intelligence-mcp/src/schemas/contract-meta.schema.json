@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "mindtrace://schemas/contract-meta.schema.json",
+  "$id": "mindtrace://schemas/contract.meta.schema.json",
   "title": "Contract Metadata",
   "type": "object",
   "additionalProperties": false,
