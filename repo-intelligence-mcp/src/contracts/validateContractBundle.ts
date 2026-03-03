@@ -36,7 +36,14 @@ export async function validateContractBundle(contractDir: string): Promise<Valid
 
       const schemaResult = validateAgainstSchema(file, data);
       if (!schemaResult.valid) {
-        errors.push(...schemaResult.errors);
+        // Phase 0: Treat missing schemas as warnings, not errors
+        const hasNoSchema = schemaResult.errors.some(e => e.includes("No schema found"));
+        if (hasNoSchema) {
+          warnings.push(...schemaResult.errors);
+        } else {
+          // Prefix errors with filename for better debugging
+          errors.push(...schemaResult.errors.map(e => `${file}: ${e}`));
+        }
       }
     } catch (error) {
       errors.push(`Failed to read/parse ${file}: ${error instanceof Error ? error.message : String(error)}`);
@@ -52,14 +59,14 @@ export async function validateContractBundle(contractDir: string): Promise<Valid
   }
 
   // Verify hash file matches computed fingerprint
-  const hashPath = path.join(contractDir, "automation-contract.hash");
+  const hashPath = path.join(contractDir, "contract.fingerprint.sha256");
   try {
     const storedHash = await fs.readFile(hashPath, "utf-8");
     if (storedHash.trim() !== fpResult.fingerprint) {
       errors.push(`Hash mismatch: stored=${storedHash.trim()}, computed=${fpResult.fingerprint}`);
     }
   } catch (error) {
-    errors.push(`Missing or unreadable automation-contract.hash file: ${error instanceof Error ? error.message : String(error)}`);
+    errors.push(`Missing or unreadable contract.fingerprint.sha256 file: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   return {

@@ -152,7 +152,7 @@ export function computeContractFingerprint(
  * @param fingerprint - The computed fingerprint hash
  */
 export function writeFingerprintAtomic(contractDir: string, fingerprint: string): void {
-  const outPath = path.join(contractDir, "automation-contract.hash");
+  const outPath = path.join(contractDir, "contract.fingerprint.sha256");
   const tempHashPath = path.join(contractDir, `.hash.tmp.${crypto.randomUUID()}`);
 
   try {
