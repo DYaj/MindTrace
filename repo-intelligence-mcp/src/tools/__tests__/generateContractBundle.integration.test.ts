@@ -269,4 +269,60 @@ describe('Login', () => {
     // Verify should-style assertions detected (not hardcoded "expect")
     expect(assertionStyle.primaryStyle).toBe("should");
   });
+
+  it("builds contract-derived cache when buildCache: true", async () => {
+    const result = await generateContractBundle({
+      repoRoot: testRepoRoot,
+      buildCache: true
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Should not fail");
+
+    // Verify cache directory exists
+    const cachePath = path.join(testRepoRoot, ".mcp-cache/pages");
+    const cacheExists = await fs.access(cachePath).then(() => true).catch(() => false);
+    expect(cacheExists).toBe(true);
+
+    // Verify cache files include contractSha256
+    const cacheFiles = await fs.readdir(cachePath);
+    expect(cacheFiles.length).toBeGreaterThan(0);
+
+    // Verify index.json exists
+    const indexExists = cacheFiles.includes("index.json");
+    expect(indexExists).toBe(true);
+
+    // Read index.json and verify contractSha256 linkage
+    const indexContent = JSON.parse(
+      await fs.readFile(path.join(cachePath, "index.json"), "utf-8")
+    );
+    expect(indexContent.contractSha256).toBe(result.contractSha256);
+    expect(indexContent.cacheVersion).toBe("0.1.0");
+
+    // Check individual page cache files (if any)
+    for (const file of cacheFiles) {
+      if (file === "index.json") continue; // Skip index file
+
+      const cacheEntry = JSON.parse(
+        await fs.readFile(path.join(cachePath, file), "utf-8")
+      );
+      expect(cacheEntry.contractSha256).toBe(result.contractSha256);
+      expect(cacheEntry.generatedAt).toBeUndefined(); // NO timestamp
+    }
+  });
+
+  it("skips cache building when buildCache: false (default)", async () => {
+    const result = await generateContractBundle({
+      repoRoot: testRepoRoot,
+      buildCache: false  // Explicit false
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Should not fail");
+
+    // Verify cache directory does NOT exist
+    const cachePath = path.join(testRepoRoot, ".mcp-cache");
+    const cacheExists = await fs.access(cachePath).then(() => true).catch(() => false);
+    expect(cacheExists).toBe(false);
+  });
 });
