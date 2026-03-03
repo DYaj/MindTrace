@@ -142,6 +142,10 @@ const TOOLS: Tool[] = [
           type: "string",
           enum: ["strict", "best_effort"],
           description: "Fingerprint mode (default: best_effort)"
+        },
+        buildCache: {
+          type: "boolean",
+          description: "Generate contract-derived page cache (default: false)"
         }
       },
       required: ["repoRoot"]
@@ -237,8 +241,9 @@ export function createRepoIntelligenceMcpServer() {
       if (name === "generate_contract_bundle") {
         const repoRoot = String((args as any).repoRoot || "");
         const mode = (args as any).mode as "strict" | "best_effort" | undefined;
+        const buildCache = Boolean((args as any).buildCache);
 
-        const result = await generateContractBundle({ repoRoot, mode });
+        const result = await generateContractBundle({ repoRoot, mode, buildCache });
         return okJson(result);
       }
 

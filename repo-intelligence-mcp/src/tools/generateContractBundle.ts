@@ -10,6 +10,7 @@ import { computeContractFingerprint } from "./fingerprintContract.js";
 import { resolveContractDir } from "../core/paths.js";
 import { scanRepo } from "./scanRepo.js";
 import { detectFramework, inferStructure, detectLocatorStyle, detectAssertionStyle } from "./infer.js";
+import { buildPageCache } from "./buildPageCache.js";
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
@@ -106,13 +107,12 @@ export async function generateContractBundle(params: {
 
     await fs.mkdir(contractDir, { recursive: true });
 
-    // Write placeholder detection artifacts required for fingerprinting
-    // TODO: Replace with real detection artifacts in Phase 1
     const { canonicalStringify } = await import("../core/deterministic.js");
 
-    // Write repo-topology.json (exclude scannedAt for deterministic fingerprinting)
+    // Write repo-topology.json (exclude scannedAt + repoRoot for deterministic fingerprinting)
     // Note: scannedAt is volatile (timestamp), but contract.meta.json already has generated_at
-    const { scannedAt, ...topologyForFingerprint } = topology;
+    // Note: repoRoot is volatile (absolute path), makes cross-machine comparison non-deterministic
+    const { scannedAt, repoRoot, ...topologyForFingerprint } = topology;
     await fs.writeFile(
       path.join(contractDir, "repo-topology.json"),
       canonicalStringify(topologyForFingerprint),
@@ -184,10 +184,30 @@ export async function generateContractBundle(params: {
     const hashContent = await fs.readFile(hashFile, "utf-8");
     const contractSha256 = hashContent.trim();
 
-    // Step 10: Optionally build cache
+    // Step 10: Optionally build cache (contract-derived)
     if (params.buildCache) {
-      // TODO: Implement cache building in Task 9
-      console.log("Cache building requested but not yet implemented");
+      const cacheDir = path.join(params.repoRoot, ".mcp-cache");
+
+      // Read contract from disk (enforce contract-derived boundary)
+      const contractPath = path.join(contractDir, "automation-contract.json");
+      const policyPath = path.join(contractDir, "page-key-policy.json");
+
+      const contractJson = await fs.readFile(contractPath, "utf-8");
+      const policyJson = await fs.readFile(policyPath, "utf-8");
+
+      const automationContract = JSON.parse(contractJson);
+      const pageKeyPolicy = JSON.parse(policyJson);
+
+      const cacheResult = await buildPageCache({
+        automationContract,
+        pageKeyPolicy,
+        contractSha256: contractSha256,
+        outputDir: cacheDir
+      });
+
+      if (!cacheResult.ok) {
+        return { ok: false, error: `Cache building failed: ${cacheResult.error}` };
+      }
     }
 
     return {

@@ -90,7 +90,7 @@ function extractDetectedPaths(topology: RepoTopologyJSON, category: "pageObjects
     }
   }
 
-  // TODO: Implement pageObjects and stepDefs categories based on signals
+  // TODO(Phase 2+): Implement pageObjects and stepDefs categories based on signals
 
   return Array.from(paths)
     .map((p) => toPosix(p))
