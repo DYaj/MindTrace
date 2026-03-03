@@ -7,6 +7,7 @@ import { retrofitEvidenceBundle } from "./generators/retrofitEvidence.js";
 import { writeContractBundle } from "../contracts/writeContractBundle.js";
 import { validateContractBundle } from "../contracts/validateContractBundle.js";
 import { computeContractFingerprint } from "./fingerprintContract.js";
+import { resolveContractDir } from "../core/paths.js";
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
@@ -129,7 +130,13 @@ export async function generateContractBundle(params: {
     );
 
     // Step 6: Write detection artifacts (placeholders for Phase 0)
-    const contractDir = path.join(params.repoRoot, ".mindtrace", "contracts");
+    const { dir: contractDir, isLegacy } = resolveContractDir(params.repoRoot);
+
+    // Emit warning if legacy path used
+    if (isLegacy) {
+      console.warn("⚠️  Using legacy contract directory: .mindtrace/contracts/ (migrate to .mcp-contract/)");
+    }
+
     await fs.mkdir(contractDir, { recursive: true });
 
     // Write placeholder detection artifacts required for fingerprinting

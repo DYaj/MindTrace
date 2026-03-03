@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { generateContractBundle } from "../generateContractBundle.js";
+import { resolveContractDir } from "../../core/paths.js";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -30,7 +31,7 @@ describe("generateContractBundle", () => {
     ]);
 
     // Verify all reported files exist
-    const contractDir = path.join(tempDir, ".mindtrace", "contracts");
+    const { dir: contractDir } = resolveContractDir(tempDir);
     for (const file of result.filesWritten) {
       const filePath = path.join(contractDir, file);
       const exists = await fs.access(filePath).then(() => true).catch(() => false);
@@ -45,7 +46,7 @@ describe("generateContractBundle", () => {
     if (!result.ok) throw new Error("Should not fail");
 
     // The bundle should pass validation
-    const contractDir = path.join(tempDir, ".mindtrace", "contracts");
+    const { dir: contractDir } = resolveContractDir(tempDir);
     const { validateContractBundle } = await import("../../contracts/validateContractBundle.js");
     const validation = await validateContractBundle(contractDir);
 
