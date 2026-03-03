@@ -1,4 +1,5 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
@@ -155,7 +156,7 @@ const TOOLS: Tool[] = [
 
 export function createRepoIntelligenceMcpServer() {
   const server = new Server(
-    { name: "mindtrace-repo-intelligence-mcp", version: "0.1.0" },
+    { name: "repo-intelligence-mcp", version: "0.1.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -270,3 +271,12 @@ export function createRepoIntelligenceMcpServer() {
 
   return server;
 }
+
+// Start server
+async function main() {
+  const transport = new StdioServerTransport();
+  const server = createRepoIntelligenceMcpServer();
+  await server.connect(transport);
+}
+
+main().catch(console.error);
