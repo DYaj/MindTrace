@@ -15,6 +15,7 @@ import {
 import { discoverWrappers } from "../tools/discoverWrappers.js";
 import { generateContractFiles } from "../tools/generateContract.js";
 import { buildPageSemanticCache } from "../tools/buildPageCache.js";
+import { generateContractBundle } from "../tools/generateContractBundle.js";
 
 type ToolResult = {
   content: Array<{ type: "text"; text: string }>;
@@ -126,6 +127,26 @@ const TOOLS: Tool[] = [
     }
   },
   {
+    name: "generate_contract_bundle",
+    description:
+      "Generate complete Phase 0 contract bundle (automation-contract.json, page-key-policy.json, contract.meta.json, contract.fingerprint.sha256)",
+    inputSchema: {
+      type: "object",
+      properties: {
+        repoRoot: {
+          type: "string",
+          description: "Absolute path to repository root"
+        },
+        mode: {
+          type: "string",
+          enum: ["strict", "best_effort"],
+          description: "Fingerprint mode (default: best_effort)"
+        }
+      },
+      required: ["repoRoot"]
+    }
+  },
+  {
     name: "toolmap.get",
     description: "Return the Tool Map (capabilities contract) for enterprise pinning.",
     inputSchema: { type: "object", properties: {} }
@@ -210,6 +231,14 @@ export function createRepoIntelligenceMcpServer() {
 
         const out = buildPageSemanticCache({ repoRoot, topology, limits });
         return okJson({ ok: true, pageCache: { summary: out.summary, written: out.written } });
+      }
+
+      if (name === "generate_contract_bundle") {
+        const repoRoot = String((args as any).repoRoot || "");
+        const mode = (args as any).mode as "strict" | "best_effort" | undefined;
+
+        const result = await generateContractBundle({ repoRoot, mode });
+        return okJson(result);
       }
 
       if (name === "toolmap.get") {
