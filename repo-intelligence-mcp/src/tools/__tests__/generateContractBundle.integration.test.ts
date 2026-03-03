@@ -239,4 +239,34 @@ test('login', async ({ page }) => {
     expect(selectorStrategy.preferred).toContain("data-testid");
     expect(selectorStrategy.preferred).toContain("role");
   });
+
+  it("detects assertion style from actual test files", async () => {
+    // Create test file with .should() assertions (Cypress-style)
+    // This will fail with the hardcoded placeholder which always returns "expect"
+    await fs.writeFile(path.join(testRepoRoot, "cypress-assertions.cy.ts"), `
+describe('Login', () => {
+  it('validates login form', () => {
+    cy.visit('/login');
+    cy.get('#username').should('be.visible');
+    cy.get('#password').should('be.visible');
+    cy.get('form').should('have.class', 'login-form');
+  });
+});
+  `);
+
+    const result = await generateContractBundle({
+      repoRoot: testRepoRoot,
+      mode: "strict"
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Should not fail");
+
+    const { dir: contractDir } = resolveContractDir(testRepoRoot);
+    const assertionStylePath = path.join(contractDir, "assertion-style.json");
+    const assertionStyle = JSON.parse(await fs.readFile(assertionStylePath, "utf-8"));
+
+    // Verify should-style assertions detected (not hardcoded "expect")
+    expect(assertionStyle.primaryStyle).toBe("should");
+  });
 });

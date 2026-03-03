@@ -9,7 +9,7 @@ import { validateContractBundle } from "../contracts/validateContractBundle.js";
 import { computeContractFingerprint } from "./fingerprintContract.js";
 import { resolveContractDir } from "../core/paths.js";
 import { scanRepo } from "./scanRepo.js";
-import { detectFramework, inferStructure, detectLocatorStyle } from "./infer.js";
+import { detectFramework, inferStructure, detectLocatorStyle, detectAssertionStyle } from "./infer.js";
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
@@ -46,12 +46,8 @@ export async function generateContractBundle(params: {
     // Step 4: Detect locator style with real implementation
     const locatorDetection = detectLocatorStyle(topology);
 
-    const assertionStyle: import("../types/contract.js").DetectAssertionStyleOutput = {
-      primary: "expect",
-      confidence: 0.9,
-      wrappers: [],
-      signalsUsed: []
-    };
+    // Step 5: Detect assertion style with real implementation
+    const assertionDetection = detectAssertionStyle(topology);
 
     const stylesDetected = ["style1-native"];
     const entrypoints = [];
@@ -66,7 +62,7 @@ export async function generateContractBundle(params: {
       framework: frameworkDetection,
       structure: structureDetection,
       locatorStyle: locatorDetection,
-      assertionStyle,
+      assertionStyle: assertionDetection,
       stylesDetected,
       entrypoints,
       primaryStyle
@@ -94,7 +90,7 @@ export async function generateContractBundle(params: {
       {
         framework: frameworkDetection as any,
         selector: locatorDetection as any,
-        assertion: assertionStyle as any
+        assertion: assertionDetection as any
       },
       topology
     );
@@ -151,7 +147,7 @@ export async function generateContractBundle(params: {
       path.join(contractDir, "assertion-style.json"),
       canonicalStringify({
         schema_version: "1.0.0",
-        primaryStyle: assertionStyle.primary,
+        primaryStyle: assertionDetection.primary,
         wrappers: [],
         evidence: []
       }),
