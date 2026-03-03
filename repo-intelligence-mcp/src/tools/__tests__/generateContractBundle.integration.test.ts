@@ -325,4 +325,78 @@ describe('Login', () => {
     const cacheExists = await fs.access(cachePath).then(() => true).catch(() => false);
     expect(cacheExists).toBe(false);
   });
+
+  it("produces byte-identical contracts and cache across independent runs", async () => {
+    // Create two separate temp directories
+    const tmp1 = path.join(os.tmpdir(), `phase1-test-1-${crypto.randomUUID()}`);
+    const tmp2 = path.join(os.tmpdir(), `phase1-test-2-${crypto.randomUUID()}`);
+
+    await fs.mkdir(tmp1, { recursive: true });
+    await fs.mkdir(tmp2, { recursive: true });
+
+    try {
+      // Create identical test repos in both directories
+      for (const tmpDir of [tmp1, tmp2]) {
+        await fs.writeFile(
+          path.join(tmpDir, "playwright.config.ts"),
+          `import { defineConfig } from '@playwright/test';
+export default defineConfig({});`
+        );
+
+        await fs.writeFile(
+          path.join(tmpDir, "test.spec.ts"),
+          `import { test, expect } from '@playwright/test';
+test('example', async ({ page }) => {
+  expect(true).toBe(true);
+});`
+        );
+
+        await fs.writeFile(
+          path.join(tmpDir, "package.json"),
+          JSON.stringify({ name: "test", dependencies: { "@playwright/test": "^1.40.0" } })
+        );
+      }
+
+      // Run contract generation twice independently
+      const result1 = await generateContractBundle({
+        repoRoot: tmp1,
+        buildCache: true
+      });
+
+      const result2 = await generateContractBundle({
+        repoRoot: tmp2,
+        buildCache: true
+      });
+
+      expect(result1.ok).toBe(true);
+      expect(result2.ok).toBe(true);
+      if (!result1.ok || !result2.ok) throw new Error("Should not fail");
+
+      // Verify contractSha256 is identical
+      expect(result1.contractSha256).toBe(result2.contractSha256);
+
+      // Verify contract file bytes are identical
+      const contract1Bytes = await fs.readFile(
+        path.join(tmp1, ".mcp-contract/automation-contract.json")
+      );
+      const contract2Bytes = await fs.readFile(
+        path.join(tmp2, ".mcp-contract/automation-contract.json")
+      );
+      expect(contract1Bytes.equals(contract2Bytes)).toBe(true);
+
+      // Verify cache file bytes are identical
+      const cache1Files = await fs.readdir(path.join(tmp1, ".mcp-cache/pages"));
+      const cache2Files = await fs.readdir(path.join(tmp2, ".mcp-cache/pages"));
+      expect(cache1Files.sort()).toEqual(cache2Files.sort());
+
+      for (const file of cache1Files) {
+        const cache1Bytes = await fs.readFile(path.join(tmp1, ".mcp-cache/pages", file));
+        const cache2Bytes = await fs.readFile(path.join(tmp2, ".mcp-cache/pages", file));
+        expect(cache1Bytes.equals(cache2Bytes)).toBe(true);
+      }
+    } finally {
+      await fs.rm(tmp1, { recursive: true, force: true });
+      await fs.rm(tmp2, { recursive: true, force: true });
+    }
+  });
 });

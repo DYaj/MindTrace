@@ -111,9 +111,10 @@ export async function generateContractBundle(params: {
     // TODO: Replace with real detection artifacts in Phase 1
     const { canonicalStringify } = await import("../core/deterministic.js");
 
-    // Write repo-topology.json (exclude scannedAt for deterministic fingerprinting)
+    // Write repo-topology.json (exclude scannedAt + repoRoot for deterministic fingerprinting)
     // Note: scannedAt is volatile (timestamp), but contract.meta.json already has generated_at
-    const { scannedAt, ...topologyForFingerprint } = topology;
+    // Note: repoRoot is volatile (absolute path), makes cross-machine comparison non-deterministic
+    const { scannedAt, repoRoot, ...topologyForFingerprint } = topology;
     await fs.writeFile(
       path.join(contractDir, "repo-topology.json"),
       canonicalStringify(topologyForFingerprint),
