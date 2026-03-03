@@ -26,6 +26,9 @@ describe("generateContractBundle (integration)", () => {
       mode: "strict"
     });
 
+    if (!result.ok) {
+      console.error("Generation failed:", result.error);
+    }
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("Should not fail");
 
@@ -40,7 +43,7 @@ describe("generateContractBundle (integration)", () => {
     ]);
 
     // Verify all files exist
-    const contractDir = path.join(testRepoRoot, ".mindtrace", "contracts");
+    const { dir: contractDir } = resolveContractDir(testRepoRoot);
     for (const file of result.filesWritten) {
       const filePath = path.join(contractDir, file);
       const exists = await fs.access(filePath).then(() => true).catch(() => false);
@@ -54,7 +57,7 @@ describe("generateContractBundle (integration)", () => {
       mode: "best_effort"
     });
 
-    const contractDir = path.join(testRepoRoot, ".mindtrace", "contracts");
+    const { dir: contractDir } = resolveContractDir(testRepoRoot);
     const validation = await validateContractBundle(contractDir);
 
     expect(validation.valid).toBe(true);
@@ -90,7 +93,7 @@ describe("generateContractBundle (integration)", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("Should not fail");
 
-    const contractDir = path.join(testRepoRoot, ".mindtrace", "contracts");
+    const { dir: contractDir } = resolveContractDir(testRepoRoot);
     const hashPath = path.join(contractDir, "contract.fingerprint.sha256");
     const hashContent = (await fs.readFile(hashPath, "utf-8")).trim();
 
@@ -131,5 +134,48 @@ test('example', async ({ page }) => {
     expect(topology.files).toBeDefined();
     expect(topology.files.count).toBeGreaterThan(0);
     expect(topology.files.paths).toContain("test.spec.ts");
+  });
+
+  it("detects framework from actual repository", async () => {
+    // Create playwright.config.ts to ensure detection
+    await fs.writeFile(path.join(testRepoRoot, "playwright.config.ts"), `
+import { defineConfig } from '@playwright/test';
+export default defineConfig({});
+  `);
+
+    // Create package.json with playwright dependency
+    await fs.writeFile(path.join(testRepoRoot, "package.json"), JSON.stringify({
+      name: "test-repo",
+      dependencies: {
+        "@playwright/test": "^1.40.0"
+      }
+    }));
+
+    const result = await generateContractBundle({
+      repoRoot: testRepoRoot,
+      mode: "strict"
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Should not fail");
+
+    const { dir: contractDir } = resolveContractDir(testRepoRoot);
+
+    // Check automation-contract.json for framework
+    const contractPath = path.join(contractDir, "automation-contract.json");
+    const contract = JSON.parse(await fs.readFile(contractPath, "utf-8"));
+    expect(contract.framework).toBe("playwright");
+
+    // Check framework-pattern.json for confidence (where it's actually stored)
+    const frameworkPatternPath = path.join(contractDir, "framework-pattern.json");
+    const frameworkPattern = JSON.parse(await fs.readFile(frameworkPatternPath, "utf-8"));
+    expect(frameworkPattern.framework).toBe("playwright");
+    expect(frameworkPattern.confidence).toBeGreaterThan(0.5);
+
+    // Verify real detection by checking evidence array is populated
+    // (hardcoded placeholder has empty signalsUsed array)
+    expect(frameworkPattern.evidence).toBeDefined();
+    expect(frameworkPattern.evidence.length).toBeGreaterThan(0);
+    expect(frameworkPattern.evidence).toContain("playwright.config.ts");
   });
 });

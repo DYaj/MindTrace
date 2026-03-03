@@ -9,6 +9,7 @@ import { validateContractBundle } from "../contracts/validateContractBundle.js";
 import { computeContractFingerprint } from "./fingerprintContract.js";
 import { resolveContractDir } from "../core/paths.js";
 import { scanRepo } from "./scanRepo.js";
+import { detectFramework } from "./infer.js";
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
@@ -36,14 +37,8 @@ export async function generateContractBundle(params: {
       // Use defaults for ignore dirs/globs and limits
     });
 
-    // Step 2: Detect framework, structure, locator style, assertion style (placeholders)
-    // TODO: Replace with actual detection functions
-    const framework: import("../types/contract.js").DetectFrameworkOutput = {
-      framework: "playwright",
-      confidence: 0.9,
-      signalsUsed: [],
-      notes: []
-    };
+    // Step 2: Detect framework with real implementation
+    const frameworkDetection = detectFramework(topology);
 
     const structure: import("../types/contract.js").InferStructureOutput = {
       style: "native",
@@ -91,7 +86,7 @@ export async function generateContractBundle(params: {
     // Step 4: Generate contracts
     const automationContract = generateAutomationContract({
       topology,
-      framework,
+      framework: frameworkDetection,
       structure,
       locatorStyle,
       assertionStyle,
@@ -120,7 +115,7 @@ export async function generateContractBundle(params: {
     // Step 5: Retrofit evidence (using placeholder contracts for now)
     const retrofitted = retrofitEvidenceBundle(
       {
-        framework: framework as any,
+        framework: frameworkDetection as any,
         selector: locatorStyle as any,
         assertion: assertionStyle as any
       },
@@ -155,9 +150,9 @@ export async function generateContractBundle(params: {
       path.join(contractDir, "framework-pattern.json"),
       canonicalStringify({
         schema_version: "1.0.0",
-        framework: framework.framework,
-        confidence: framework.confidence,
-        evidence: framework.signalsUsed
+        framework: frameworkDetection.framework,
+        confidence: frameworkDetection.confidence,
+        evidence: frameworkDetection.signalsUsed
       }),
       "utf-8"
     );
