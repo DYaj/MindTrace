@@ -147,24 +147,34 @@ export function computeContractFingerprint(
 
 /**
  * Write fingerprint to disk atomically using temp→rename strategy.
+ * DUAL-WRITE: Writes both canonical and legacy markers for compatibility.
+ *
+ * Canonical: automation-contract.hash (master spec)
+ * Legacy: contract.fingerprint.sha256 (backward compat)
  *
  * @param contractDir - Directory containing contract files
  * @param fingerprint - The computed fingerprint hash
  */
 export function writeFingerprintAtomic(contractDir: string, fingerprint: string): void {
-  const outPath = path.join(contractDir, "contract.fingerprint.sha256");
+  const canonicalPath = path.join(contractDir, "automation-contract.hash");
+  const legacyPath = path.join(contractDir, "contract.fingerprint.sha256");
   const tempHashPath = path.join(contractDir, `.hash.tmp.${crypto.randomUUID()}`);
 
   try {
     writeFileSync(tempHashPath, fingerprint + "\n", "utf-8");
 
+    // Write CANONICAL marker: automation-contract.hash
     // On Windows, renameSync fails if target exists, so delete first
     // On POSIX, renameSync is atomic even if target exists
-    if (process.platform === 'win32' && existsSync(outPath)) {
-      unlinkSync(outPath);
+    if (process.platform === 'win32' && existsSync(canonicalPath)) {
+      unlinkSync(canonicalPath);
     }
+    renameSync(tempHashPath, canonicalPath);
 
-    renameSync(tempHashPath, outPath);
+    // DUAL-WRITE: Also write LEGACY marker for backward compatibility
+    // Direct write (not atomic) since this is secondary marker
+    writeFileSync(legacyPath, fingerprint + "\n", "utf-8");
+
   } catch (error) {
     // Cleanup temp file on failure
     if (existsSync(tempHashPath)) {

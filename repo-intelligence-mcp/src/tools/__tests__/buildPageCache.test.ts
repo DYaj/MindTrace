@@ -84,18 +84,29 @@ describe("buildPageCache - Contract-Derived Boundary Enforcement", () => {
 
     expect(result.pagesWritten).toBeGreaterThan(0);
 
-    // Verify cache index written
-    const indexPath = path.join(tempDir, "pages", "index.json");
-    const indexExists = await fs.access(indexPath).then(() => true).catch(() => false);
-    expect(indexExists).toBe(true);
+    // Verify CANONICAL meta.json written (v1 structure)
+    const metaPath = path.join(tempDir, "v1", "meta.json");
+    const metaExists = await fs.access(metaPath).then(() => true).catch(() => false);
+    expect(metaExists).toBe(true);
 
-    // Verify index includes contractSha256 and NO timestamp
-    const indexContent = await fs.readFile(indexPath, "utf-8");
-    const index = JSON.parse(indexContent);
-    expect(index.contractSha256).toBe(contractSha256);
-    expect(index.generatedAt).toBeUndefined(); // NO timestamp
-    expect(index.generated_by).toBeDefined(); // Provenance via generated_by instead
-    expect(index.cacheVersion).toBe("0.1.0");
+    // Verify canonical meta includes contract_hash and NO timestamp in cache entries
+    const metaContent = await fs.readFile(metaPath, "utf-8");
+    const meta = JSON.parse(metaContent);
+    expect(meta.contract_hash).toBe(contractSha256);
+    expect(meta.schema_version).toBe("1.0.0");
+    expect(meta.cache_format).toBe("semantic-v1");
+    expect(meta.pages_count).toBeGreaterThan(0);
+
+    // Verify LEGACY index.json written for backward compatibility
+    const legacyIndexPath = path.join(tempDir, "index.json");
+    const legacyIndexExists = await fs.access(legacyIndexPath).then(() => true).catch(() => false);
+    expect(legacyIndexExists).toBe(true);
+
+    // Verify legacy index includes contractSha256
+    const legacyIndexContent = await fs.readFile(legacyIndexPath, "utf-8");
+    const legacyIndex = JSON.parse(legacyIndexContent);
+    expect(legacyIndex.contractSha256).toBe(contractSha256);
+    expect(legacyIndex.cacheVersion).toBe("0.1.0");
   });
 
   it("includes contractSha256 in every page cache entry", async () => {
@@ -150,10 +161,10 @@ describe("buildPageCache - Contract-Derived Boundary Enforcement", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("Should not fail");
 
-    // Read a page cache entry
-    const pagesDir = path.join(tempDir, "pages");
+    // Read a page cache entry from CANONICAL v1/pages/ directory
+    const pagesDir = path.join(tempDir, "v1", "pages");
     const files = await fs.readdir(pagesDir);
-    const pageFiles = files.filter(f => f.endsWith(".json") && f !== "index.json");
+    const pageFiles = files.filter(f => f.endsWith(".json"));
 
     expect(pageFiles.length).toBeGreaterThan(0);
 
@@ -269,8 +280,9 @@ describe("buildPageCache - Contract-Derived Boundary Enforcement", () => {
     expect(result1.ok).toBe(true);
     if (!result1.ok) throw new Error("Should not fail");
 
+    // Read from LEGACY location for backward compat verification
     const index1 = JSON.parse(
-      await fs.readFile(path.join(tempDir, "pages", "index.json"), "utf-8")
+      await fs.readFile(path.join(tempDir, "index.json"), "utf-8")
     );
 
     // Clean and re-run
@@ -288,7 +300,7 @@ describe("buildPageCache - Contract-Derived Boundary Enforcement", () => {
     if (!result2.ok) throw new Error("Should not fail");
 
     const index2 = JSON.parse(
-      await fs.readFile(path.join(tempDir, "pages", "index.json"), "utf-8")
+      await fs.readFile(path.join(tempDir, "index.json"), "utf-8")
     );
 
     // Should be identical (no timestamps, deterministic)

@@ -803,7 +803,8 @@ Phase 1 does NOT:
 - **Phase 0 Design**: [docs/plans/2026-03-02-phase0-contract-generators-design.md](2026-03-02-phase0-contract-generators-design.md)
 - **Phase 0 Implementation**: [docs/plans/2026-03-02-phase0-contract-generators-implementation.md](2026-03-02-phase0-contract-generators-implementation.md)
 - **Phase 0 README**: [repo-intelligence-mcp/README.phase0.md](../../repo-intelligence-mcp/README.phase0.md)
-- **Master Build Prompt**: [ClaudeCode_Master_Build_All_Phases_MindTrace.md](../../ClaudeCode_Master_Build_All_Phases_MindTrace.md)
+- **Master Build Prompt**: [MindTrace_Master_Build_All_Phases_Deterministic_Automation_Contract_Architecture.md](../../MindTrace_Master_Build_All_Phases_Deterministic_Automation_Contract_Architecture.md)
+- **Archived Legacy Document**: [ClaudeCode_Master_Build_All_Phases_MindTrace.md](../archive/ClaudeCode_Master_Build_All_Phases_MindTrace.md)
 
 ---
 
