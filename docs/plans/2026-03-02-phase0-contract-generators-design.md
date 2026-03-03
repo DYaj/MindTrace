@@ -781,8 +781,9 @@ Phase 0 contract generation is **complete** when:
 
 ## 25. References
 
-- [Master Build Document](../../ClaudeCode_Master_Build_All_Phases_MindTrace.md)
-- [Policy & Boundaries Spec](../../ClaudeCode_Master_Build_All_Phases_MindTrace.md#policy--boundaries-spec)
+- [Master Build Document](../../MindTrace_Master_Build_All_Phases_Deterministic_Automation_Contract_Architecture.md)
+- [Policy & Boundaries Spec](../../MindTrace_Master_Build_All_Phases_Deterministic_Automation_Contract_Architecture.md#policy--boundaries-spec)
+- [Archived legacy document](../archive/ClaudeCode_Master_Build_All_Phases_MindTrace.md)
 - [Existing Phase 0 Schemas](../../repo-intelligence-mcp/src/schemas/)
 - [Existing Phase 0 Types](../../repo-intelligence-mcp/src/types/contract.ts)
 
