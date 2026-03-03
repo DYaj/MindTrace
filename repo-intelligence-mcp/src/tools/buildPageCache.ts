@@ -108,21 +108,36 @@ export async function buildPageCache(
       pages.push(entry);
     }
 
-    // Write cache to outputDir/pages/
-    const pagesDir = path.join(outputDir, "pages");
+    // Write cache to CANONICAL structure: outputDir/v1/pages/
+    const v1Dir = path.join(outputDir, "v1");
+    const pagesDir = path.join(v1Dir, "pages");
     await fs.mkdir(pagesDir, { recursive: true });
 
-    // Write individual page cache files
+    // Write individual page cache files to canonical location
     for (const page of pages) {
       const pagePath = path.join(pagesDir, `${page.pageId}.json`);
       await fs.writeFile(pagePath, JSON.stringify(page, null, 2));
     }
 
-    // Write cache index
-    const index: PageCacheIndex = {
+    // Build canonical meta.json structure (master spec format)
+    // NOTE: Excludes created_at for byte-identical determinism (same repo → identical cache)
+    const meta = {
+      schema_version: "1.0.0",
+      contract_hash: contractSha256, // ✅ CRITICAL: Link cache to contract
+      pages_count: pages.length,
+      cache_format: "semantic-v1",
+      generated_by: automationContract.generated_by // Provenance without timestamp
+    };
+
+    // Write CANONICAL meta.json
+    const metaPath = path.join(v1Dir, "meta.json");
+    await fs.writeFile(metaPath, JSON.stringify(meta, null, 2));
+
+    // DUAL-WRITE: Write LEGACY index.json for backward compatibility
+    const legacyIndex: PageCacheIndex = {
       cacheVersion: "0.1.0",
       contractSha256, // ✅ CRITICAL: Link index to contract
-      generated_by: automationContract.generated_by, // ✅ Provenance without timestamp
+      generated_by: automationContract.generated_by,
       pages: pages.map(p => ({
         pageId: p.pageId,
         sourcePath: p.sourcePath,
@@ -133,8 +148,8 @@ export async function buildPageCache(
       )
     };
 
-    const indexPath = path.join(pagesDir, "index.json");
-    await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
+    const legacyIndexPath = path.join(outputDir, "index.json");
+    await fs.writeFile(legacyIndexPath, JSON.stringify(legacyIndex, null, 2));
 
     return { ok: true, pagesWritten: pages.length };
 

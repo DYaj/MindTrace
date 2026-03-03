@@ -279,30 +279,41 @@ describe('Login', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("Should not fail");
 
-    // Verify cache directory exists
-    const cachePath = path.join(testRepoRoot, ".mcp-cache/pages");
+    // Verify CANONICAL cache directory exists (v1/pages/)
+    const cachePath = path.join(testRepoRoot, ".mcp-cache/v1/pages");
     const cacheExists = await fs.access(cachePath).then(() => true).catch(() => false);
     expect(cacheExists).toBe(true);
 
-    // Verify cache files include contractSha256
+    // Verify canonical meta.json exists
+    const metaPath = path.join(testRepoRoot, ".mcp-cache/v1/meta.json");
+    const metaExists = await fs.access(metaPath).then(() => true).catch(() => false);
+    expect(metaExists).toBe(true);
+
+    // Read canonical meta.json and verify contract_hash linkage
+    const metaContent = JSON.parse(
+      await fs.readFile(metaPath, "utf-8")
+    );
+    expect(metaContent.contract_hash).toBe(result.contractSha256);
+    expect(metaContent.schema_version).toBe("1.0.0");
+    expect(metaContent.cache_format).toBe("semantic-v1");
+
+    // Verify LEGACY index.json exists for backward compatibility
+    const legacyIndexPath = path.join(testRepoRoot, ".mcp-cache/index.json");
+    const legacyIndexExists = await fs.access(legacyIndexPath).then(() => true).catch(() => false);
+    expect(legacyIndexExists).toBe(true);
+
+    // Read legacy index.json and verify contractSha256 linkage
+    const legacyIndexContent = JSON.parse(
+      await fs.readFile(legacyIndexPath, "utf-8")
+    );
+    expect(legacyIndexContent.contractSha256).toBe(result.contractSha256);
+
+    // Verify cache page files include contractSha256
     const cacheFiles = await fs.readdir(cachePath);
     expect(cacheFiles.length).toBeGreaterThan(0);
 
-    // Verify index.json exists
-    const indexExists = cacheFiles.includes("index.json");
-    expect(indexExists).toBe(true);
-
-    // Read index.json and verify contractSha256 linkage
-    const indexContent = JSON.parse(
-      await fs.readFile(path.join(cachePath, "index.json"), "utf-8")
-    );
-    expect(indexContent.contractSha256).toBe(result.contractSha256);
-    expect(indexContent.cacheVersion).toBe("0.1.0");
-
-    // Check individual page cache files (if any)
+    // Check individual page cache files
     for (const file of cacheFiles) {
-      if (file === "index.json") continue; // Skip index file
-
       const cacheEntry = JSON.parse(
         await fs.readFile(path.join(cachePath, file), "utf-8")
       );
@@ -384,16 +395,26 @@ test('example', async ({ page }) => {
       );
       expect(contract1Bytes.equals(contract2Bytes)).toBe(true);
 
-      // Verify cache file bytes are identical
-      const cache1Files = await fs.readdir(path.join(tmp1, ".mcp-cache/pages"));
-      const cache2Files = await fs.readdir(path.join(tmp2, ".mcp-cache/pages"));
+      // Verify cache file bytes are identical (canonical v1/pages structure)
+      const cache1Files = await fs.readdir(path.join(tmp1, ".mcp-cache/v1/pages"));
+      const cache2Files = await fs.readdir(path.join(tmp2, ".mcp-cache/v1/pages"));
       expect(cache1Files.sort()).toEqual(cache2Files.sort());
 
       for (const file of cache1Files) {
-        const cache1Bytes = await fs.readFile(path.join(tmp1, ".mcp-cache/pages", file));
-        const cache2Bytes = await fs.readFile(path.join(tmp2, ".mcp-cache/pages", file));
+        const cache1Bytes = await fs.readFile(path.join(tmp1, ".mcp-cache/v1/pages", file));
+        const cache2Bytes = await fs.readFile(path.join(tmp2, ".mcp-cache/v1/pages", file));
         expect(cache1Bytes.equals(cache2Bytes)).toBe(true);
       }
+
+      // Verify canonical meta.json is byte-identical
+      const meta1Bytes = await fs.readFile(path.join(tmp1, ".mcp-cache/v1/meta.json"));
+      const meta2Bytes = await fs.readFile(path.join(tmp2, ".mcp-cache/v1/meta.json"));
+      expect(meta1Bytes.equals(meta2Bytes)).toBe(true);
+
+      // Verify legacy index.json is byte-identical
+      const legacyIndex1Bytes = await fs.readFile(path.join(tmp1, ".mcp-cache/index.json"));
+      const legacyIndex2Bytes = await fs.readFile(path.join(tmp2, ".mcp-cache/index.json"));
+      expect(legacyIndex1Bytes.equals(legacyIndex2Bytes)).toBe(true);
     } finally {
       await fs.rm(tmp1, { recursive: true, force: true });
       await fs.rm(tmp2, { recursive: true, force: true });
