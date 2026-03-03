@@ -13,7 +13,7 @@ import { detectFramework, inferStructure, detectLocatorStyle, detectAssertionSty
 import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
-  | { ok: true; hash: string; filesWritten: string[] }
+  | { ok: true; contractSha256: string; filesWritten: string[] }
   | { ok: false; error: string };
 
 /**
@@ -21,12 +21,13 @@ export type GenerateContractBundleResult =
  *
  * Pipeline: scan → detect → generate → retrofit → write → validate → fingerprint
  *
- * @param params - { repoRoot: string; mode?: "strict" | "best_effort" }
- * @returns Result with hash and files written, or error
+ * @param params - { repoRoot: string; mode?: "strict" | "best_effort"; buildCache?: boolean }
+ * @returns Result with contractSha256 and files written, or error
  */
 export async function generateContractBundle(params: {
   repoRoot: string;
   mode?: "strict" | "best_effort";
+  buildCache?: boolean;
 }): Promise<GenerateContractBundleResult> {
   const mode = params.mode ?? "best_effort";
 
@@ -181,11 +182,17 @@ export async function generateContractBundle(params: {
     // Step 9: Read the fingerprint that was written by writeContractBundle
     const hashFile = path.join(contractDir, "contract.fingerprint.sha256");
     const hashContent = await fs.readFile(hashFile, "utf-8");
-    const hash = hashContent.trim();
+    const contractSha256 = hashContent.trim();
+
+    // Step 10: Optionally build cache
+    if (params.buildCache) {
+      // TODO: Implement cache building in Task 9
+      console.log("Cache building requested but not yet implemented");
+    }
 
     return {
       ok: true,
-      hash,
+      contractSha256,
       filesWritten: [
         "automation-contract.json",
         "contract.fingerprint.sha256",

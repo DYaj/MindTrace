@@ -32,8 +32,8 @@ describe("generateContractBundle (integration)", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("Should not fail");
 
-    expect(result.hash).toBeDefined();
-    expect(result.hash).toMatch(/^[a-f0-9]{64}$/); // SHA256 hex format
+    expect(result.contractSha256).toBeDefined();
+    expect(result.contractSha256).toMatch(/^[a-f0-9]{64}$/); // SHA256 hex format
     expect(result.filesWritten).toHaveLength(4);
     expect(result.filesWritten).toEqual([
       "automation-contract.json",
@@ -80,8 +80,8 @@ describe("generateContractBundle (integration)", () => {
 
     if (!result1.ok || !result2.ok) throw new Error("Should not fail");
 
-    expect(result1.hash).toBe(result2.hash);
-    expect(result1.hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(result1.contractSha256).toBe(result2.contractSha256);
+    expect(result1.contractSha256).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it("hash file is written last (commit marker)", async () => {
@@ -102,7 +102,7 @@ describe("generateContractBundle (integration)", () => {
     expect(fpResult.ok).toBe(true);
     if (fpResult.ok) {
       expect(hashContent).toBe(fpResult.fingerprint);
-      expect(result.hash).toBe(fpResult.fingerprint);
+      expect(result.contractSha256).toBe(fpResult.fingerprint);
     }
   });
 

@@ -22,7 +22,7 @@ describe("generateContractBundle", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("Should not fail");
 
-    expect(result.hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.contractSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.filesWritten).toEqual([
       "automation-contract.json",
       "contract.fingerprint.sha256",
