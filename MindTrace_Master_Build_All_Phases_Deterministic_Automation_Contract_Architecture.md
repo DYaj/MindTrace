@@ -1,4 +1,4 @@
-# MindTrace — ClaudeCode Master Build (PLATINUM vNext)
+# MindTrace — ClaudeCode Master Build (PLATINUM)
 
 **Date:** 2026-03-03 (Asia/Tokyo)  
 **Version:** PLATINUM (FINAL base + Contract-Awareness module)

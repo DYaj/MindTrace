@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mindtrace.ai/schemas/policy-decision.schema.json",
+  "title": "Policy Decision",
+  "description": "Governance decision and compliance verdict",
+  "type": "object",
+  "required": ["schema_version", "decision"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version for this contract file"
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["accept", "reject", "conditional"],
+      "description": "Governance verdict"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Explanation for the decision"
+    }
+  },
+  "additionalProperties": true
+}

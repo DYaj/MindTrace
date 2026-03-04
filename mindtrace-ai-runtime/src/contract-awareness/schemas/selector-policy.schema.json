@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mindtrace.ai/schemas/selector-policy.schema.json",
+  "title": "Selector Policy",
+  "description": "Selector strategy and preference order for element location",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version for this contract file"
+    },
+    "strategy": {
+      "type": "string",
+      "description": "Selector strategy (e.g., stable-first, css-only)"
+    },
+    "preferenceOrder": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ordered list of selector preferences"
+    }
+  },
+  "additionalProperties": true
+}
