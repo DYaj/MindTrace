@@ -53,8 +53,8 @@ export type IssueSeverity = "ERROR" | "WARN";
  * - For CA_SCHEMA_INVALID: { file: string, validationErrors: unknown[] }
  * - For CA_HASH_MISMATCH: { expected: string, actual: string }
  * - For CA_LEGACY_PATH: { path: string }
- * - For CA_CACHE_DIR_MISSING: { expectedPath: string }
- * - For CA_CACHE_HASH_MISMATCH: { contractHash: string, cacheHash: string }
+ * - For CA_CACHE_DIR_MISSING: { triedPaths: string[] }
+ * - For CA_CACHE_HASH_MISMATCH: { expected: string, actual: string }
  */
 export type ContractAwarenessIssue = {
   code: ContractAwarenessErrorCode;
@@ -116,17 +116,24 @@ export type ContractValidationResult = {
 };
 
 /**
- * Result of binding the page cache to the contract.
+ * Result of binding page semantic cache to automation contract.
  *
- * Success case (ok: true):
- * - cacheDir: absolute path to the page cache directory
- * - cacheHash: hash from the cache that matches the contract hash
- * - issues: empty or warnings only
+ * Cache is ADVISORY/OPTIONAL - all results return ok: true with warnings only.
+ * Cache issues NEVER cause execution failure (always WARN severity, never ERROR).
  *
- * Failure case (ok: false):
- * - cacheDir: null if cache directory not found
- * - cacheHash: null if cache hash file missing or doesn't match contract
- * - issues: error issues (e.g., CA_CACHE_DIR_MISSING, CA_CACHE_HASH_MISMATCH)
+ * When cache found and valid:
+ * - ok: true
+ * - cacheDir: absolute path to .mcp-cache/v1/ (canonical) or .mcp-cache/ (legacy)
+ * - cacheHash: SHA256 from cache metadata (contractSha256 field)
+ * - issues: warnings array (may include CA_LEGACY_PATH, CA_CACHE_HASH_MISMATCH)
+ *
+ * When cache missing or invalid:
+ * - ok: true (cache is optional, not required)
+ * - cacheDir: null
+ * - cacheHash: null
+ * - issues: warnings array (CA_CACHE_DIR_MISSING, CA_JSON_PARSE_ERROR, etc.)
+ *
+ * All cache-related issues have severity: "WARN" (never "ERROR").
  */
 export type PageCacheBindResult = {
   ok: boolean;
