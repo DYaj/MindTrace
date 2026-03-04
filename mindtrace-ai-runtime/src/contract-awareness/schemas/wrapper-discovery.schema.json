@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mindtrace.ai/schemas/wrapper-discovery.schema.json",
+  "title": "Wrapper Discovery",
+  "description": "Discovered test wrapper functions and patterns",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version for this contract file"
+    },
+    "wrappers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "List of discovered wrapper functions"
+    }
+  },
+  "additionalProperties": true
+}

@@ -148,7 +148,10 @@ export function loadContractBundle(args: {
   }
 
   // Compute deterministic hash (concatenate sorted file contents)
-  const sortedKeys = Object.keys(files).sort();
+  // Note: Exclude fingerprint.json from hash to avoid circular dependency
+  const sortedKeys = Object.keys(files)
+    .filter((key) => key !== "fingerprint.json")
+    .sort();
   const hashInput = sortedKeys.map((key) => JSON.stringify(files[key])).join("");
   const contractHash = createHash("sha256").update(hashInput).digest("hex");
 

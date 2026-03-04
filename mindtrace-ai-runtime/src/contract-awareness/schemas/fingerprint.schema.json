@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mindtrace.ai/schemas/fingerprint.schema.json",
+  "title": "Contract Fingerprint",
+  "description": "Cryptographic fingerprint of the contract bundle",
+  "type": "object",
+  "required": ["schema_version", "contractHash", "mode"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version for this contract file"
+    },
+    "contractHash": {
+      "type": "string",
+      "description": "SHA256 hash of the contract bundle"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["strict", "permissive"],
+      "description": "Fingerprint verification mode"
+    }
+  },
+  "additionalProperties": true
+}
