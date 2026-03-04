@@ -99,6 +99,7 @@ export type ProbeMethodId =
   | "ATTACHED_VISIBLE_ENABLED_SELECT";
 
 export interface AttemptRecord {
+  /** Schema version for healing-attempts.jsonl (snake_case for JSON Schema compliance) */
   schema_version: "1.0.0";
   writerVersion: string;
   attemptId: string;
@@ -151,8 +152,11 @@ export interface HealingContext {
   pageKey?: string;
   expectedRole?: string;
   accessibleNameHint?: string;
-  strategyContext: any; // Will import from contract-awareness
+  /** Will import RuntimeStrategyContext from contract-awareness module (Phase 2.0) */
+  strategyContext: any;
+  /** Phase 2.0 PolicyDecision snapshot (read-only input to healing) */
   policyDecisionSnapshot: any;
   budgets: HealingBudgets;
-  pageAdapter: any; // Will define PageAdapter interface next
+  /** PageAdapter interface defined in Task 2 (page-adapter.ts) */
+  pageAdapter: any;
 }
