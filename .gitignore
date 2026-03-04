@@ -48,4 +48,11 @@ mindtrace.policy.json
 
 # Local snapshots / outputs
 mindtrace_snapshot_*.txt
+
+# Claude Code local config
+.claude/
+
+# Test coverage
+coverage/
+**/coverage/
 test-results/

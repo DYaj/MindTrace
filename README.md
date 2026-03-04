@@ -12,25 +12,33 @@ It is a compliance-enforced execution runtime.
 
 ---
 
-# 🎯 What MindTrace Is (Phase 3)
+# 🎯 What MindTrace Is (Phase 2.0 Complete)
 
 MindTrace transforms Playwright into:
 
-• A policy-controlled execution engine  
-• A contract-validated test runtime  
-• A deterministic artifact generator  
-• A CI-governed compliance system  
+• A policy-controlled execution engine
+• A contract-validated test runtime
+• A deterministic artifact generator
+• A CI-governed compliance system
 • An audit-ready execution layer
+
+**Phase 2.0 Contract-Awareness Module** provides deterministic contract loading, validation, and strategy context for runtime execution.
 
 AI resilience features are layered on top — but governance comes first.
 
 ---
 
-# 🏗️ Architecture (Current State)
+# 🏗️ Architecture (Phase 2.0+)
 
 Developer
 ↓
 MindTrace CLI / Runtime
+↓
+**Contract-Awareness Module** (Phase 2.0)
+- Loads & validates automation contracts from `.mcp-contract/`
+- Binds page cache from `.mcp-cache/v1/`
+- Builds runtime strategy context
+- Writes contract artifacts to `runs/<runId>/artifacts/`
 ↓
 Governance MCP (contracts + policy gate)
 ↓
@@ -46,11 +54,17 @@ Governance Gate
 ↓
 Audit Trail + History Index
 
+**Phase 2.0 Integration:**
+- Runtime loads contracts **before** test execution
+- Environment variables set: `MINDTRACE_AUTOMATION_CONTRACT_CONTEXT_PATH`, `MINDTRACE_CONTRACT_DIR`, `MINDTRACE_PAGE_CACHE_DIR`
+- Contract validation errors → exit code 3 (compliance invalid)
+- All contract awareness operations are deterministic (no network, no AI)
+
 MindTrace ensures every run produces deterministic, machine-validated artifacts.
 
 ---
 
-# 📦 Deterministic Artifact Contract (Phase 3)
+# 📦 Deterministic Artifact Contract (Phase 2.0+)
 
 Every run generates:
 
@@ -63,7 +77,10 @@ runs/<runName>/
 │ ├── gate-summary.json
 │ ├── artifact-validation.json
 │ ├── healed-selectors.json
-│ └── locator-manifest.snapshot.json
+│ ├── locator-manifest.snapshot.json
+│ ├── contract-awareness.json          # Phase 2.0: Contract validation result
+│ ├── contract-snapshot.json           # Phase 2.2.1: Contract bundle snapshot
+│ └── contract-utilization.json        # Phase 2.2.2: Contract usage tracking
 │
 ├── audit/
 │ ├── events.ndjson
@@ -89,7 +106,18 @@ This allows CI/CD systems to differentiate failure types.
 
 ---
 
-# 📜 Manifest Enforcement (Phase 3)
+# 📜 Contract & Manifest Enforcement (Phase 2.0+)
+
+**Contract Loading (Phase 2.0):**
+
+Runtime loads and validates automation contracts from `.mcp-contract/`:
+- repo-topology.json
+- selector-policy.json
+- healing-policy.json
+- wrapper-discovery.json
+- policy-decision.json
+- meta.json
+- fingerprint.json
 
 If `locator-manifest.json` exists:
 
@@ -183,13 +211,23 @@ Any violation → exit code 3.
 
 🔮 Roadmap
 
-Phase 4 — Manifest Drift Detection
-Phase 5 — Drift Scoring + Risk Levels
-Phase 6 — AI Resilience Proposal Engine
-Phase 7 — Compliance Export Bundle
+**Completed:**
+- ✅ Phase 0: Repo Intelligence (contract generation via MCP)
+- ✅ Phase 1: Page Semantic Cache (`.mcp-cache/v1/`)
+- ✅ Phase 2.0: Contract-Awareness Module (deterministic loading + validation)
+- ✅ Phase 2: Runtime Contract Execution (CLI integration)
 
-Compliance remains primary.
-AI resilience remains secondary.
+**Next:**
+- 🔄 Phase 3: Healing Engine Upgrade (contract-aware selector ranking)
+- ⏭️ Phase 4: Cross Framework Adapter (contract-driven mapping)
+- ⏭️ Phase 5: Runtime Learning Loop (confidence scoring)
+- ⏭️ Phase 6: Enterprise Layer (CLI commands: `mindtrace phase0`, `mindtrace phase1`, etc.)
+
+**Key Principles:**
+- Compliance remains primary
+- AI resilience remains secondary (advisory only)
+- LLM NEVER overrides governance policy
+- Deterministic artifacts required for all phases
 
 ⸻
 
