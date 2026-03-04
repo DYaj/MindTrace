@@ -4,6 +4,7 @@
 // AJV schema validation + fingerprint verification
 
 import Ajv from "ajv";
+import addFormats from "ajv-formats";
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { LoadContractBundleResult, ContractValidationResult } from "./types";
@@ -38,6 +39,8 @@ function initializeAjv(): Ajv {
     validateSchema: false, // Don't validate the schema itself (skip $schema meta-validation)
   });
 
+  addFormats(ajv); // Enable format validation (date-time, uri, etc.)
+
   const schemasDir = join(__dirname, "schemas");
 
   for (const [contractFile, schemaFile] of Object.entries(SCHEMA_FILES)) {
@@ -47,9 +50,7 @@ function initializeAjv(): Ajv {
       const schema = JSON.parse(schemaContent);
       ajv.addSchema(schema, contractFile);
     } catch (error) {
-      // Schema files are expected to exist (build-time guarantee)
-      // If missing, validation will fail gracefully
-      console.warn(`Warning: Schema file ${schemaFile} not found at build-time location`);
+      // Schema missing - will cause validation failure via CA_SCHEMA_INVALID in validateContractBundle
     }
   }
 
