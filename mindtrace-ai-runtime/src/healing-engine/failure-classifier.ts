@@ -10,17 +10,32 @@ const CLASSIFIER_VERSION = "1.0.0";
  * NO network, NO AI, NO randomness - same error always produces same classification.
  */
 export function classifyFailure(error: Error): FailureClass {
-  const normalized = normalizeMessage(error.message);
-  const category = classifyCategory(normalized);
-  const healable = isHealable(category, normalized);
+  // Validate input
+  const errMessage = error?.message ? normalizeMessage(error.message) : "";
+
+  // Empty message defaults to unknown
+  if (!errMessage) {
+    return {
+      category: "unknown",
+      healable: false,
+      confidence: 0.0,
+      source: "playwright_error",
+      reasonCode: "UNKNOWN_ERROR",
+      errorFingerprint: "0000000000000000",
+      classifierVersion: CLASSIFIER_VERSION
+    };
+  }
+
+  const category = classifyCategory(errMessage);
+  const healable = isHealable(category, errMessage);
   const confidence = deriveConfidence(category);
   const reasonCode = deriveReasonCode(category);
-  const errorFingerprint = computeErrorFingerprint(normalized);
+  const errorFingerprint = computeErrorFingerprint(errMessage);
 
   // Extract matched patterns for debugging
   const matchedPatterns: string[] = [];
   for (const pattern of getPatterns(category)) {
-    if (normalized.includes(pattern.toLowerCase())) {
+    if (errMessage.includes(pattern.toLowerCase())) {
       matchedPatterns.push(pattern);
     }
   }
@@ -48,7 +63,20 @@ function normalizeMessage(message: string): string {
 }
 
 /**
- * Classifies error into category using fixed pattern matching.
+ * Classify error category using fixed pattern matching.
+ *
+ * PRECEDENCE ORDER (first match wins):
+ * 1. Assertion - highest priority, never healable
+ * 2. Network - client errors, never healable
+ * 3. Environment - setup issues, never healable
+ * 4. Test Code - JavaScript errors, never healable
+ * 5. Timeout - conditionally healable (only if selector-related)
+ * 6. Selector Missing - healable
+ * 7. Element Detached - healable
+ * 8. Unknown - default fallback, not healable
+ *
+ * @param normalized - Normalized (lowercase, trimmed) error message
+ * @returns FailureCategory enum value
  */
 function classifyCategory(normalized: string): FailureCategory {
   // Assertion errors (highest priority - never healable)

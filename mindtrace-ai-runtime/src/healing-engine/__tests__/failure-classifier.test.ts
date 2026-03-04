@@ -45,4 +45,62 @@ describe("classifyFailure", () => {
 
     expect(result1.errorFingerprint).toBe(result2.errorFingerprint);
   });
+
+  it("should classify timeout errors as healable (selector-related)", () => {
+    const error = new Error("Timeout 30000ms exceeded while waiting for selector");
+    const result = classifyFailure(error);
+    expect(result.category).toBe("timeout");
+    expect(result.healable).toBe(true);
+    expect(result.confidence).toBe(1.0);
+  });
+
+  it("should classify network4xx as non-healable", () => {
+    const error = new Error("net::ERR_FAILED at https://example.com/api");
+    const result = classifyFailure(error);
+    expect(result.category).toBe("network4xx");
+    expect(result.healable).toBe(false);
+  });
+
+  it("should classify environment errors as non-healable", () => {
+    const error = new Error("ECONNREFUSED - connection refused");
+    const result = classifyFailure(error);
+    expect(result.category).toBe("environment");
+    expect(result.healable).toBe(false);
+  });
+
+  it("should classify test code errors as non-healable", () => {
+    const error = new Error("TypeError: page.clck is not a function");
+    const result = classifyFailure(error);
+    expect(result.category).toBe("testCodeError");
+    expect(result.healable).toBe(false);
+  });
+
+  it("should classify unknown errors with confidence 0.0", () => {
+    const error = new Error("Something completely unexpected");
+    const result = classifyFailure(error);
+    expect(result.category).toBe("unknown");
+    expect(result.healable).toBe(false);
+    expect(result.confidence).toBe(0.0);
+  });
+
+  it("should handle empty error messages", () => {
+    const error = new Error("");
+    const result = classifyFailure(error);
+    expect(result.category).toBe("unknown");
+    expect(result.healable).toBe(false);
+  });
+
+  it("should handle messages with excessive whitespace", () => {
+    const error1 = new Error("  Selector   not   found  ");
+    const error2 = new Error("Selector not found");
+    expect(classifyFailure(error1).errorFingerprint)
+      .toBe(classifyFailure(error2).errorFingerprint);
+  });
+
+  it("should prioritize assertion over timeout when both patterns match", () => {
+    const error = new Error("expect(page).toBeVisible() timeout waiting for selector");
+    const result = classifyFailure(error);
+    expect(result.category).toBe("assertion");
+    expect(result.healable).toBe(false);
+  });
 });
