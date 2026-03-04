@@ -52,6 +52,9 @@ mindtrace_snapshot_*.txt
 # Claude Code local config
 .claude/
 
+# Git worktrees (isolated workspaces)
+.worktrees/
+
 # Test coverage
 coverage/
 **/coverage/
