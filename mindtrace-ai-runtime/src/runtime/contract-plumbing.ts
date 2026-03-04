@@ -4,6 +4,9 @@
 // Provide runtime-level plumbing utilities to read the repo-generated Automation Contract
 // and Page Semantic Cache context, without enforcing governance decisions.
 //
+// Phase 2.0 Integration:
+// Modified to delegate to Phase 2.0 contract-awareness pipeline instead of using old implementation.
+//
 // Non-goals:
 // - Do NOT change test execution behavior
 // - Do NOT change governance pass/fail
@@ -11,6 +14,15 @@
 
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import {
+  loadContractBundle,
+  validateContractBundle,
+  verifyFingerprint,
+  bindCacheToContract,
+  buildRuntimeStrategyContext,
+  writeContractAwarenessArtifact,
+} from "../contract-awareness/index";
+import type { RuntimeStrategyContext } from "../contract-awareness/index";
 
 export type AutomationContractContextSnapshot = {
   ok: boolean;
@@ -142,23 +154,114 @@ export function resolveRuntimeContractContext(args: {
 
 
 /**
+ * Result type for applyRuntimeContractContextEnv.
+ *
+ * Returns structured result instead of process.exit(3):
+ * - ok: true if contract loaded successfully, false otherwise
+ * - context: RuntimeStrategyContext from Phase 2.0 (or null on failure)
+ * - exitCode: 3 for COMPLIANCE failures (undefined otherwise)
+ * - warnings: non-critical issues (WARN severity)
+ * - errors: critical issues (ERROR severity)
+ */
+export type ApplyRuntimeContractContextResult = {
+  ok: boolean;
+  context: RuntimeStrategyContext | null;
+  exitCode?: number; // 3 for COMPLIANCE failures, undefined otherwise
+  warnings: string[];
+  errors: string[];
+};
+
+/**
  * Phase 2.2.3 (additive): export resolved contract context into environment variables
  * so runtime components can consume contract + page cache paths without re-scanning.
  *
+ * Phase 2.0 Integration:
+ * Now delegates to Phase 2.0 pipeline (load → validate → verify → bind → build → write)
+ * instead of using old implementation.
+ *
  * Non-goals:
- * - Must NOT affect governance/pass-fail
+ * - Must NOT affect governance/pass-fail (return exitCode signal instead)
  * - Must NOT throw (callers should wrap in try/catch anyway)
  */
-export function applyRuntimeContractContextEnv(args: { artifactsDir: string }): RuntimeContractContext {
-  const ctx = resolveRuntimeContractContext({ artifactsDir: args.artifactsDir });
+export function applyRuntimeContractContextEnv(args: {
+  artifactsDir: string;
+  repoRoot: string;
+  mode: "COMPLIANCE" | "BEST_EFFORT";
+}): ApplyRuntimeContractContextResult {
+  // Phase 2.0 Pipeline:
+  // 1. Load contract bundle
+  const contractBundle = loadContractBundle({
+    repoRoot: args.repoRoot,
+    mode: args.mode,
+  });
 
-  // PHASE_2_2_3_APPLY_ENV
-  // Always set a pointer to the artifacts snapshot (portable across repos)
-  process.env.MINDTRACE_AUTOMATION_CONTRACT_CONTEXT_PATH = join(args.artifactsDir, "automation-contract-context.json");
+  // If load failed, early return
+  if (!contractBundle.ok) {
+    const result: ApplyRuntimeContractContextResult = {
+      ok: false,
+      context: null,
+      exitCode: args.mode === "COMPLIANCE" ? 3 : undefined,
+      warnings: contractBundle.issues.filter((i) => i.severity === "WARN").map((i) => i.message),
+      errors: contractBundle.issues.filter((i) => i.severity === "ERROR").map((i) => i.message),
+    };
 
-  // Only set these when available
-  if (ctx.contractDir) process.env.MINDTRACE_CONTRACT_DIR = ctx.contractDir;
-  if (ctx.cacheDir) process.env.MINDTRACE_PAGE_CACHE_DIR = ctx.cacheDir;
+    // Note: Can't write artifact because we don't have a valid context
+    // Set env var to point to where artifact would be written
+    process.env.MINDTRACE_AUTOMATION_CONTRACT_CONTEXT_PATH = join(
+      args.artifactsDir,
+      "contract-awareness.json"
+    );
 
-  return ctx;
+    return result;
+  }
+
+  // 2. Validate contract bundle (AJV schemas)
+  const validation = validateContractBundle(contractBundle);
+
+  // 3. Verify fingerprint
+  const fingerprint = verifyFingerprint(contractBundle);
+
+  // 4. Bind cache to contract
+  const cache = bindCacheToContract({
+    repoRoot: args.repoRoot,
+    contractHash: contractBundle.contractHash,
+  });
+
+  // 5. Build runtime strategy context
+  const context = buildRuntimeStrategyContext({
+    contractBundle,
+    validation,
+    fingerprint,
+    cache,
+  });
+
+  // 6. Write contract awareness artifact
+  writeContractAwarenessArtifact({
+    artifactsDir: args.artifactsDir,
+    context,
+  });
+
+  // 7. Set environment variables (Phase 2.2 compatibility)
+  process.env.MINDTRACE_AUTOMATION_CONTRACT_CONTEXT_PATH = join(
+    args.artifactsDir,
+    "contract-awareness.json"
+  );
+  if (contractBundle.contractDir) {
+    process.env.MINDTRACE_CONTRACT_DIR = contractBundle.contractDir;
+  }
+  if (cache.cacheDir) {
+    process.env.MINDTRACE_PAGE_CACHE_DIR = cache.cacheDir;
+  }
+
+  // 8. Return result
+  const warnings = context.issues.filter((i) => i.severity === "WARN").map((i) => i.message);
+  const errors = context.issues.filter((i) => i.severity === "ERROR").map((i) => i.message);
+
+  return {
+    ok: context.ok,
+    context,
+    exitCode: !context.ok && args.mode === "COMPLIANCE" ? 3 : undefined,
+    warnings,
+    errors,
+  };
 }
