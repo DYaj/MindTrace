@@ -84,8 +84,12 @@ export class HealingOrchestrator {
     const result = await tier.execute(ctx);
 
     // Probe candidates if tier returned any
-    if (result.status === "miss" && result.candidates) {
-      for (const candidate of result.candidates) {
+    // Note: Tiers return candidates in the "attempts" field (cast as any)
+    if (result.status === "miss" && result.attempts && result.attempts.length > 0) {
+      const candidates = result.attempts as any as Candidate[]; // Cast back to candidates
+      const actualAttempts: AttemptRecord[] = [];
+
+      for (const candidate of candidates) {
         // Check budget before each probe
         if (!budgetTracker.isUnderBudget(ctx.stepScopeId, ctx.runId)) {
           break;
@@ -114,14 +118,18 @@ export class HealingOrchestrator {
         };
 
         writer.append(attemptRecord);
-        result.attempts.push(attemptRecord);
+        actualAttempts.push(attemptRecord);
 
         if (probeResult === "success") {
           result.status = "success";
           result.selectedCandidate = candidate;
+          result.attempts = actualAttempts;
           return result;
         }
       }
+
+      // Replace candidates with actual attempt records
+      result.attempts = actualAttempts;
     }
 
     return result;
