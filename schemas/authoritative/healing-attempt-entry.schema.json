@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "healing-attempt-entry.schema.json",
+  "title": "Healing Attempt Entry",
+  "description": "Single entry in healing-attempts.jsonl (authoritative)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifactClass",
+    "attemptId",
+    "stepScopeId",
+    "runId",
+    "tier",
+    "result"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "artifactClass": {
+      "type": "string",
+      "const": "authoritative"
+    },
+    "attemptId": {
+      "type": "string"
+    },
+    "attemptGroupId": {
+      "type": "string"
+    },
+    "stepScopeId": {
+      "type": "string"
+    },
+    "runId": {
+      "type": "string"
+    },
+    "stepId": {
+      "type": "string"
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["contract", "cache", "lkg", "fallback", "llm"]
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "probeMethodId": {
+      "type": "string"
+    },
+    "probeTimeoutMs": {
+      "type": "number"
+    },
+    "result": {
+      "type": "string",
+      "enum": ["success", "timeout", "not_attached", "not_visible", "not_enabled", "error"]
+    },
+    "budgetRemaining": {
+      "type": "number"
+    },
+    "candidate": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}
