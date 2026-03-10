@@ -12,17 +12,23 @@ It is a compliance-enforced execution runtime.
 
 ---
 
-# 🎯 What MindTrace Is (Phase 2.0 Complete)
+# 🎯 What MindTrace Is (Phase 3 Complete)
 
 MindTrace transforms Playwright into:
 
 • A policy-controlled execution engine
 • A contract-validated test runtime
 • A deterministic artifact generator
+• A governance-first healing system
 • A CI-governed compliance system
 • An audit-ready execution layer
 
-**Phase 2.0 Contract-Awareness Module** provides deterministic contract loading, validation, and strategy context for runtime execution.
+**Phase 3 Healing Engine** provides contract-aware selector ranking with 5-tier system:
+1. **Contract** (governance-first, highest authority)
+2. **Cache** (semantic signals, high confidence)
+3. **Last-Known-Good** (historical fallback)
+4. **Fallback** (deterministic, bounded)
+5. **LLM** (advisory only, never overrides)
 
 AI resilience features are layered on top — but governance comes first.
 
