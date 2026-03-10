@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "rca-report.schema.json",
+  "title": "Root Cause Analysis Report",
+  "description": "Advisory RCA report (analysis only, never execution). Replaces legacy root-cause-summary.schema.json with enhanced structured fields for comprehensive failure analysis.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "artifactClass",
+    "runId",
+    "category",
+    "confidence",
+    "isFlaky",
+    "summary",
+    "recommendations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "artifactClass": {
+      "type": "string",
+      "const": "advisory"
+    },
+    "runId": {
+      "type": "string"
+    },
+    "stepId": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "dom_changed",
+        "selector_failed",
+        "api_error",
+        "timeout",
+        "flaky",
+        "navigation_mismatch",
+        "ux_regression",
+        "environmental",
+        "test_logic_error",
+        "none"
+      ],
+      "description": "Structured failure classification for machine-readable analysis"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Confidence level of the RCA analysis (0.0 to 1.0)"
+    },
+    "isFlaky": {
+      "type": "boolean",
+      "description": "Whether the failure is identified as flaky/intermittent"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable root cause summary (prose explanation)"
+    },
+    "detectedIssue": {
+      "type": "string",
+      "description": "Concise statement of the detected issue"
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Actionable recommendations for fixing the issue (aliases suggestedActions from legacy schema)"
+    },
+    "affectedTests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of test identifiers affected by this root cause"
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Supporting evidence for the RCA (logs, screenshots, traces, etc.)"
+    }
+  },
+  "additionalProperties": false
+}
