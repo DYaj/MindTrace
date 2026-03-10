@@ -1,3 +1,11 @@
+# ⚠️ DEPRECATED - This file has moved
+
+**New location:** [docs/architecture/overview.md](docs/architecture/overview.md)
+
+This file will be removed in v2.0.0. Please update your bookmarks.
+
+---
+
 # 🎯 MindTrace for Playwright Framework - Complete Package
 
 ## 📦 What You've Received

@@ -1,11 +1,3 @@
-# ⚠️ DEPRECATED - This file has moved
-
-**New location:** [docs/reference/enterprise-features.md](docs/reference/enterprise-features.md)
-
-This file will be removed in v2.0.0. Please update your bookmarks.
-
----
-
 # MindTrace Enterprise Features
 
 ## 🏢 Enterprise-Grade Architecture

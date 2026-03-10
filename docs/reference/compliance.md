@@ -1,11 +1,3 @@
-# ⚠️ DEPRECATED - This file has moved
-
-**New location:** [docs/reference/compliance.md](docs/reference/compliance.md)
-
-This file will be removed in v2.0.0. Please update your bookmarks.
-
----
-
 # MindTrace Compliance Definition of Done (DoD)
 Version: 1.0
 Last Updated: 2026-03-01

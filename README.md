@@ -12,17 +12,23 @@ It is a compliance-enforced execution runtime.
 
 ---
 
-# 🎯 What MindTrace Is (Phase 2.0 Complete)
+# 🎯 What MindTrace Is (Phase 3 Complete)
 
 MindTrace transforms Playwright into:
 
 • A policy-controlled execution engine
 • A contract-validated test runtime
 • A deterministic artifact generator
+• A governance-first healing system
 • A CI-governed compliance system
 • An audit-ready execution layer
 
-**Phase 2.0 Contract-Awareness Module** provides deterministic contract loading, validation, and strategy context for runtime execution.
+**Phase 3 Healing Engine** provides contract-aware selector ranking with 5-tier system:
+1. **Contract** (governance-first, highest authority)
+2. **Cache** (semantic signals, high confidence)
+3. **Last-Known-Good** (historical fallback)
+4. **Fallback** (deterministic, bounded)
+5. **LLM** (advisory only, never overrides)
 
 AI resilience features are layered on top — but governance comes first.
 
@@ -64,6 +70,22 @@ MindTrace ensures every run produces deterministic, machine-validated artifacts.
 
 ---
 
+# 📚 Documentation
+
+Quick access to documentation:
+
+- **[Quick Start Guide](docs/guides/quickstart.md)** - Get started in 5 minutes
+- **[Architecture Overview](docs/architecture/overview.md)** - System design and components
+- **[Phase Documentation](docs/architecture/phases/)** - Detailed phase architecture
+  - [Phase 0: Contract Generators](docs/architecture/phases/phase0-contracts.md)
+  - [Phase 1: Page Cache](docs/architecture/phases/phase1-cache.md)
+  - [Phase 2.0: Contract Awareness](docs/architecture/phases/phase2-awareness.md)
+  - [Phase 3: Healing Engine](docs/architecture/phases/phase3-healing.md)
+- **[Reference Documentation](docs/reference/)** - Compliance, enterprise features, products
+- **[Setup & Guides](docs/guides/)** - Installation, TeamCity, client setup
+
+---
+
 # 📦 Deterministic Artifact Contract (Phase 2.0+)
 
 Every run generates:
@@ -80,7 +102,12 @@ runs/<runName>/
 │ ├── locator-manifest.snapshot.json
 │ ├── contract-awareness.json          # Phase 2.0: Contract validation result
 │ ├── contract-snapshot.json           # Phase 2.2.1: Contract bundle snapshot
-│ └── contract-utilization.json        # Phase 2.2.2: Contract usage tracking
+│ ├── contract-utilization.json        # Phase 2.2.2: Contract usage tracking
+│ │
+│ ├── runtime/                          # Phase 3: Healing runtime artifacts
+│ │   ├── healing-attempts.jsonl       # Append-only healing ledger
+│ │   ├── healing-outcome.json         # Per-step healing result
+│ │   └── healing-summary.json         # Run-level healing aggregate
 │
 ├── audit/
 │ ├── events.ndjson
