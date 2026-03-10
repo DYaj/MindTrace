@@ -52,10 +52,16 @@
     },
     "result": {
       "type": "string",
-      "enum": ["success", "timeout", "not_attached", "not_visible", "not_enabled", "error"]
+      "enum": ["success", "fail", "skipped"]
     },
     "budgetRemaining": {
-      "type": "number"
+      "type": "object",
+      "required": ["step", "run"],
+      "properties": {
+        "step": { "type": "number" },
+        "run": { "type": "number" }
+      },
+      "additionalProperties": false
     },
     "candidate": {
       "type": "object"
