@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { ValidationResult, SchemaError } from './types.js';
+import { SchemaValidationError } from './errors.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,8 +34,12 @@ export class SchemaValidator {
     const result = this.validate(artifact, schemaName, category);
 
     if (!result.valid) {
-      const errorMessages = result.errors!.map(e => `${e.path}: ${e.message}`).join(', ');
-      throw new Error(`Schema validation failed for ${category}/${schemaName}: ${errorMessages}`);
+      throw new SchemaValidationError(
+        schemaName,
+        category,
+        result.errors!,
+        3  // exit code for policy/compliance violation
+      );
     }
 
     throw new Error('Unreachable: artifact was valid');
