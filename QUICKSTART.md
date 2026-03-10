@@ -1,3 +1,11 @@
+# ⚠️ DEPRECATED - This file has moved
+
+**New location:** [docs/guides/quickstart.md](docs/guides/quickstart.md)
+
+This file will be removed in v2.0.0. Please update your bookmarks.
+
+---
+
 # 🚀 QUICKSTART GUIDE
 
 Get up and running with MindTrace for Playwright in 5 minutes!

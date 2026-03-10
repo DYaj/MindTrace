@@ -1,3 +1,11 @@
+# ⚠️ DEPRECATED - This file has moved
+
+**New location:** [docs/reference/products.md](docs/reference/products.md)
+
+This file will be removed in v2.0.0. Please update your bookmarks.
+
+---
+
 # MindTrace Product Suite
 
 ## Company

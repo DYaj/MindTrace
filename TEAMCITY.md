@@ -1,3 +1,11 @@
+# ⚠️ DEPRECATED - This file has moved
+
+**New location:** [docs/guides/teamcity.md](docs/guides/teamcity.md)
+
+This file will be removed in v2.0.0. Please update your bookmarks.
+
+---
+
 # TeamCity Integration Guide
 MindTrace for Playwright CI/CD Runtime Integration
 
