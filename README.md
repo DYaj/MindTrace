@@ -86,7 +86,12 @@ runs/<runName>/
 │ ├── locator-manifest.snapshot.json
 │ ├── contract-awareness.json          # Phase 2.0: Contract validation result
 │ ├── contract-snapshot.json           # Phase 2.2.1: Contract bundle snapshot
-│ └── contract-utilization.json        # Phase 2.2.2: Contract usage tracking
+│ ├── contract-utilization.json        # Phase 2.2.2: Contract usage tracking
+│ │
+│ ├── runtime/                          # Phase 3: Healing runtime artifacts
+│ │   ├── healing-attempts.jsonl       # Append-only healing ledger
+│ │   ├── healing-outcome.json         # Per-step healing result
+│ │   └── healing-summary.json         # Run-level healing aggregate
 │
 ├── audit/
 │ ├── events.ndjson
