@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "artifactClass": "advisory",
+  "runId": "run-2026-03-10-12-34-56",
+  "stepId": "step-checkout-submit",
+  "category": "selector_failed",
+  "confidence": 0.85,
+  "isFlaky": false,
+  "summary": "The selector `button:has-text('Submit')` failed because the button text changed from 'Submit' to 'Send' in the latest UI update. The healing engine attempted contract-based selectors first, then cache-based alternatives, but none matched the new UI state.",
+  "detectedIssue": "Button text changed: 'Submit' → 'Send'",
+  "recommendations": [
+    "Add stable data-testid='checkout-submit-button' to the submit button",
+    "Update automation contract to use data-testid instead of text-based selector",
+    "Consider using aria-label for accessible and stable selection"
+  ],
+  "affectedTests": [
+    "checkout-flow.spec.ts:submit-order",
+    "checkout-flow.spec.ts:guest-checkout"
+  ],
+  "evidence": {
+    "failedSelector": "button:has-text('Submit')",
+    "currentButtonText": "Send",
+    "healingAttemptsCount": 5,
+    "triedTiers": ["contract", "cache", "lkg"],
+    "screenshotPath": "runs/run-2026-03-10-12-34-56/artifacts/runtime/failure-screenshot.png"
+  }
+}
