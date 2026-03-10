@@ -1,8 +1,12 @@
 import Ajv, { type ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type { ValidationResult, SchemaError } from './types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export class SchemaValidator {
   private ajv: Ajv;
@@ -23,6 +27,17 @@ export class SchemaValidator {
 
   validateJSONLEntry(entry: unknown, schemaName: string): ValidationResult {
     return this.validate(entry, schemaName, 'authoritative');
+  }
+
+  rejectInvalid(artifact: unknown, schemaName: string, category: 'authoritative' | 'advisory'): never {
+    const result = this.validate(artifact, schemaName, category);
+
+    if (!result.valid) {
+      const errorMessages = result.errors!.map(e => `${e.path}: ${e.message}`).join(', ');
+      throw new Error(`Schema validation failed for ${category}/${schemaName}: ${errorMessages}`);
+    }
+
+    throw new Error('Unreachable: artifact was valid');
   }
 
   private validate(artifact: unknown, schemaName: string, category: 'authoritative' | 'advisory'): ValidationResult {
@@ -50,11 +65,21 @@ export class SchemaValidator {
       return this.schemaCache.get(cacheKey)!;
     }
 
-    const schemaPath = join(process.cwd(), '../../schemas', category, `${schemaName}.schema.json`);
-    const schemaContent = readFileSync(schemaPath, 'utf-8');
-    const schema = JSON.parse(schemaContent);
+    const schemaPath = join(__dirname, '../../../schemas', category, `${schemaName}.schema.json`);
 
-    this.schemaCache.set(cacheKey, schema);
-    return schema;
+    try {
+      const schemaContent = readFileSync(schemaPath, 'utf-8');
+      const schema = JSON.parse(schemaContent);
+      this.schemaCache.set(cacheKey, schema);
+      return schema;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error(`Schema not found: ${category}/${schemaName}.schema.json at ${schemaPath}`);
+      }
+      if (error instanceof SyntaxError) {
+        throw new Error(`Invalid JSON in schema: ${category}/${schemaName}.schema.json`);
+      }
+      throw error;
+    }
   }
 }
