@@ -70,6 +70,22 @@ MindTrace ensures every run produces deterministic, machine-validated artifacts.
 
 ---
 
+# 📚 Documentation
+
+Quick access to documentation:
+
+- **[Quick Start Guide](docs/guides/quickstart.md)** - Get started in 5 minutes
+- **[Architecture Overview](docs/architecture/overview.md)** - System design and components
+- **[Phase Documentation](docs/architecture/phases/)** - Detailed phase architecture
+  - [Phase 0: Contract Generators](docs/architecture/phases/phase0-contracts.md)
+  - [Phase 1: Page Cache](docs/architecture/phases/phase1-cache.md)
+  - [Phase 2.0: Contract Awareness](docs/architecture/phases/phase2-awareness.md)
+  - [Phase 3: Healing Engine](docs/architecture/phases/phase3-healing.md)
+- **[Reference Documentation](docs/reference/)** - Compliance, enterprise features, products
+- **[Setup & Guides](docs/guides/)** - Installation, TeamCity, client setup
+
+---
+
 # 📦 Deterministic Artifact Contract (Phase 2.0+)
 
 Every run generates:
