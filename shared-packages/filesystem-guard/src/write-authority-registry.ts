@@ -1,4 +1,4 @@
-import { normalize, join } from 'path';
+import { normalize, resolve, relative } from 'path';
 import type { WriterIdentity } from './types';
 
 export class WriteAuthorityRegistry {
@@ -25,20 +25,25 @@ export class WriteAuthorityRegistry {
       return false; // Unregistered writer has no access
     }
 
+    // Normalize and resolve to handle both absolute and relative paths
     const normalizedTarget = normalize(targetPath);
+    const resolvedTarget = resolve(normalizedTarget);
 
     // Check if target path is within any allowed path
     return identity.allowedPaths.some(allowedPath => {
-      // Exact match or nested within allowed directory
-      if (normalizedTarget === allowedPath) {
+      const resolvedAllowed = resolve(allowedPath);
+
+      // Exact match
+      if (resolvedTarget === resolvedAllowed) {
         return true;
       }
 
       // Check if target is nested within allowed directory
-      const relPath = normalizedTarget.startsWith(allowedPath + '/')
-        || normalizedTarget.startsWith(allowedPath + '\\');
+      const rel = relative(resolvedAllowed, resolvedTarget);
 
-      return relPath;
+      // If relative path doesn't start with '..' and isn't absolute,
+      // then target is inside allowed directory
+      return !rel.startsWith('..') && !rel.startsWith('/') && rel !== '';
     });
   }
 
