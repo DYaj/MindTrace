@@ -6,6 +6,17 @@
 
 ---
 
+# Architecture Alignment Update (2026-03-03)
+
+The deterministic healing engine (Phase 3) already exists in the repository.
+The purpose of Phase 0–2 is to establish contract identity and semantic cache
+as the authoritative inputs to that healing engine.
+
+Contract directory canonical path: .mcp-contract/
+Legacy read fallback: .mindtrace/contracts/
+
+---
+
 # MindTrace: Phase 0 → Phase 6 (Full System, Additive Only)
 
 You are a **Principal Automation Infrastructure Engineer** working inside:
@@ -124,6 +135,562 @@ runs/<runId>/
 - Runtime **MUST NOT write** to `.mcp-cache/*`
 - LLM/AI **MUST NOT write** to contract/cache
 - Healing MUST respect contract strategy (not override)
+
+---
+
+# MindTrace — Data Moat + Governance Safety Layer
+
+## Purpose
+
+This document adds two strategic architecture layers to MindTrace:
+
+1. **Automation Contract Intelligence Network (ACIN)**  
+   A privacy-safe intelligence layer that creates a long-term data moat around automation reliability.
+
+2. **Governance Safety Layer (GSL)**  
+   A hard-stop safety architecture that prevents AI, healing, cache drift, or contract drift from silently corrupting automation.
+
+These additions are fully aligned with the existing MindTrace master system:
+
+- deterministic core first
+- contract is the source of truth
+- governance decides pass/fail
+- stable exit codes
+- immutable audit trails
+- schema-validated artifacts
+- AI is assistive only
+
+---
+
+# 1. Automation Contract Intelligence Network (ACIN)
+
+## What It Is
+
+ACIN is a privacy-safe intelligence network that learns from automation reliability signals across runs, repositories, and organizations.
+
+It does **not** collect raw source code, private DOM content, or business-sensitive UI details.
+
+It only collects **normalized automation reliability signals**.
+
+## Why It Matters
+
+Traditional frameworks can copy features such as:
+
+- test execution
+- retry logic
+- self-healing
+- selector ranking
+- AI summaries
+
+But they cannot easily copy:
+
+- years of automation reliability patterns
+- cross-project selector stability intelligence
+- contract evolution outcomes
+- framework-specific failure distributions
+- aggregated UI breakage signatures
+
+That creates a **data moat**.
+
+## Core Value
+
+MindTrace becomes more than a test framework.
+
+It becomes an **automation intelligence platform** that knows:
+
+- which selector strategies are most stable
+- which page structures tend to break tests
+- which contract patterns survive UI change best
+- which healing strategies succeed by framework, action type, and page category
+- which releases are likely to cause automation regression before execution starts
+
+---
+
+## Where ACIN Fits
+
+Existing architecture:
+
+Repo Intelligence  
+↓  
+Contract Generation  
+↓  
+Page Semantic Cache  
+↓  
+Runtime Execution  
+↓  
+Governance Decision  
+↓  
+Healing Engine  
+↓  
+Claude Skills Intelligence
+
+Enhanced architecture:
+
+Repo Intelligence  
+↓  
+Contract Generation  
+↓  
+Page Semantic Cache  
+↓  
+Runtime Execution  
+↓  
+Governance Decision  
+↓  
+Healing Engine  
+↓  
+Claude Skills Intelligence  
+↓  
+**Automation Contract Intelligence Network (ACIN)**
+
+---
+
+## What ACIN Collects
+
+ACIN must collect **normalized signals only**.
+
+### Allowed signal types
+
+- framework type
+- selector strategy type
+- failure category
+- healing outcome
+- page category
+- route shape
+- contract quality metrics
+- cache drift events
+- selector stability patterns
+- contract evolution proposal patterns
+- predicted breakage confidence buckets
+
+### Example normalized signal
+
+```json
+{
+  "framework": "playwright",
+  "primaryStyle": "bdd",
+  "selectorStrategy": "text",
+  "pageCategory": "checkout",
+  "failureType": "missing-element",
+  "healingSuccess": false,
+  "predictionBucket": "high-risk"
+}
+```
+
+### Not allowed
+
+ACIN must **never** ingest:
+
+- raw source code
+- customer DOM snapshots
+- credentials
+- private HTML content
+- proprietary UI text
+- secrets
+- session tokens
+- PII
+
+---
+
+## ACIN Output Artifacts
+
+Suggested outputs:
+
+- `global-test-intelligence.json`
+- `contract-quality-benchmarks.json`
+- `selector-stability-benchmarks.json`
+- `release-risk-patterns.json`
+
+### Example output
+
+```json
+{
+  "patterns": [
+    {
+      "pattern": "text-based selectors unstable on checkout flows",
+      "framework": "playwright",
+      "failureRate": 0.37,
+      "recommendedStrategy": "prefer data-testid"
+    }
+  ]
+}
+```
+
+---
+
+## What ACIN Improves
+
+### Better contract generation
+
+Repo intelligence can recommend stronger contract defaults based on historical outcomes.
+
+Examples:
+
+- prefer `data-testid` for transactional forms
+- prefer semantic role selectors for login flows
+- avoid text selectors in multi-language navigation
+
+### Better contract evolution
+
+The Contract Evolution Advisor becomes smarter because it can compare current repo behavior against broader historical patterns.
+
+### Better breakage prediction
+
+The UI Change Prediction Engine becomes stronger because it can say not only _what changed_, but also _how often this class of change historically breaks automation_.
+
+### Better enterprise reporting
+
+MindTrace can produce quality and risk scoring at:
+
+- repo level
+- suite level
+- contract level
+- team level
+- organization level
+
+---
+
+## ACIN Privacy Modes
+
+### Offline mode
+
+Signals remain local to the customer environment.
+
+### Network mode
+
+Signals are anonymized and contributed to the global intelligence layer.
+
+### Hybrid mode
+
+Only allowlisted signal types leave the customer environment.
+
+---
+
+## Phase 6 Monetization Alignment
+
+ACIN directly supports monetizable enterprise products:
+
+### Automation Intelligence Dashboard
+
+Show:
+
+- unstable selector patterns
+- fragile flows
+- framework reliability trends
+- automation maturity metrics
+
+### Contract Quality Score
+
+Example:
+
+```json
+{
+  "contractQualityScore": 0.87,
+  "riskLevel": "medium",
+  "improvementAreas": ["replace css selectors with testids"]
+}
+```
+
+### Enterprise Benchmarking
+
+Examples:
+
+- your selector stability vs industry benchmark
+- your automation resilience by framework
+- your release breakage risk trend
+
+### Release Risk Forecasting
+
+Examples:
+
+- predicted automation instability before release
+- top high-risk flows for tonight's CI
+- contract drift hotspots
+
+This turns MindTrace into a platform category that is much harder to copy.
+
+---
+
+# 2. Governance Safety Layer (GSL)
+
+## What It Is
+
+The Governance Safety Layer is the final enterprise-grade protection system that prevents:
+
+- silent AI corruption
+- unsafe healing behavior
+- stale cache usage
+- contract drift abuse
+- schema drift
+- artifact tampering
+- unauthorized write paths
+- hidden execution mutation
+
+Its job is simple:
+
+**Nothing changes automation authority silently.**
+
+## Why It Matters
+
+Enterprise-grade systems fail when:
+
+- an AI suggestion becomes an implicit runtime decision
+- a stale cache influences healing
+- a contract changes without revalidation
+- artifacts are overwritten or partially rewritten
+- incompatible versions load without detection
+- hidden side effects alter execution outcomes
+
+GSL prevents this.
+
+---
+
+## Core Safety Principle
+
+Every automation decision must be attributable to one of these authorities only:
+
+1. **Contract authority**
+2. **Governance authority**
+3. **Deterministic runtime rules**
+4. **Explicit human approval**
+
+Nothing else.
+
+Not AI.
+Not heuristic mutation.
+Not stale artifacts.
+Not implicit fallback drift.
+
+---
+
+## GSL Enforcement Domains
+
+### 1. Contract integrity gate
+
+Before execution, verify:
+
+- `.mcp-contract/` exists
+- required files exist
+- schema validation passes
+- fingerprint matches canonical bundle
+- version compatibility is valid
+
+If not, fail hard.
+
+### 2. Cache integrity gate
+
+Before any cache-aware healing or prediction:
+
+- `.mcp-cache/` schema valid
+- `cache.contractSha256` matches current contract fingerprint
+- cache version compatible
+- cache not partially missing required entries
+
+If not, cache is invalid.
+
+### 3. Authority boundary gate
+
+Enforce at runtime:
+
+- runtime cannot write to `.mcp-contract/`
+- runtime cannot write to `.mcp-cache/`
+- Claude Skills cannot write to `.mcp-contract/`
+- Claude Skills cannot write to `.mcp-cache/`
+- AI cannot alter governance outcomes
+- AI cannot mark test pass/fail
+- healing engine cannot mutate contract
+
+### 4. Artifact tamper gate
+
+For run-local artifacts:
+
+- required artifacts must exist
+- artifact schemas must validate
+- append-only files must remain append-only
+- overwrite attempts must be rejected unless explicitly allowed
+- policy artifacts must be written before healing continues
+
+### 5. Drift safety gate
+
+When contract fingerprint changes:
+
+- invalidate dependent cache
+- require explicit regeneration
+- record drift event in immutable audit
+- block unsafe reuse of previous intelligence artifacts where necessary
+
+### 6. AI safety gate
+
+AI/Claude Skills may only produce:
+
+- summaries
+- explanations
+- suggestions
+- proposal artifacts
+- risk forecasts
+
+They may not produce:
+
+- execution authority
+- contract mutations
+- cache mutations
+- governance overrides
+- pass/fail decisions
+
+---
+
+## Suggested GSL Artifacts
+
+Suggested run-local artifacts:
+
+- `policy-decision.json`
+- `runtime-contract-context.json`
+- `governance-safety-report.json`
+- `drift-integrity-report.json`
+- `authority-boundary-report.json`
+
+### Example governance safety report
+
+```json
+{
+  "contractIntegrity": "pass",
+  "cacheIntegrity": "pass",
+  "authorityBoundary": "pass",
+  "aiSafety": "pass",
+  "driftStatus": "valid",
+  "result": "safe-to-execute"
+}
+```
+
+---
+
+## Failure Behavior
+
+### Hard-fail conditions
+
+These should result in policy/compliance failure behavior:
+
+- contract fingerprint mismatch
+- missing required contract files
+- invalid schema
+- stale cache used as authoritative input
+- AI attempt to mutate contract/cache
+- unauthorized write path
+- invalid artifact ordering
+- incompatible schema version
+
+### Recommended exit behavior
+
+Use existing MindTrace exit semantics:
+
+- `0` success
+- `1` test failure
+- `2` infra/runtime failure
+- `3` policy/compliance violation
+
+GSL violations belong under **exit code 3** whenever they represent authority or integrity failure.
+
+---
+
+## Enterprise-Grade Outcome
+
+With GSL in place, MindTrace becomes safer at enterprise scale because:
+
+- AI cannot silently corrupt automation
+- healing cannot quietly become authority
+- contract drift cannot poison execution
+- stale cache cannot influence results
+- artifacts remain auditable
+- decisions remain attributable
+
+That is the difference between a clever test framework and a platform trusted by companies like Stripe or Datadog.
+
+---
+
+# 3. How To Add This To the Master MD File
+
+## Recommended placement
+
+Add a new section **after the current authority/governance sections** and before later monetization strategy details.
+
+### Best insertion points
+
+#### Option A — preferred
+
+Add immediately after:
+
+- `# AUTHORITY MODEL (WHO WRITES WHAT)`
+
+New sections:
+
+- `# AUTOMATION CONTRACT INTELLIGENCE NETWORK (ACIN)`
+- `# GOVERNANCE SAFETY LAYER (GSL)`
+
+This is the cleanest place because both ACIN and GSL are architectural governance extensions.
+
+#### Option B — also valid
+
+Add after the current Phase 5 / Phase 6 intelligence discussion, if you want them framed as advanced platform capabilities.
+
+But Option A is stronger because:
+
+- GSL is not optional strategy; it is core enterprise safety
+- ACIN depends on strong authority boundaries
+- it keeps the master architecture coherent
+
+---
+
+## Suggested master-doc anchor layout
+
+```md
+# AUTHORITY MODEL (WHO WRITES WHAT)
+
+...existing content...
+
+# AUTOMATION CONTRACT INTELLIGENCE NETWORK (ACIN)
+
+...new ACIN content...
+
+# GOVERNANCE SAFETY LAYER (GSL)
+
+...new GSL content...
+
+# VERSIONING + COMPATIBILITY POLICY
+
+...existing content continues...
+```
+
+That is the best place if you want the master file to remain the single architectural source of truth.
+
+---
+
+# 4. Final Recommendation
+
+If you want the cleanest structure:
+
+- keep this file as a standalone strategic addendum now
+- then merge the two major sections into the master architecture file under the authority model section
+
+That gives you:
+
+- one master canonical architecture
+- one focused addendum for planning/review
+- zero ambiguity about where ACIN and GSL belong
+
+---
+
+# 5. Final Strategic Position
+
+With ACIN + GSL added, MindTrace becomes:
+
+- deterministic automation platform
+- contract-governed execution system
+- governance-enforced healing engine
+- AI-assisted intelligence layer
+- contract-learning automation platform
+- predictive release-risk system
+- enterprise-grade automation integrity platform
+
+That is an architecture category far beyond Playwright, Cypress, or Selenium alone.
 
 ---
 
@@ -675,6 +1242,12 @@ Append to `history/run-index.jsonl`:
   "evidence": {}
 }
 ```
+
+---
+
+# AI Assistive Layer (Claude Skills)
+
+See: `claude-skills-integration.md`
 
 ---
 
