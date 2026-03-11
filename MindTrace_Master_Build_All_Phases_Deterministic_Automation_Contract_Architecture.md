@@ -606,6 +606,277 @@ That is the difference between a clever test framework and a platform trusted by
 
 ---
 
+## GSL Implementation (4-Layer Defense-in-Depth)
+
+The Governance Safety Layer is implemented as **4 sequential protection layers**, each building on the previous:
+
+### Layer 1: Schema Validation Gates
+
+**Package:** `@mindtrace/schema-validator`
+
+**Purpose:** Prevent invalid artifacts at the schema level
+
+**Implementation:**
+- AJV-based JSON schema validation for all artifacts
+- Separate schemas for authoritative vs advisory artifacts
+- Pre-write schema validation with `SchemaValidator` class
+- `rejectInvalid()` method throws with exit code 3
+
+**Key Classes:**
+- `SchemaValidator` - AJV-based validator with schema caching
+- `SchemaValidationError` - Error with exit code 3
+
+**Enforcement:**
+```typescript
+const validator = new SchemaValidator();
+const result = validator.validateAuthoritative(artifact, 'policy-decision');
+if (!result.valid) {
+  validator.rejectInvalid(artifact, 'policy-decision', 'authoritative'); // Exit 3
+}
+```
+
+---
+
+### Layer 2: Audit Trail Enforcement
+
+**Package:** `@mindtrace/artifact-writer`
+
+**Purpose:** Directory-based authority separation (runtime vs advisory)
+
+**Implementation:**
+- Physical separation: `artifacts/runtime/` vs `artifacts/advisory/`
+- `RuntimeArtifactWriter` - writes only to runtime directory
+- `AdvisoryArtifactWriter` - writes only to advisory directory
+- `ArtifactReader` - compatibility loader with legacy fallback
+- Read-time enforcement via `AuthorityBoundaryViolation` (exit code 3)
+
+**Directory Structure:**
+```
+runs/<runId>/
+  artifacts/
+    runtime/          # Authoritative artifacts only
+      policy-decision.json
+      healing-attempts.jsonl
+    advisory/         # Advisory artifacts only
+      rca-report.json
+      predictions.json
+```
+
+**Key Classes:**
+- `RuntimeArtifactWriter` - Layer 1 validation + runtime directory writes
+- `AdvisoryArtifactWriter` - Layer 1 validation + advisory directory writes
+- `ArtifactReader` - Smart loader with authority boundary enforcement
+- `AuthorityBoundaryViolation` - Error when advisory consumed as authoritative
+
+**Enforcement:**
+```typescript
+const reader = new ArtifactReader(artifactsRoot);
+const artifact = reader.readAuthoritativeArtifact('policy.json', 'healing-engine');
+// Throws AuthorityBoundaryViolation (exit 3) if artifact is advisory
+```
+
+---
+
+### Layer 3: Filesystem Guards
+
+**Package:** `@mindtrace/filesystem-guard`
+
+**Purpose:** Path-based write authorization and violation tracking
+
+**Implementation:**
+- `WriteAuthorityRegistry` - registry of authorized writers with allowed paths
+- `FileSystemGuard` - enforces write permissions with path normalization
+- `ViolationLogger` - JSONL append-only violation audit trail
+- `GuardedRuntimeWriter` - Layer 1 + Layer 2 + Layer 3 enforcement
+- `GuardedAdvisoryWriter` - Layer 1 + Layer 2 + Layer 3 enforcement
+
+**Path Protection:**
+- Normalized path comparison (prevents `../` bypass)
+- Resolved absolute path checking
+- Cross-directory write blocking
+- Multi-writer capability system
+
+**Key Classes:**
+- `WriteAuthorityRegistry` - Path-based access control
+- `FileSystemGuard` - Permission checking with violation tracking
+- `ViolationLogger` - JSONL violation logging with summaries
+- `FileSystemGuardError` - Error with exit code 3
+
+**Enforcement:**
+```typescript
+const registry = new WriteAuthorityRegistry();
+const guard = new FileSystemGuard(registry);
+
+registry.registerWriter('runtime-writer', {
+  allowedPaths: ['artifacts/runtime'],
+  capability: 'write-authoritative'
+});
+
+guard.guardedWriteFile('runtime-writer', 'artifacts/runtime/policy.json', data);
+// Throws FileSystemGuardError (exit 3) if path unauthorized
+```
+
+**Violation Tracking:**
+```typescript
+const logger = new ViolationLogger('violations.jsonl');
+guard.getViolations().forEach(v => logger.logViolation(v));
+
+const summary = logger.getSummary();
+// { totalViolations, violationsByWriter, firstViolation, lastViolation }
+```
+
+---
+
+### Layer 4: Runtime Type Guards
+
+**Package:** `@mindtrace/type-guards`
+
+**Purpose:** Compile-time + runtime type safety enforcement
+
+**Implementation:**
+- Branded types using TypeScript's nominal typing
+- Trusted loaders as the ONLY way to create branded types
+- Compile-time prevention of advisory → authoritative conversion
+- Runtime validation with exit code 3
+
+**Branded Types:**
+```typescript
+type TrustedAuthoritative<T> = Brand<T, 'TrustedAuthoritative'>;
+type UntrustedAdvisory<T> = Brand<T, 'UntrustedAdvisory'>;
+type TrustedCache<T> = Brand<T, 'TrustedCache'>;
+type TrustedContract<T> = Brand<T, 'TrustedContract'>;
+```
+
+**Trusted Loaders (Only Way to Create Brands):**
+```typescript
+function loadTrustedAuthoritative<T>(
+  data: unknown,
+  validator: (data: unknown) => boolean
+): TrustedAuthoritative<T> {
+  if (!validator(data)) {
+    throw new TrustedLoadError('TrustedAuthoritative', 'validation failed', data, 3);
+  }
+  return data as TrustedAuthoritative<T>;
+}
+```
+
+**Type-Level Enforcement:**
+```typescript
+// ✅ Allowed: validated authoritative artifact
+const trusted = loadTrustedAuthoritative(rawData, schemaValidator);
+executeDecision(trusted);
+
+// ❌ Compile Error: cannot pass advisory to authoritative function
+const advisory = loadTrustedAdvisory(aiData, validator);
+executeDecision(advisory); // TypeScript prevents this!
+
+// ❌ Compile Error: cannot create branded types without validation
+const fake: TrustedAuthoritative<Data> = rawData; // TypeScript prevents this!
+```
+
+**Key Features:**
+- Brands are compile-time only (zero runtime overhead)
+- Only trusted loaders can create branded types
+- TypeScript enforces authority boundaries at compile time
+- Escape hatches (`unsafeCast`) are explicit anti-patterns
+
+---
+
+## GSL Package Architecture
+
+```
+shared-packages/
+  schema-validator/          # Layer 1: Schema Validation Gates
+    src/
+      schema-validator.ts    # AJV-based validator
+      errors.ts              # SchemaValidationError (exit 3)
+
+  artifact-writer/           # Layer 2: Audit Trail Enforcement
+    src/
+      runtime-writer.ts      # RuntimeArtifactWriter
+      advisory-writer.ts     # AdvisoryArtifactWriter
+      artifact-reader.ts     # ArtifactReader with read-time enforcement
+      guarded-writers.ts     # Layer 2 + Layer 3 integration
+
+  filesystem-guard/          # Layer 3: Filesystem Guards
+    src/
+      write-authority-registry.ts  # Path-based access control
+      filesystem-guard.ts          # Permission enforcement
+      violation-logger.ts          # JSONL audit trail
+
+  type-guards/               # Layer 4: Runtime Type Guards
+    src/
+      branded-types.ts       # Branded type definitions
+      trusted-loaders.ts     # Validation-enforced type creation
+```
+
+---
+
+## GSL Integration Pattern
+
+Complete protection stack (all 4 layers):
+
+```typescript
+import { SchemaValidator } from '@mindtrace/schema-validator';
+import { initializeGuardedWriters } from '@mindtrace/artifact-writer';
+import { loadTrustedAuthoritative } from '@mindtrace/type-guards';
+
+// Initialize guarded writers (Layers 1-3)
+const { runtimeWriter, advisoryWriter } = initializeGuardedWriters(runDir);
+
+// Layer 1: Schema validation
+// Layer 2: Directory separation
+// Layer 3: Filesystem guards
+runtimeWriter.writeRuntimeArtifact(artifact, 'policy-decision', 'policy.json');
+
+// Layer 4: Type-level safety
+const validator = (data: unknown) => {
+  const result = new SchemaValidator().validateAuthoritative(data, 'policy-decision');
+  return result.valid;
+};
+
+const trusted = loadTrustedAuthoritative(artifact, validator);
+
+// Only TrustedAuthoritative can be passed to execution functions
+executeDecision(trusted); // ✅ TypeScript allows
+// executeDecision(rawData); // ❌ TypeScript prevents
+```
+
+---
+
+## GSL Exit Code Contract
+
+All GSL violations use **exit code 3** (policy/compliance violation):
+
+| Layer | Violation Type | Error Class | Exit Code |
+|-------|---------------|-------------|-----------|
+| Layer 1 | Schema validation failure | `SchemaValidationError` | 3 |
+| Layer 2 | Authority boundary violation | `AuthorityBoundaryViolation` | 3 |
+| Layer 2 | Cross-directory write | `Error` | 3 |
+| Layer 3 | Filesystem guard violation | `FileSystemGuardError` | 3 |
+| Layer 4 | Type validation failure | `TrustedLoadError` | 3 |
+
+This maintains the existing MindTrace exit code contract:
+- `0` - success
+- `1` - test failure
+- `2` - infra/runtime failure
+- `3` - policy/compliance violation (GSL)
+
+---
+
+## GSL Test Coverage
+
+Complete test coverage across all 4 layers:
+
+- **Layer 1 (Schema Validator):** Schema validation, error handling
+- **Layer 2 (Artifact Writer):** 27 tests - runtime/advisory separation, read-time enforcement
+- **Layer 3 (Filesystem Guard):** 25 tests - path authorization, violation tracking, path traversal prevention
+- **Layer 4 (Type Guards):** 30 tests - branded types, trusted loaders, compile-time safety
+
+**Total:** 80+ tests ensuring complete GSL protection
+
+---
+
 # 3. How To Add This To the Master MD File
 
 ## Recommended placement
