@@ -17,7 +17,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@mindtrace/schema-validator": "^1.0.0"
+    "@mindtrace/schema-validator": "^1.0.0",
+    "@mindtrace/filesystem-guard": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
