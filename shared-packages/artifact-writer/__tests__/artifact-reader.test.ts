@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ArtifactReader } from '../src/artifact-reader.js';
+import { ArtifactReader, AuthorityBoundaryViolation } from '../src/artifact-reader.js';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 
 describe('ArtifactReader', () => {
@@ -105,6 +105,99 @@ describe('ArtifactReader', () => {
       const result = reader.readArtifact('missing.json', 'runtime');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('Read-time enforcement', () => {
+    beforeEach(() => {
+      mkdirSync(`${testRunDir}/artifacts/runtime`, { recursive: true });
+      mkdirSync(`${testRunDir}/artifacts/advisory`, { recursive: true });
+    });
+
+    it('should enforce that advisory artifacts cannot be consumed as authoritative', () => {
+      const advisoryArtifact = {
+        schemaVersion: "1.0",
+        artifactClass: "advisory",
+        runId: "test",
+        summary: "RCA"
+      };
+
+      writeFileSync(
+        `${testRunDir}/artifacts/runtime/test.json`,
+        JSON.stringify(advisoryArtifact),
+        'utf-8'
+      );
+
+      const reader = new ArtifactReader(testRunDir);
+      const artifact = reader.readArtifact('test.json', 'runtime');
+
+      expect(() => {
+        reader.enforceAuthoritative(artifact, 'healing-engine');
+      }).toThrow('AUTHORITY_BOUNDARY_VIOLATION');
+    });
+
+    it('should allow authoritative artifacts', () => {
+      const authArtifact = {
+        schemaVersion: "1.0",
+        artifactClass: "authoritative",
+        runId: "test",
+        decision: "pass"
+      };
+
+      writeFileSync(
+        `${testRunDir}/artifacts/runtime/test.json`,
+        JSON.stringify(authArtifact),
+        'utf-8'
+      );
+
+      const reader = new ArtifactReader(testRunDir);
+      const artifact = reader.readArtifact('test.json', 'runtime');
+
+      expect(() => {
+        reader.enforceAuthoritative(artifact, 'healing-engine');
+      }).not.toThrow();
+    });
+
+    it('should provide safe readAuthoritativeArtifact method', () => {
+      const authArtifact = {
+        schemaVersion: "1.0",
+        artifactClass: "authoritative",
+        runId: "test",
+        decision: "pass"
+      };
+
+      writeFileSync(
+        `${testRunDir}/artifacts/runtime/safe.json`,
+        JSON.stringify(authArtifact),
+        'utf-8'
+      );
+
+      const reader = new ArtifactReader(testRunDir);
+      const artifact = reader.readAuthoritativeArtifact('safe.json', 'test-context');
+
+      expect(artifact).toBeDefined();
+      expect(artifact.artifactClass).toBe('authoritative');
+    });
+
+    it('should reject advisory artifact in readAuthoritativeArtifact', () => {
+      const advisoryArtifact = {
+        schemaVersion: "1.0",
+        artifactClass: "advisory",
+        runId: "test",
+        summary: "Should fail"
+      };
+
+      writeFileSync(
+        `${testRunDir}/artifacts/runtime/unsafe.json`,
+        JSON.stringify(advisoryArtifact),
+        'utf-8'
+      );
+
+      const reader = new ArtifactReader(testRunDir);
+
+      expect(() => {
+        reader.readAuthoritativeArtifact('unsafe.json', 'test-context');
+      }).toThrow('AUTHORITY_BOUNDARY_VIOLATION');
     });
   });
 });

@@ -1,6 +1,13 @@
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
+export class AuthorityBoundaryViolation extends Error {
+  constructor(message: string, public exitCode: number = 3) {
+    super(message);
+    this.name = 'AuthorityBoundaryViolation';
+  }
+}
+
 export interface ArtifactLocation {
   path: string;
   isLegacy: boolean;
@@ -60,5 +67,44 @@ export class ArtifactReader {
 
     // If neither new directory exists, it's legacy
     return !existsSync(runtimeDir) && !existsSync(advisoryDir);
+  }
+
+  /**
+   * Enforce that artifact is authoritative (for execution)
+   * Throws if advisory artifact is being consumed as execution input
+   */
+  enforceAuthoritative(artifact: any, context: string): void {
+    if (!artifact) {
+      return; // null artifacts are handled elsewhere
+    }
+
+    if (artifact.artifactClass === 'advisory') {
+      throw new AuthorityBoundaryViolation(
+        `AUTHORITY_BOUNDARY_VIOLATION: Attempted to consume advisory artifact as authoritative execution input in ${context}. ` +
+        `Advisory artifacts must never influence execution decisions.`,
+        3 // exit code for policy/compliance violation
+      );
+    }
+
+    if (artifact.artifactClass !== 'authoritative') {
+      throw new AuthorityBoundaryViolation(
+        `INVALID_ARTIFACT_CLASS: Artifact must have artifactClass='authoritative' for execution, got '${artifact.artifactClass}' in ${context}`,
+        3
+      );
+    }
+  }
+
+  /**
+   * Read authoritative artifact with enforcement
+   * Safe for use in execution paths
+   */
+  readAuthoritativeArtifact(filename: string, context: string): any | null {
+    const artifact = this.readArtifact(filename, 'runtime');
+
+    if (artifact) {
+      this.enforceAuthoritative(artifact, context);
+    }
+
+    return artifact;
   }
 }
