@@ -1,5 +1,5 @@
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { SchemaValidator } from '@mindtrace/schema-validator';
 import type { AdvisoryArtifact } from './types.js';
 
@@ -34,13 +34,15 @@ export class AdvisoryArtifactWriter {
 
     // Write to advisory directory
     const filePath = join(this.advisoryPath, filename);
+    this.ensureDirectory(dirname(filePath));
     const content = JSON.stringify(artifact, null, 2);
     writeFileSync(filePath, content, 'utf-8');
   }
 
-  private ensureDirectory(): void {
-    if (!existsSync(this.advisoryPath)) {
-      mkdirSync(this.advisoryPath, { recursive: true });
+  private ensureDirectory(path?: string): void {
+    const dirPath = path || this.advisoryPath;
+    if (!existsSync(dirPath)) {
+      mkdirSync(dirPath, { recursive: true });
     }
   }
 }

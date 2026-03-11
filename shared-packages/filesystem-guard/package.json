@@ -1,7 +1,7 @@
 {
-  "name": "@mindtrace/artifact-writer",
+  "name": "@mindtrace/filesystem-guard",
   "version": "1.0.0",
-  "description": "Artifact writer for MindTrace GSL Layer 2",
+  "description": "Filesystem guards for MindTrace GSL Layer 3",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,20 +14,13 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "test:watch": "vitest --watch"
   },
-  "dependencies": {
-    "@mindtrace/schema-validator": "^1.0.0",
-    "@mindtrace/filesystem-guard": "^1.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
-  },
-  "author": "MindTrace Inc.",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
