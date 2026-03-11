@@ -3,7 +3,7 @@ import { AdvisoryArtifactWriter } from '../src/advisory-writer.js';
 import { existsSync, readFileSync, rmSync, mkdirSync } from 'fs';
 
 describe('AdvisoryArtifactWriter', () => {
-  const testRunDir = 'test-runs/run_test';
+  const testRunDir = 'test-runs/advisory-test';
   const advisoryPath = `${testRunDir}/artifacts/advisory`;
 
   beforeEach(() => {
@@ -11,8 +11,8 @@ describe('AdvisoryArtifactWriter', () => {
   });
 
   afterEach(() => {
-    if (existsSync('test-runs')) {
-      rmSync('test-runs', { recursive: true });
+    if (existsSync(testRunDir)) {
+      rmSync(testRunDir, { recursive: true, force: true });
     }
   });
 
@@ -52,5 +52,26 @@ describe('AdvisoryArtifactWriter', () => {
     expect(() => {
       writer.writeAdvisoryArtifact(wrongArtifact as any, 'rca-report', 'test.json');
     }).toThrow();
+  });
+
+  it('should ensure artifactClass is advisory', () => {
+    const writer = new AdvisoryArtifactWriter(testRunDir);
+
+    const artifact = {
+      schemaVersion: "1.0",
+      artifactClass: "advisory",
+      runId: "run_test",
+      category: "selector_failed",
+      confidence: 0.85,
+      isFlaky: false,
+      summary: "Metadata test",
+      recommendations: []
+    };
+
+    writer.writeAdvisoryArtifact(artifact, 'rca-report', 'metadata-test.json');
+
+    const content = JSON.parse(readFileSync(`${advisoryPath}/metadata-test.json`, 'utf-8'));
+    expect(content.artifactClass).toBe('advisory');
+    expect(content.schemaVersion).toBeDefined();
   });
 });

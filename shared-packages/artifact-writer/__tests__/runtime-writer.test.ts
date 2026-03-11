@@ -3,7 +3,7 @@ import { RuntimeArtifactWriter } from '../src/runtime-writer.js';
 import { existsSync, readFileSync, rmSync, mkdirSync } from 'fs';
 
 describe('RuntimeArtifactWriter', () => {
-  const testRunDir = 'test-runs/run_test';
+  const testRunDir = 'test-runs/runtime-test';
   const runtimePath = `${testRunDir}/artifacts/runtime`;
 
   beforeEach(() => {
@@ -11,8 +11,8 @@ describe('RuntimeArtifactWriter', () => {
   });
 
   afterEach(() => {
-    if (existsSync('test-runs')) {
-      rmSync('test-runs', { recursive: true });
+    if (existsSync(testRunDir)) {
+      rmSync(testRunDir, { recursive: true, force: true });
     }
   });
 
@@ -34,5 +34,39 @@ describe('RuntimeArtifactWriter', () => {
 
     const content = JSON.parse(readFileSync(filePath, 'utf-8'));
     expect(content.artifactClass).toBe('authoritative');
+  });
+
+  it('should ensure artifactClass is authoritative', () => {
+    const writer = new RuntimeArtifactWriter(testRunDir);
+
+    const artifact = {
+      schemaVersion: "1.0",
+      artifactClass: "authoritative",
+      runId: "run_test",
+      decision: "pass",
+      timestamp: "2026-03-10T10:00:00Z"
+    };
+
+    writer.writeRuntimeArtifact(artifact, 'policy-decision', 'metadata-test.json');
+
+    const content = JSON.parse(readFileSync(`${runtimePath}/metadata-test.json`, 'utf-8'));
+    expect(content.artifactClass).toBe('authoritative');
+    expect(content.schemaVersion).toBeDefined();
+  });
+
+  it('should reject artifact with wrong artifactClass', () => {
+    const writer = new RuntimeArtifactWriter(testRunDir);
+
+    const wrongArtifact = {
+      schemaVersion: "1.0",
+      artifactClass: "advisory",  // Wrong for runtime
+      runId: "run_test",
+      decision: "pass",
+      timestamp: "2026-03-10T10:00:00Z"
+    };
+
+    expect(() => {
+      writer.writeRuntimeArtifact(wrongArtifact as any, 'policy-decision', 'wrong.json');
+    }).toThrow();
   });
 });
