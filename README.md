@@ -66,6 +66,14 @@ Audit Trail + History Index
 - Contract validation errors → exit code 3 (compliance invalid)
 - All contract awareness operations are deterministic (no network, no AI)
 
+**Phase 2 GSL (Governance Safety Layer):**
+- `@mindtrace/integrity-gates` package provides hard authority verification
+- **Contract Integrity Gate** - Verify contract before execution (canonical `.mcp-contract/` precedence)
+- **Cache Integrity Gate** - Verify cache binding and validity (path-sensitive, drift-aware)
+- **Drift Safety System** - Detect contract changes, invalidate stale cache, audit drift events
+- All gates are verifier-only (never regenerate, repair, or mutate artifacts)
+- Exit code 3 for all integrity failures (policy/compliance violations)
+
 MindTrace ensures every run produces deterministic, machine-validated artifacts.
 
 ---
@@ -208,6 +216,7 @@ mindtrace-for-playwright/
 ├── shared-packages/
 │   ├── contracts/                     # @mindtrace/contracts (schemas/types/loader)
 │   ├── promptpacks/                   # @mindtrace/promptpacks (prompt packs)
+│   ├── integrity-gates/               # @mindtrace/integrity-gates (GSL enforcement) ✨ NEW
 │   └── shared/                        # @mindtrace/shared (common utils)
 ├── prompts/                           # source prompt packs (synced into packages/MCPs at build)
 ├── contracts/                         # source contracts (synced into packages/MCPs at build)
@@ -243,6 +252,7 @@ Any violation → exit code 3.
 - ✅ Phase 1: Page Semantic Cache (`.mcp-cache/v1/`)
 - ✅ Phase 2.0: Contract-Awareness Module (deterministic loading + validation)
 - ✅ Phase 2: Runtime Contract Execution (CLI integration)
+- ✅ Phase 2 GSL: Governance Safety Layer (`@mindtrace/integrity-gates` - Phase A complete)
 
 **Next:**
 - 🔄 Phase 3: Healing Engine Upgrade (contract-aware selector ranking)

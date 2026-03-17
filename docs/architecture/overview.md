@@ -32,6 +32,45 @@ MindTrace for Playwright is a **production-ready, enterprise-grade test automati
 - **Page Scraper**: DOM snapshot capture
 - **MCP Runtime**: Test execution listener
 
+### 4. Governance Safety Layer (GSL) 🆕
+
+**Package:** `@mindtrace/integrity-gates` (Phase A Complete)
+
+The Governance Safety Layer provides hard authority verification for contract integrity, cache binding, and drift detection.
+
+#### Components
+
+**Contract Integrity Gate**
+- Verifies automation contracts before test execution
+- Canonical `.mcp-contract/` precedence over legacy `.mindtrace/contracts/`
+- All failures are fatal (exit code 3)
+- Verifier-only (never regenerates or mutates contracts)
+
+**Cache Integrity Gate**
+- Verifies page cache binding to contract fingerprint
+- Path-sensitive (only fails when cache required for current path)
+- Mode-aware (strict mode fails hard, default mode continues)
+- Drift always invalidates cache (hard invariant)
+
+**Drift Safety System**
+- Pure drift detection (no I/O, no timestamps)
+- Compares contract fingerprint vs cache binding
+- Audit trail in append-only JSONL format
+- Records drift events with action taken
+
+#### Verification Principles
+
+1. **Hard Authority** - Contract verification is always enforced
+2. **Verifier-Only** - Never generate, repair, or mutate artifacts
+3. **Pure Detection** - Drift logic has zero side effects
+4. **Canonical First** - `.mcp-contract/` wins if both paths exist
+5. **Drift Invariant** - Cache immediately invalid on contract mismatch
+6. **Exit Code 3** - All integrity failures are compliance violations
+
+#### Parity Protection
+
+The package includes parity tests vs. `repo-intelligence-mcp` to ensure deterministic logic has not diverged. This protects against regression during Phase B extraction to `@mindtrace/deterministic-core`.
+
 ## Data Flow
 
 ```
