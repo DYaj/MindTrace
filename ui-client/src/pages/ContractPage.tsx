@@ -1,56 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useContract } from '../hooks/useContract';
-import { FileText, CheckCircle, XCircle, AlertTriangle, Play, Loader } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, AlertTriangle, Play } from 'lucide-react';
+import { JobStatusCard } from '../components/JobStatusCard';
+import type { JobStatus } from '@breakline/ui-types';
 
 export function ContractPage() {
   const { data: contract, isLoading, error, refetch } = useContract();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   // Generate contract job state
-  const [generatingJob, setGeneratingJob] = useState<string | null>(null);
-  const [jobError, setJobError] = useState<string | null>(null);
-  const [jobSuccess, setJobSuccess] = useState<boolean>(false);
-
-  // Poll job status
-  useEffect(() => {
-    if (!generatingJob) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`http://localhost:3001/api/jobs/${generatingJob}`);
-        const data = await response.json();
-
-        if (!data.success) {
-          setJobError(data.error || 'Job failed');
-          setGeneratingJob(null);
-          return;
-        }
-
-        const job = data.data;
-
-        if (job.status === 'completed') {
-          setGeneratingJob(null);
-          setJobError(null);
-          setJobSuccess(true);
-          refetch(); // Refresh contract data
-          // Clear success message after 5 seconds
-          setTimeout(() => setJobSuccess(false), 5000);
-        } else if (job.status === 'failed') {
-          setJobError(job.result?.error || 'Job failed');
-          setGeneratingJob(null);
-        }
-      } catch (err) {
-        setJobError(err instanceof Error ? err.message : 'Failed to check job status');
-        setGeneratingJob(null);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [generatingJob, refetch]);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
 
   const handleGenerateContract = async () => {
-    setJobError(null);
-    setJobSuccess(false);
     try {
       const response = await fetch('http://localhost:3001/api/actions/generate-contract', {
         method: 'POST',
@@ -60,14 +21,18 @@ export function ContractPage() {
 
       const data = await response.json();
 
-      if (!data.success) {
-        setJobError(data.error || 'Failed to start contract generation');
-        return;
+      if (data.success && data.data.jobId) {
+        setCurrentJobId(data.data.jobId);
       }
-
-      setGeneratingJob(data.data.jobId);
     } catch (err) {
-      setJobError(err instanceof Error ? err.message : 'Failed to start contract generation');
+      console.error('Failed to start contract generation:', err);
+    }
+  };
+
+  const handleJobComplete = (job: JobStatus) => {
+    if (job.status === 'completed') {
+      // Refresh contract data after successful generation
+      refetch();
     }
   };
 
@@ -105,38 +70,17 @@ export function ContractPage() {
           {/* Generate Contract Button */}
           <button
             onClick={handleGenerateContract}
-            disabled={!!generatingJob}
+            disabled={!!currentJobId}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {generatingJob ? (
-              <>
-                <Loader className="animate-spin mr-2" size={16} />
-                Generating Contract...
-              </>
-            ) : (
-              <>
-                <Play className="mr-2" size={16} />
-                Generate Contract
-              </>
-            )}
+            <Play className="mr-2" size={16} />
+            Generate Contract
           </button>
 
-          {generatingJob && (
-            <p className="mt-3 text-sm text-gray-600">
-              This may take a few seconds...
-            </p>
-          )}
-
-          {jobSuccess && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm flex items-center gap-2">
-              <CheckCircle size={16} />
-              <span>Contract generated successfully!</span>
-            </div>
-          )}
-
-          {jobError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-              {jobError}
+          {/* Job Status */}
+          {currentJobId && (
+            <div className="mt-4">
+              <JobStatusCard jobId={currentJobId} onComplete={handleJobComplete} />
             </div>
           )}
         </div>

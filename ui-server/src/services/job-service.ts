@@ -88,4 +88,21 @@ export class JobService {
   static getAllJobs(): JobStatus[] {
     return Array.from(this.jobs.values());
   }
+
+  /**
+   * Calculate job duration in milliseconds
+   * Returns duration from start to completion, or start to now if still running
+   */
+  static getJobDuration(job: JobStatus): number | undefined {
+    if (!job.startedAt) {
+      return undefined; // Job hasn't started yet
+    }
+
+    const startTime = new Date(job.startedAt).getTime();
+    const endTime = job.completedAt
+      ? new Date(job.completedAt).getTime()
+      : Date.now();
+
+    return endTime - startTime;
+  }
 }

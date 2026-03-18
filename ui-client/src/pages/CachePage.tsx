@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCache } from '../hooks/useCache';
 import { useContract } from '../hooks/useContract';
-import { AlertTriangle, CheckCircle, Database, FileText, Play, Loader } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Database, FileText, Play } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
+import { JobStatusCard } from '../components/JobStatusCard';
+import type { JobStatus } from '@breakline/ui-types';
 
 export function CachePage() {
   const { data: cache, isLoading, error, refetch } = useCache();
   const { data: contract } = useContract();
 
   // Build cache job state
-  const [buildingJob, setBuildingJob] = useState<string | null>(null);
-  const [jobError, setJobError] = useState<string | null>(null);
-  const [jobSuccess, setJobSuccess] = useState<boolean>(false);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
 
   // Cache page viewer state
   const [selectedPage, setSelectedPage] = useState<{ key: string; content: string } | null>(null);
@@ -32,46 +32,7 @@ export function CachePage() {
     }
   };
 
-  // Poll job status
-  useEffect(() => {
-    if (!buildingJob) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`http://localhost:3001/api/jobs/${buildingJob}`);
-        const data = await response.json();
-
-        if (!data.success) {
-          setJobError(data.error || 'Job failed');
-          setBuildingJob(null);
-          return;
-        }
-
-        const job = data.data;
-
-        if (job.status === 'completed') {
-          setBuildingJob(null);
-          setJobError(null);
-          setJobSuccess(true);
-          refetch(); // Refresh cache data
-          // Clear success message after 5 seconds
-          setTimeout(() => setJobSuccess(false), 5000);
-        } else if (job.status === 'failed') {
-          setJobError(job.result?.error || 'Job failed');
-          setBuildingJob(null);
-        }
-      } catch (err) {
-        setJobError(err instanceof Error ? err.message : 'Failed to check job status');
-        setBuildingJob(null);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [buildingJob, refetch]);
-
   const handleBuildCache = async () => {
-    setJobError(null);
-    setJobSuccess(false);
     try {
       const response = await fetch('http://localhost:3001/api/actions/build-cache', {
         method: 'POST',
@@ -81,14 +42,18 @@ export function CachePage() {
 
       const data = await response.json();
 
-      if (!data.success) {
-        setJobError(data.error || 'Failed to start cache build');
-        return;
+      if (data.success && data.data.jobId) {
+        setCurrentJobId(data.data.jobId);
       }
-
-      setBuildingJob(data.data.jobId);
     } catch (err) {
-      setJobError(err instanceof Error ? err.message : 'Failed to start cache build');
+      console.error('Failed to start cache build:', err);
+    }
+  };
+
+  const handleJobComplete = (job: JobStatus) => {
+    if (job.status === 'completed') {
+      // Refresh cache data after successful build
+      refetch();
     }
   };
 
@@ -137,38 +102,17 @@ export function CachePage() {
           {/* Build Cache Button */}
           <button
             onClick={handleBuildCache}
-            disabled={!!buildingJob || contractMissing}
+            disabled={!!currentJobId || contractMissing}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {buildingJob ? (
-              <>
-                <Loader className="animate-spin mr-2" size={16} />
-                Building Cache...
-              </>
-            ) : (
-              <>
-                <Play className="mr-2" size={16} />
-                Build Cache
-              </>
-            )}
+            <Play className="mr-2" size={16} />
+            Build Cache
           </button>
 
-          {buildingJob && (
-            <p className="mt-3 text-sm text-gray-600">
-              This may take a few seconds...
-            </p>
-          )}
-
-          {jobSuccess && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm flex items-center gap-2">
-              <CheckCircle size={16} />
-              <span>Cache built successfully!</span>
-            </div>
-          )}
-
-          {jobError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-              {jobError}
+          {/* Job Status */}
+          {currentJobId && (
+            <div className="mt-4">
+              <JobStatusCard jobId={currentJobId} onComplete={handleJobComplete} />
             </div>
           )}
         </div>

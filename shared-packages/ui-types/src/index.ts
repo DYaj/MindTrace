@@ -186,6 +186,7 @@ export interface JobStatus {
   createdAt: string;
   startedAt?: string;
   completedAt?: string;
+  duration?: number; // milliseconds - calculated from startedAt to completedAt (or now if running)
   result?: JobResult;
 }
 

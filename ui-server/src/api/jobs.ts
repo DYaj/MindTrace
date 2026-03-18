@@ -24,9 +24,16 @@ const jobsRoutes: FastifyPluginAsync = async (server) => {
         });
       }
 
+      // Enrich response with calculated duration
+      const duration = JobService.getJobDuration(job);
+      const enrichedJob: JobStatus = {
+        ...job,
+        duration
+      };
+
       return reply.send({
         success: true,
-        data: job
+        data: enrichedJob
       });
     } catch (error) {
       server.log.error(error);
