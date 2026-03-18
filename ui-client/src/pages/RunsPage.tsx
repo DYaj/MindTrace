@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRuns } from '../hooks/useRuns';
 import { formatDistanceToNow } from 'date-fns';
 import ExitCodeBadge from '../components/ExitCodeBadge';
+import { JobStatusCard } from '../components/JobStatusCard';
 import { api } from '../api/client';
 import type { JobStatus } from '@breakline/ui-types';
 
@@ -10,61 +11,30 @@ function RunsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: runs, isLoading, refetch } = useRuns();
-  const [runningJob, setRunningJob] = useState<JobStatus | null>(null);
-  const [jobError, setJobError] = useState<string | null>(null);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
 
-  // Initialize running job from navigation state (if coming from Layout "Run Tests" button)
+  // Initialize job from navigation state (if coming from Layout "Run Tests" button)
   useEffect(() => {
     if (location.state?.jobId) {
-      setRunningJob({
-        jobId: location.state.jobId,
-        type: 'run',
-        status: location.state.status || 'pending',
-        createdAt: new Date().toISOString()
-      });
+      setCurrentJobId(location.state.jobId);
       // Clear the navigation state so refresh doesn't re-trigger
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
-  // Poll job status
-  useEffect(() => {
-    if (!runningJob || runningJob.status === 'completed' || runningJob.status === 'failed') {
-      return;
-    }
-
-    const pollInterval = setInterval(async () => {
-      try {
-        const job = await api.getJob(runningJob.jobId);
-        setRunningJob(job);
-
-        if (job.status === 'completed' || job.status === 'failed') {
-          clearInterval(pollInterval);
-          // Refetch runs list after job completes
-          refetch();
-        }
-      } catch (error) {
-        console.error('Failed to poll job:', error);
-        clearInterval(pollInterval);
-        setJobError(error instanceof Error ? error.message : 'Unknown error');
-      }
-    }, 1000); // Poll every second
-
-    return () => clearInterval(pollInterval);
-  }, [runningJob, refetch]);
-
   const handleRunTests = async () => {
     try {
-      setJobError(null);
       const response = await api.runTests();
-      setRunningJob({
-        jobId: response.jobId,
-        type: 'run',
-        status: response.status,
-        createdAt: new Date().toISOString()
-      });
+      setCurrentJobId(response.jobId);
     } catch (error) {
-      setJobError(error instanceof Error ? error.message : 'Failed to start test run');
+      console.error('Failed to start test run:', error);
+    }
+  };
+
+  const handleJobComplete = (job: JobStatus) => {
+    if (job.status === 'completed' || job.status === 'failed') {
+      // Refresh runs list after job completes
+      refetch();
     }
   };
 
@@ -83,24 +53,19 @@ function RunsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Runs</h1>
           <p className="text-gray-600 mt-2">Test execution history</p>
         </div>
-        <div className="flex items-center gap-3">
-          {runningJob && runningJob.status !== 'completed' && runningJob.status !== 'failed' && (
-            <span className="text-sm text-gray-600">
-              {runningJob.status === 'running' ? 'Running tests...' : 'Starting...'}
-            </span>
-          )}
-          {jobError && (
-            <span className="text-sm text-red-600">{jobError}</span>
-          )}
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleRunTests}
-            disabled={runningJob?.status === 'running' || runningJob?.status === 'pending'}
-          >
-            Run Tests
-          </button>
-        </div>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleRunTests}
+          disabled={!!currentJobId}
+        >
+          Run Tests
+        </button>
       </div>
+
+      {/* Job Status */}
+      {currentJobId && (
+        <JobStatusCard jobId={currentJobId} onComplete={handleJobComplete} />
+      )}
 
       {!runs || runs.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
