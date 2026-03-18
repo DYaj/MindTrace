@@ -80,7 +80,8 @@ export class SystemService {
       if (hasCacheFiles) {
         try {
           const meta = JSON.parse(readFileSync(metaPath, 'utf-8'));
-          pageCount = meta.pages?.length ?? 0;
+          // Support both formats: pages_count (current) and pages.length (legacy)
+          pageCount = meta.pages_count ?? meta.pages?.length ?? 0;
         } catch {
           // If meta.json is malformed, treat as missing
           hasCacheFiles = false;
