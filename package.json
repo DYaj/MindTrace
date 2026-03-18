@@ -7,6 +7,15 @@
     "frameworks-mcp",
     "orchestrator-mcp",
     "mindtrace-ai-runtime",
-    "repo-intelligence-mcp"
-  ]
+    "repo-intelligence-mcp",
+    "ui-server",
+    "ui-client"
+  ],
+  "scripts": {
+    "build:ui-types": "npm -w @breakline/ui-types run build",
+    "build:ui-server": "npm -w ui-server run build",
+    "build:ui-client": "npm -w ui-client run build",
+    "dev:server": "npm -w ui-server run dev",
+    "dev:client": "npm -w ui-client run dev"
+  }
 }
