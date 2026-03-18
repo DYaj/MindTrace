@@ -59,3 +59,16 @@ mindtrace_snapshot_*.txt
 coverage/
 **/coverage/
 test-results/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/settings.json
+.idea/
