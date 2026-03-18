@@ -102,34 +102,60 @@ Filesystem + Runtime CLI + MCP (future)
 
 ---
 
-## What's Next (After Review)
+## Implementation Progress
 
-### Stage 2: Remaining Read Pages
-- RunDetailPage (artifacts + audit tabs)
-- ContractPage (file viewer)
-- CachePage (drift indicator + page list)
-- IntegrityPage (3 gate cards)
+### ✅ Stage 1: Foundation (Complete)
+- System page with status cards
+- Runs page with history table
+- Basic layout and navigation
 
-### Stage 3: Job Model + Actions
-- JobService (in-memory registry)
-- CliService (spawn CLI commands)
-- POST /api/actions/run (job-based)
+### ✅ Stage 2: Read Pages (Complete - 2026-03-19)
+- RunDetailPage with clickable artifacts
+- ContractPage with file viewer
+- CachePage with page list and viewing
+- FileViewerModal component
+
+### ✅ Stage 3: Job Model + Actions (Complete - 2026-03-19)
+- JobService with in-memory registry
+- CliService for runtime execution
+- POST /api/actions/run with job tracking
 - Job polling in frontend
 
-### Stage 4: MCP Integration
-- MCP client wrapper
-- Wire generate-contract action
-- Wire build-cache action
+### ✅ Stage 4: MCP Integration (Complete - 2026-03-19)
+- RepoIntelligenceService with direct MCP imports
+- Generate contract action wired and working
+- Build cache action wired and working
+- All actions use async job model
+
+**Implementation note:** Stage 4 uses direct imports from `@mindtrace/repo-intelligence-mcp` rather than MCP stdio protocol. This is intentional for internal backend integration.
+
+### 🚧 Stage 5: Operational Clarity & System Depth (Next)
+- Run timeline and observability
+- Error surfaces with better failure grouping
+- System transparency improvements
+- Stability hardening
 
 ---
 
-## Known Limitations (V1 Scaffold)
+## Current Capabilities
 
-1. **Action buttons disabled** - MCP/CLI integration not wired
-2. **No real-time updates** - Polling only
-3. **No job tracking UI** - Job model exists but no progress display
-4. **No contract/cache detail pages** - Basic scaffolds only
-5. **No integrity-gates integration** - Package not in main branch yet
+### Working Features
+✅ View system status (Runtime, Contract, Cache, MCP)
+✅ Generate contract via UI button
+✅ Build cache via UI button
+✅ Run tests via UI button
+✅ View run history with exit codes
+✅ View run details with artifacts
+✅ Click artifacts to view content (JSON/text)
+✅ View cache pages and detection metadata
+✅ Job tracking with polling
+✅ Real-time status updates (5s polling)
+
+### Known Limitations
+1. **Polling only** - No WebSocket/SSE for real-time updates
+2. **Basic error display** - Could be more detailed
+3. **No run deletion** - Can only view, not manage runs
+4. **No integrity gates UI** - Package exists but not integrated
 
 ---
 
