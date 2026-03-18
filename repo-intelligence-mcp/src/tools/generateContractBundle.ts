@@ -11,7 +11,9 @@ import { resolveContractDir } from "../core/paths.js";
 import { scanRepo } from "./scanRepo.js";
 import { detectFramework, inferStructure, detectLocatorStyle, detectAssertionStyle } from "./infer.js";
 import { buildPageCache } from "./buildPageCache.js";
-import type { RepoTopologyJSON } from "../schemas/types.js";
+import type { Entrypoint, StyleKey } from "../types/contract.js";
+// TEMPORARY: Commented out until schema types are generated
+// import type { RepoTopologyJSON } from "../schemas/types.js";
 
 export type GenerateContractBundleResult =
   | { ok: true; contractSha256: string; filesWritten: string[] }
@@ -52,11 +54,11 @@ export async function generateContractBundle(params: {
     const assertionDetection = detectAssertionStyle(topology);
 
     const stylesDetected = ["style1-native"];
-    const entrypoints = [];
+    const entrypoints: Entrypoint[] = [];
 
     // Step 3: Detect primary style
     const { detectPrimaryStyle } = await import("./generators/detectPrimaryStyle.js");
-    const primaryStyle = detectPrimaryStyle(stylesDetected);
+    const primaryStyle = detectPrimaryStyle(stylesDetected) as StyleKey;
 
     // Step 4: Generate contracts
     const automationContract = generateAutomationContract({

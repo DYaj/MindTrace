@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useRuns } from '../hooks/useRuns';
 import { formatDistanceToNow } from 'date-fns';
@@ -8,9 +8,24 @@ import type { JobStatus } from '@breakline/ui-types';
 
 function RunsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: runs, isLoading, refetch } = useRuns();
   const [runningJob, setRunningJob] = useState<JobStatus | null>(null);
   const [jobError, setJobError] = useState<string | null>(null);
+
+  // Initialize running job from navigation state (if coming from Layout "Run Tests" button)
+  useEffect(() => {
+    if (location.state?.jobId) {
+      setRunningJob({
+        jobId: location.state.jobId,
+        type: 'run',
+        status: location.state.status || 'pending',
+        createdAt: new Date().toISOString()
+      });
+      // Clear the navigation state so refresh doesn't re-trigger
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Poll job status
   useEffect(() => {

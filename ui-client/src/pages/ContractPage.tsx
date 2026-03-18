@@ -54,7 +54,8 @@ export function ContractPage() {
     try {
       const response = await fetch('http://localhost:3001/api/actions/generate-contract', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       });
 
       const data = await response.json();

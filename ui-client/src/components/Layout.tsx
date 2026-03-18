@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Activity, Settings } from 'lucide-react';
+import { Activity, Settings, FileCode, Database } from 'lucide-react';
 import { useSystemStatus } from '../hooks/useSystemStatus';
 import StatusIndicator from './StatusIndicator';
 import { useState } from 'react';
@@ -14,14 +14,20 @@ function Layout() {
     try {
       const response = await fetch('http://localhost:3001/api/actions/run', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Navigate to Runs page where job polling will show progress
-        navigate('/runs');
+        // Navigate to Runs page with job info
+        navigate('/runs', {
+          state: {
+            jobId: data.data.jobId,
+            status: data.data.status
+          }
+        });
       }
     } catch (error) {
       console.error('Failed to start test run:', error);
@@ -32,6 +38,8 @@ function Layout() {
 
   const navItems = [
     { to: '/', label: 'System', icon: Settings, exact: true },
+    { to: '/contract', label: 'Contract', icon: FileCode },
+    { to: '/cache', label: 'Cache', icon: Database },
     { to: '/runs', label: 'Runs', icon: Activity }
   ];
 
