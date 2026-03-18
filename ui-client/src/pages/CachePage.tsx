@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCache } from '../hooks/useCache';
 import { useContract } from '../hooks/useContract';
 import { AlertTriangle, CheckCircle, Database, FileText, Play, Loader } from 'lucide-react';
+import { FileViewerModal } from '../components/FileViewerModal';
 
 export function CachePage() {
   const { data: cache, isLoading, error, refetch } = useCache();
@@ -11,6 +12,25 @@ export function CachePage() {
   const [buildingJob, setBuildingJob] = useState<string | null>(null);
   const [jobError, setJobError] = useState<string | null>(null);
   const [jobSuccess, setJobSuccess] = useState<boolean>(false);
+
+  // Cache page viewer state
+  const [selectedPage, setSelectedPage] = useState<{ key: string; content: string } | null>(null);
+
+  const handlePageClick = async (pageKey: string) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/cache/pages/${pageKey}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setSelectedPage({
+          key: pageKey,
+          content: data.data.content
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load cache page:', err);
+    }
+  };
 
   // Poll job status
   useEffect(() => {
@@ -55,7 +75,8 @@ export function CachePage() {
     try {
       const response = await fetch('http://localhost:3001/api/actions/build-cache', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       });
 
       const data = await response.json();
@@ -271,7 +292,11 @@ export function CachePage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {cache.pages.map((page, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr
+                  key={index}
+                  onClick={() => handlePageClick(page.key)}
+                  className="hover:bg-blue-50 cursor-pointer transition-colors"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <FileText size={16} className="text-gray-400" />
@@ -295,6 +320,17 @@ export function CachePage() {
           Full drift analysis is delegated to integrity gates.
         </p>
       </div>
+
+      {/* Cache Page Viewer Modal */}
+      {selectedPage && (
+        <FileViewerModal
+          isOpen={true}
+          onClose={() => setSelectedPage(null)}
+          fileName={`${selectedPage.key}.json`}
+          content={selectedPage.content}
+          fileType="json"
+        />
+      )}
     </div>
   );
 }

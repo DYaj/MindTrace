@@ -1,5 +1,5 @@
 import { useSystemStatus } from '../hooks/useSystemStatus';
-import { CheckCircle, XCircle, Activity, FileCode, Database, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Activity, FileCode, Database, ArrowRight, Cpu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function SystemPage() {
@@ -39,6 +39,12 @@ function SystemPage() {
       icon: Database,
       ok: system.cache.state === 'available',
       detail: system.cache.detail || (system.cache.state === 'available' ? 'Built' : 'Not Built')
+    },
+    {
+      label: 'MCP',
+      icon: Cpu,
+      ok: system.mcp.state === 'available',
+      detail: system.mcp.state === 'available' ? 'Installed' : 'Missing'
     }
   ];
 
@@ -57,7 +63,7 @@ function SystemPage() {
           <div className="space-y-2">
             <Link
               to="/contract"
-              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-900 font-medium"
+              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
             >
               <span>1. Generate Contract</span>
               <ArrowRight size={16} />
@@ -65,7 +71,7 @@ function SystemPage() {
             </Link>
             <Link
               to="/cache"
-              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-900 font-medium"
+              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
             >
               <span>2. Build Cache</span>
               <ArrowRight size={16} />
@@ -73,7 +79,7 @@ function SystemPage() {
             </Link>
             <Link
               to="/runs"
-              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-900 font-medium"
+              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
             >
               <span>3. Run Tests</span>
               <ArrowRight size={16} />
@@ -90,21 +96,19 @@ function SystemPage() {
             key={label}
             className="bg-white border border-gray-200 rounded-lg p-6"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${ok ? 'bg-green-50' : 'bg-red-50'}`}>
-                  <Icon className={ok ? 'text-green-600' : 'text-red-600'} size={24} />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">{label}</p>
-                  <p className="text-sm text-gray-600">{detail}</p>
-                </div>
+            <div className="flex items-start justify-between mb-4">
+              <div className={`p-3 rounded-lg ${ok ? 'bg-green-50' : 'bg-red-50'}`}>
+                <Icon className={ok ? 'text-green-600' : 'text-red-600'} size={24} />
               </div>
               {ok ? (
-                <CheckCircle className="text-green-600" size={20} />
+                <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
               ) : (
-                <XCircle className="text-red-600" size={20} />
+                <XCircle className="text-red-600 flex-shrink-0" size={20} />
               )}
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 mb-1">{label}</p>
+              <p className="text-sm text-gray-600">{detail}</p>
             </div>
           </div>
         ))}

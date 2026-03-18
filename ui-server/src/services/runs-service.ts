@@ -36,7 +36,7 @@ export class RunsService {
 
         // Handle both old and new format
         const runId = entry.runId || entry.runName;
-        const timestamp = entry.timestamp || entry.ts;
+        const timestamp = entry.timestamp || entry.ts || entry.indexed_at;
 
         if (!runId || !timestamp) continue;
 
@@ -122,6 +122,7 @@ export class RunsService {
 
   /**
    * Read audit events from NDJSON file
+   * Transforms raw events to match AuditEvent interface
    */
   private static readAuditEvents(path: string): AuditEvent[] {
     const content = readFileSync(path, 'utf-8');
@@ -130,13 +131,34 @@ export class RunsService {
 
     for (const line of lines) {
       try {
-        events.push(JSON.parse(line));
+        const raw = JSON.parse(line);
+        // Transform to match AuditEvent interface
+        events.push({
+          timestamp: raw.at || raw.timestamp,
+          type: raw.type,
+          message: raw.message || this.generateMessageFromEvent(raw),
+          details: raw
+        });
       } catch {
         // Skip invalid lines
       }
     }
 
     return events;
+  }
+
+  /**
+   * Generate human-readable message from raw event data
+   */
+  private static generateMessageFromEvent(event: any): string {
+    switch (event.type) {
+      case 'gate_start':
+        return `Integrity gate started for run ${event.runName || 'unknown'}`;
+      case 'gate_end':
+        return `Integrity gate completed - Policy: ${event.policySaysFail ? 'FAIL' : 'PASS'}, Artifacts: ${event.artifactValidationFail ? 'INVALID' : 'VALID'}`;
+      default:
+        return JSON.stringify(event);
+    }
   }
 
   /**
@@ -169,7 +191,7 @@ export class RunsService {
           const entry = JSON.parse(line);
           const entryRunId = entry.runId || entry.runName;
           if (entryRunId === runId) {
-            timestamp = entry.timestamp || entry.ts;
+            timestamp = entry.timestamp || entry.ts || entry.indexed_at;
             break;
           }
         } catch {
@@ -249,5 +271,31 @@ export class RunsService {
     }
 
     return artifacts;
+  }
+
+  /**
+   * Get artifact file content
+   *
+   * DEFENSIVE: Returns null if file not found or read fails
+   */
+  static getArtifactContent(runId: string, artifactPath: string): string | null {
+    try {
+      PathValidator.validateRunId(runId);
+      const runPath = PathValidator.getRunPath(runId);
+
+      if (!existsSync(runPath)) {
+        return null;
+      }
+
+      const artifactFullPath = join(runPath, 'artifacts', artifactPath);
+
+      if (!existsSync(artifactFullPath)) {
+        return null;
+      }
+
+      return readFileSync(artifactFullPath, 'utf-8');
+    } catch (error) {
+      return null;
+    }
   }
 }

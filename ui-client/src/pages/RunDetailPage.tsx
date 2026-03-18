@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useRunDetail } from '../hooks/useRunDetail';
 import { ArrowLeft, FileText, Activity } from 'lucide-react';
+import { FileViewerModal } from '../components/FileViewerModal';
 
 type TabType = 'overview' | 'artifacts' | 'audit';
 
@@ -9,8 +10,27 @@ export function RunDetailPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [selectedArtifact, setSelectedArtifact] = useState<{ name: string; path: string; type: 'json' | 'txt' | 'other'; content: string } | null>(null);
 
   const { data: run, isLoading, error } = useRunDetail(runId || '');
+
+  const handleArtifactClick = async (artifactPath: string, name: string, type: 'json' | 'txt' | 'other') => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/runs/${runId}/artifacts/${artifactPath}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setSelectedArtifact({
+          name,
+          path: artifactPath,
+          type,
+          content: data.data.content
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load artifact:', error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -180,7 +200,11 @@ export function RunDetailPage() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {run.artifacts.map((artifact, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
+                  <tr
+                    key={index}
+                    onClick={() => handleArtifactClick(artifact.path, artifact.name, artifact.type)}
+                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <FileText size={16} className="text-gray-400" />
@@ -238,6 +262,17 @@ export function RunDetailPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* File Viewer Modal */}
+      {selectedArtifact && (
+        <FileViewerModal
+          isOpen={true}
+          onClose={() => setSelectedArtifact(null)}
+          fileName={selectedArtifact.name}
+          content={selectedArtifact.content}
+          fileType={selectedArtifact.type}
+        />
       )}
     </div>
   );

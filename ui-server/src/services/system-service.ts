@@ -45,16 +45,25 @@ export class SystemService {
     const contractPath = PathValidator.getContractPath();
     const contractExists = PathValidator.exists(contractPath);
     let contractFingerprint: string | undefined;
+    let hasContractFiles = false;
 
     if (contractExists) {
+      // Check for actual contract files (not just empty directory)
       const hashPath = join(contractPath, 'automation-contract.hash');
+      const fingerprintPath = join(contractPath, 'contract.fingerprint.sha256');
+      const jsonPath = join(contractPath, 'automation-contract.json');
+
+      hasContractFiles = existsSync(hashPath) || existsSync(fingerprintPath) || existsSync(jsonPath);
+
       if (existsSync(hashPath)) {
         contractFingerprint = readFileSync(hashPath, 'utf-8').trim();
+      } else if (existsSync(fingerprintPath)) {
+        contractFingerprint = readFileSync(fingerprintPath, 'utf-8').trim();
       }
     }
 
     const contract = {
-      state: contractExists ? 'available' as const : 'missing' as const,
+      state: (contractExists && hasContractFiles) ? 'available' as const : 'missing' as const,
       detail: contractFingerprint
     };
 
@@ -62,17 +71,25 @@ export class SystemService {
     const cachePath = PathValidator.getCachePath();
     const cacheExists = PathValidator.exists(cachePath);
     let pageCount: number | undefined;
+    let hasCacheFiles = false;
 
     if (cacheExists) {
       const metaPath = join(cachePath, 'meta.json');
-      if (existsSync(metaPath)) {
-        const meta = JSON.parse(readFileSync(metaPath, 'utf-8'));
-        pageCount = meta.pages?.length ?? 0;
+      hasCacheFiles = existsSync(metaPath);
+
+      if (hasCacheFiles) {
+        try {
+          const meta = JSON.parse(readFileSync(metaPath, 'utf-8'));
+          pageCount = meta.pages?.length ?? 0;
+        } catch {
+          // If meta.json is malformed, treat as missing
+          hasCacheFiles = false;
+        }
       }
     }
 
     const cache = {
-      state: cacheExists ? 'available' as const : 'missing' as const,
+      state: (cacheExists && hasCacheFiles) ? 'available' as const : 'missing' as const,
       detail: pageCount !== undefined ? `${pageCount} pages` : undefined
     };
 

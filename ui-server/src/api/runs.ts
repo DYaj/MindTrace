@@ -55,6 +55,40 @@ const runsRoutes: FastifyPluginAsync = async (server) => {
       });
     }
   });
+
+  /**
+   * GET /api/runs/:runId/artifacts/*
+   * Get artifact file content
+   */
+  server.get<{
+    Params: { runId: string; '*': string };
+    Reply: ApiResponse<{ content: string }>;
+  }>('/:runId/artifacts/*', async (request, reply) => {
+    try {
+      const { runId } = request.params;
+      const artifactPath = request.params['*'];
+
+      const content = RunsService.getArtifactContent(runId, artifactPath);
+
+      if (!content) {
+        return reply.code(404).send({
+          success: false,
+          error: `Artifact not found: ${artifactPath}`
+        });
+      }
+
+      return reply.send({
+        success: true,
+        data: { content }
+      });
+    } catch (error) {
+      server.log.error(error);
+      return reply.code(500).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to read artifact'
+      });
+    }
+  });
 };
 
 export default runsRoutes;

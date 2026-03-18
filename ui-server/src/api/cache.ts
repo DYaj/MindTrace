@@ -26,6 +26,38 @@ const cacheRoutes: FastifyPluginAsync = async (server) => {
       });
     }
   });
+
+  /**
+   * GET /api/cache/pages/:pageKey
+   * Get cache page file content
+   */
+  server.get<{
+    Params: { pageKey: string };
+    Reply: ApiResponse<{ content: string }>;
+  }>('/pages/:pageKey', async (request, reply) => {
+    try {
+      const { pageKey } = request.params;
+      const content = CacheService.getCachePageContent(pageKey);
+
+      if (!content) {
+        return reply.code(404).send({
+          success: false,
+          error: `Cache page not found: ${pageKey}`
+        });
+      }
+
+      return reply.send({
+        success: true,
+        data: { content }
+      });
+    } catch (error) {
+      server.log.error(error);
+      return reply.code(500).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to read cache page'
+      });
+    }
+  });
 };
 
 export default cacheRoutes;
