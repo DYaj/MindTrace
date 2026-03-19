@@ -164,6 +164,16 @@ export interface SystemStatus {
   contract: ComponentStatus;
   cache: ComponentStatus;
   mcp: ComponentStatus;
+  repository: RepositoryInfo;
+}
+
+/**
+ * Active repository information
+ */
+export interface RepositoryInfo {
+  name: string; // Repository name (e.g. "mindtrace-for-playwright")
+  path: string; // Full absolute path
+  isExternal: boolean; // True if BREAKLINE_TARGET_REPO was explicitly set
 }
 
 export interface ComponentStatus {

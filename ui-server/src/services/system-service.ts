@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { join, basename } from 'path';
 import type { SystemStatus } from '@breakline/ui-types';
 import { PathValidator } from '../utils/paths.js';
 import { getBreaklineRoot } from '../utils/breakline-root.js';
@@ -99,11 +99,20 @@ export class SystemService {
       detail: existsSync(mcpPath) ? 'Installed on disk' : undefined
     };
 
+    // Repository information
+    const isExternal = !!process.env.BREAKLINE_TARGET_REPO;
+    const repository = {
+      name: basename(targetRepoRoot),
+      path: targetRepoRoot,
+      isExternal
+    };
+
     return {
       runtime,
       contract,
       cache,
-      mcp
+      mcp,
+      repository
     };
   }
 }
