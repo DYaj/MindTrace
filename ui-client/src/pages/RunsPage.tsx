@@ -7,7 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import ExitCodeBadge from '../components/ExitCodeBadge';
 import { JobStatusCard } from '../components/JobStatusCard';
 import { api } from '../api/client';
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2, Play } from 'lucide-react';
 import type { JobStatus } from '@breakline/ui-types';
 
 const STORAGE_KEY = 'breakline:runs:currentJobId';
@@ -195,8 +195,15 @@ function RunsPage() {
 
       {!runs || runs.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-lg p-12 text-center" data-testid="runs-empty-state">
-          <p className="text-gray-600">No runs found</p>
-          <p className="text-sm text-gray-500 mt-2">Run tests to see execution history</p>
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+              <Play size={32} className="text-blue-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">No Test Runs Yet</h3>
+            <p className="text-sm text-gray-600 max-w-md">
+              Your test execution history will appear here. {system?.contract.state === 'available' && system?.cache.state === 'available' ? 'Click "Run Tests" above to start your first test execution.' : 'Complete the prerequisites above, then run your tests.'}
+            </p>
+          </div>
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">

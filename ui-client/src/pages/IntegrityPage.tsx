@@ -8,7 +8,8 @@ import {
   ArrowRight,
   FileCode,
   Database,
-  GitBranch
+  GitBranch,
+  RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { GateResult, DriftResult } from '@breakline/ui-types';
@@ -453,7 +454,7 @@ function DriftCard({ driftResult, explanation }: DriftCardProps) {
 }
 
 export function IntegrityPage() {
-  const { data: integrity, isLoading, error } = useIntegrity();
+  const { data: integrity, isLoading, error, refetch } = useIntegrity();
 
   if (isLoading) {
     return (
@@ -473,8 +474,25 @@ export function IntegrityPage() {
   if (error || !integrity) {
     return (
       <div className="max-w-5xl mx-auto p-4 sm:p-6" data-testid="integrity-page-error">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Failed to load integrity status: {error instanceof Error ? error.message : 'Unknown error'}</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <XCircle size={20} className="text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-red-900 mb-1">Failed to Load Integrity Status</h3>
+              <p className="text-sm text-red-800 mb-4">
+                {error instanceof Error ? error.message : 'Unable to retrieve integrity gate status information.'}
+              </p>
+              <button
+                onClick={() => refetch()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                <RefreshCw size={16} />
+                Retry
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCache } from '../hooks/useCache';
 import { useContract } from '../hooks/useContract';
 import { useIntegrity } from '../hooks/useIntegrity';
-import { AlertTriangle, CheckCircle, Database, FileText, Play, GitBranch, Link as LinkIcon, ArrowRight, Shield } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Database, FileText, Play, GitBranch, Link as LinkIcon, ArrowRight, Shield, RefreshCw, XCircle } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
 import { JobStatusCard } from '../components/JobStatusCard';
 import InfoTooltip from '../components/InfoTooltip';
@@ -128,8 +128,25 @@ export function CachePage() {
   if (error) {
     return (
       <div className="max-w-7xl mx-auto p-4 sm:p-6" data-testid="cache-page-error">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Failed to load cache: {error instanceof Error ? error.message : 'Unknown error'}</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <XCircle size={20} className="text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-red-900 mb-1">Failed to Load Cache</h3>
+              <p className="text-sm text-red-800 mb-4">
+                {error instanceof Error ? error.message : 'An unknown error occurred while loading cache data.'}
+              </p>
+              <button
+                onClick={() => refetch()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                <RefreshCw size={16} />
+                Retry
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -410,9 +427,24 @@ export function CachePage() {
 
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="cache-pages-list">
           {cache.pages.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <FileText className="mx-auto mb-2 text-gray-400" size={48} />
-              <p>No pages detected</p>
+            <div className="p-12 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
+                  <FileText size={32} className="text-orange-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">No Pages Detected</h3>
+                <p className="text-sm text-gray-600 max-w-md">
+                  Cache built successfully but detected zero pages — verify your application is accessible during cache generation.
+                </p>
+                <button
+                  onClick={handleBuildCache}
+                  disabled={!!currentJobId}
+                  className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                >
+                  <Play size={16} />
+                  Rebuild Cache
+                </button>
+              </div>
             </div>
           ) : (
             <div className="overflow-x-auto">
