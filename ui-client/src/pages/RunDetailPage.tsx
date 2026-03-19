@@ -4,6 +4,7 @@ import { useRunDetail } from '../hooks/useRunDetail';
 import { ArrowLeft, RefreshCw, FileX, Activity } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
 import { RunSummaryHeader } from '../components/run/RunSummaryHeader';
+import { FailureSummaryBlock } from '../components/run/FailureSummaryBlock';
 import { ArtifactGroup, categorizeArtifacts } from '../components/run/ArtifactGroup';
 import { AuditEventItem } from '../components/run/AuditEventItem';
 
@@ -128,6 +129,16 @@ export function RunDetailPage() {
         testsPassed={run.testsPassed}
         testsFailed={run.testsFailed}
       />
+
+      {/* Failure Summary Block */}
+      <div className="mt-6">
+        <FailureSummaryBlock
+          runId={run.runId}
+          exitCode={run.exitCode}
+          testsFailed={run.testsFailed}
+          testsPassed={run.testsPassed}
+        />
+      </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-4 sm:mb-6 mt-6" data-testid="run-detail-tabs">
