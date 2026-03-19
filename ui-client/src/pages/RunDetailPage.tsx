@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useRunDetail } from '../hooks/useRunDetail';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
 import { RunSummaryHeader } from '../components/run/RunSummaryHeader';
 import { ArtifactGroup, categorizeArtifacts } from '../components/run/ArtifactGroup';

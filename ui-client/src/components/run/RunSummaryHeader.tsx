@@ -17,7 +17,7 @@ function getFailureType(exitCode: number): FailureType {
   return 'test-failure';
 }
 
-export function RunSummaryHeader({ runId, exitCode, duration, testsPassed, testsFailed }: RunSummaryHeaderProps) {
+export function RunSummaryHeader({ exitCode, duration, testsPassed, testsFailed }: RunSummaryHeaderProps) {
   const failureType = getFailureType(exitCode);
 
   const typeConfig = {
