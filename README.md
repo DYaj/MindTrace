@@ -1,292 +1,378 @@
 # MindTrace for Playwright
 
-## 🧠 Governance-First Test Automation Runtime
+**Governance-first test automation with production UI.**
 
-**MindTrace** is an enterprise-grade compliance and governance layer for Playwright test execution.
-
-It enforces deterministic artifact contracts, immutable manifest validation, policy decisions, and audit traceability — before introducing AI-based resilience features.
-
-MindTrace is not a wrapper around Playwright.
-
-It is a compliance-enforced execution runtime.
+Playwright + compliance layer + operational dashboard. Deterministic artifacts. Contract-driven execution. Complete visibility.
 
 ---
 
-# 🎯 What MindTrace Is (Phase 3 Complete)
+## What It Does
 
-MindTrace transforms Playwright into:
+Transforms Playwright tests into a governed execution platform:
 
-• A policy-controlled execution engine
-• A contract-validated test runtime
-• A deterministic artifact generator
-• A governance-first healing system
-• A CI-governed compliance system
-• An audit-ready execution layer
+- **Contract** → Define what should be tested
+- **Cache** → Detect what can be tested
+- **Integrity Gates** → Verify everything aligns
+- **Run** → Execute with governance + audit trail
+- **UI** → See exactly what's happening
 
-**Phase 3 Healing Engine** provides contract-aware selector ranking with 5-tier system:
-1. **Contract** (governance-first, highest authority)
-2. **Cache** (semantic signals, high confidence)
-3. **Last-Known-Good** (historical fallback)
-4. **Fallback** (deterministic, bounded)
-5. **LLM** (advisory only, never overrides)
+**Exit codes differentiate:** test failures (1) | infrastructure (2) | compliance violations (3)
 
-AI resilience features are layered on top — but governance comes first.
+**Healing uses 5-tier authority:** Contract > Cache > Last-Known-Good > Fallback > LLM (advisory only)
 
 ---
 
-# 🏗️ Architecture (Phase 2.0+)
+## Quick Start
 
-Developer
-↓
-MindTrace CLI / Runtime
-↓
-**Contract-Awareness Module** (Phase 2.0)
-- Loads & validates automation contracts from `.mcp-contract/`
-- Binds page cache from `.mcp-cache/v1/`
-- Builds runtime strategy context
-- Writes contract artifacts to `runs/<runId>/artifacts/`
-↓
-Governance MCP (contracts + policy gate)
-↓
-Frameworks MCP (prompt packs discovery/retrieval)
-↓
-(Optionally) Orchestrator MCP (thin façade over MCPs)
-↓
-Playwright Execution
-↓
-Deterministic Artifacts
-↓
-Governance Gate
-↓
-Audit Trail + History Index
+```bash
+npm install && npm run dev
+# Open http://localhost:5173
+```
 
-**Phase 2.0 Integration:**
-- Runtime loads contracts **before** test execution
-- Environment variables set: `MINDTRACE_AUTOMATION_CONTRACT_CONTEXT_PATH`, `MINDTRACE_CONTRACT_DIR`, `MINDTRACE_PAGE_CACHE_DIR`
-- Contract validation errors → exit code 3 (compliance invalid)
-- All contract awareness operations are deterministic (no network, no AI)
+**First workflow:**
+1. Generate Contract
+2. Build Cache
+3. Check Integrity
+4. Run Tests
 
-**Phase 2 GSL (Governance Safety Layer):**
-- `@mindtrace/integrity-gates` package provides hard authority verification
-- **Contract Integrity Gate** - Verify contract before execution (canonical `.mcp-contract/` precedence)
-- **Cache Integrity Gate** - Verify cache binding and validity (path-sensitive, drift-aware)
-- **Drift Safety System** - Detect contract changes, invalidate stale cache, audit drift events
-- All gates are verifier-only (never regenerate, repair, or mutate artifacts)
-- Exit code 3 for all integrity failures (policy/compliance violations)
-
-MindTrace ensures every run produces deterministic, machine-validated artifacts.
+**See:** [Getting Started Guide](GETTING_STARTED.md) for details.
 
 ---
 
-# 📚 Documentation
+## Why MindTrace
 
-Quick access to documentation:
+**Problem:** Playwright tests break. No governance. Hard to debug. Can't trust results.
 
-- **[Quick Start Guide](docs/guides/quickstart.md)** - Get started in 5 minutes
+**Solution:**
+- **Contracts** enforce what's valid
+- **Integrity gates** prevent drift
+- **Artifacts** are deterministic and auditable
+- **UI** makes everything transparent
+
+**Result:** Tests you can trust. Failures you can debug. Compliance you can prove.
+
+---
+
+## 🚀 Quick Start
+
+### **Option 1: Use the UI (Recommended)**
+
+```bash
+# Install dependencies
+npm install
+
+# Start the UI
+npm run dev
+
+# Open http://localhost:5173
+```
+
+Then follow the in-app guidance:
+1. **Generate Contract** - Define what to test
+2. **Build Cache** - Detect pages from your application
+3. **Run Tests** - Execute with governance enforcement
+4. **Check Integrity** - Verify contract and cache alignment
+
+### **Option 2: CLI Usage**
+
+```bash
+# Generate contract
+npm run contract:generate
+
+# Build page cache
+npm run cache:build
+
+# Run tests with governance
+npm run test
+
+# Check integrity gates
+npm run integrity:check
+```
+
+For detailed setup, see **[Getting Started Guide](GETTING_STARTED.md)**.
+
+---
+
+## 📖 Documentation
+
+### **Getting Started**
+- **[Getting Started Guide](GETTING_STARTED.md)** - Complete onboarding walkthrough
+- **[How It Works](docs/HOW_IT_WORKS.md)** - Operational model explained
+- **[UI System Guide](docs/architecture/ui-system.md)** - Understanding the interface
+
+### **Architecture**
 - **[Architecture Overview](docs/architecture/overview.md)** - System design and components
 - **[Phase Documentation](docs/architecture/phases/)** - Detailed phase architecture
   - [Phase 0: Contract Generators](docs/architecture/phases/phase0-contracts.md)
   - [Phase 1: Page Cache](docs/architecture/phases/phase1-cache.md)
-  - [Phase 2.0: Contract Awareness](docs/architecture/phases/phase2-awareness.md)
+  - [Phase 2: Contract Awareness](docs/architecture/phases/phase2-awareness.md)
   - [Phase 3: Healing Engine](docs/architecture/phases/phase3-healing.md)
-- **[Reference Documentation](docs/reference/)** - Compliance, enterprise features, products
-- **[Setup & Guides](docs/guides/)** - Installation, TeamCity, client setup
+
+### **Reference**
+- **[Setup & Configuration](docs/SETUP.md)** - Installation and configuration
+- **[TeamCity Integration](docs/TEAMCITY.md)** - CI/CD setup
+- **[Compliance & Enterprise](docs/reference/)** - Governance features
 
 ---
 
-# 📦 Deterministic Artifact Contract (Phase 2.0+)
+## 🏗️ System Architecture
 
-Every run generates:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       Web UI (Port 5173)                     │
+│  System • Runs • Contract • Cache • Integrity • Job Monitor  │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                   UI Server (Port 3001)                      │
+│         REST API • System Status • Integrity Gates           │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│              Repo Intelligence MCP (stdio)                   │
+│    Contract Gen • Cache Build • Integrity Verification       │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                 MindTrace AI Runtime                         │
+│           Contract-Aware Playwright Execution                │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+              Deterministic Artifacts
+        (.mcp-contract/ • .mcp-cache/v1/ • runs/)
+```
 
+**Key Components:**
+- **Web UI** - React + TypeScript production interface
+- **UI Server** - Express API serving system state
+- **Repo Intelligence MCP** - Contract and cache operations
+- **AI Runtime** - Governed Playwright execution
+- **Artifacts** - Immutable, validated test outputs
+
+---
+
+## 📦 Deterministic Artifact Contract
+
+Every test run generates a complete artifact bundle:
+
+```
 runs/<runName>/
-
 ├── artifacts/
-│ ├── playwright-report.json
-│ ├── normalized-results.json
-│ ├── policy-decision.json
-│ ├── gate-summary.json
-│ ├── artifact-validation.json
-│ ├── healed-selectors.json
-│ ├── locator-manifest.snapshot.json
-│ ├── contract-awareness.json          # Phase 2.0: Contract validation result
-│ ├── contract-snapshot.json           # Phase 2.2.1: Contract bundle snapshot
-│ ├── contract-utilization.json        # Phase 2.2.2: Contract usage tracking
-│ │
-│ ├── runtime/                          # Phase 3: Healing runtime artifacts
-│ │   ├── healing-attempts.jsonl       # Append-only healing ledger
-│ │   ├── healing-outcome.json         # Per-step healing result
-│ │   └── healing-summary.json         # Run-level healing aggregate
-│
+│   ├── playwright-report.json
+│   ├── normalized-results.json
+│   ├── policy-decision.json
+│   ├── gate-summary.json
+│   ├── artifact-validation.json
+│   ├── healed-selectors.json
+│   ├── locator-manifest.snapshot.json
+│   ├── contract-awareness.json
+│   ├── contract-snapshot.json
+│   ├── contract-utilization.json
+│   └── runtime/
+│       ├── healing-attempts.jsonl
+│       ├── healing-outcome.json
+│       └── healing-summary.json
 ├── audit/
-│ ├── events.ndjson
-│ └── final.json
-│
+│   ├── events.ndjson
+│   └── final.json
 └── (repo root) history/
-└── run-index.jsonl
+    └── run-index.jsonl
+```
 
-If required artifacts are missing → run fails with exit code 3.
-
----
-
-# 🔐 Governance Exit Codes
-
-MindTrace standardizes exit codes:
-
-0 → Tests passed, policy satisfied  
-1 → Test failures (expected Playwright failure)  
-2 → Infrastructure/runtime failure  
-3 → Policy violation (contract invalid or artifact missing)
-
-This allows CI/CD systems to differentiate failure types.
+**If required artifacts are missing → run fails with exit code 3.**
 
 ---
 
-# 📜 Contract & Manifest Enforcement (Phase 2.0+)
+## 🔐 Governance Exit Codes
 
-**Contract Loading (Phase 2.0):**
+MindTrace standardizes exit codes for CI/CD integration:
 
-Runtime loads and validates automation contracts from `.mcp-contract/`:
-- repo-topology.json
-- selector-policy.json
-- healing-policy.json
-- wrapper-discovery.json
-- policy-decision.json
-- meta.json
-- fingerprint.json
+| Code | Meaning | CI Action |
+|------|---------|-----------|
+| **0** | Tests passed, policy satisfied | ✅ Pass |
+| **1** | Test failures (expected Playwright failure) | ❌ Fail (flaky) |
+| **2** | Infrastructure/runtime failure | ⚠️ Fail (infra) |
+| **3** | Policy violation (contract invalid or artifact missing) | 🚫 Fail (compliance) |
 
-If `locator-manifest.json` exists:
-
-1. It must validate against schema.
-2. It is snapshotted into:
-   runs/<runName>/artifacts/locator-manifest.snapshot.json
-3. The heal layer consumes only the snapshot — never the live repo manifest.
-
-If validation fails → exit code 3.
-
-This ensures deterministic compliance behavior.
+This allows CI/CD systems to differentiate failure types and take appropriate action.
 
 ---
 
-# 🚀 Quick Start (Monorepo)
+## 🛡️ Integrity Gates
 
-From repo root:
+Built-in verification system ensures system integrity:
+
+### **Contract Integrity Gate**
+- Validates contract structure and schema
+- Verifies all required contract files exist
+- Ensures contract fingerprint is current
+- **Status:** Valid | Invalid | Warning
+
+### **Cache Integrity Gate**
+- Validates cache structure and metadata
+- Verifies cache binding to contract
+- Detects drift between cache and contract
+- **Status:** Valid | Invalid | Warning | Not Created
+
+### **Drift Detection**
+- Compares cache fingerprint with current contract
+- Identifies when cache needs rebuild
+- Prevents tests from running against stale cache
+- **Auto-resolution:** Rebuild cache to sync
+
+All gates are **verifier-only** — never regenerate, repair, or mutate artifacts.
+
+---
+
+## 📂 Project Structure
+
+```
+mindtrace-for-playwright/
+├── ui-client/                         # React web UI (Vite + TypeScript)
+├── ui-server/                         # Express API server
+├── repo-intelligence-mcp/             # Contract + cache operations (MCP)
+├── mindtrace-ai-runtime/              # Playwright runtime + pipeline
+├── shared-packages/
+│   ├── contracts/                     # @mindtrace/contracts
+│   ├── promptpacks/                   # @mindtrace/promptpacks
+│   ├── integrity-gates/               # @mindtrace/integrity-gates
+│   └── ui-types/                      # @breakline/ui-types
+├── .mcp-contract/                     # Generated contracts
+├── .mcp-cache/v1/                     # Page detection cache
+├── runs/                              # Test execution artifacts
+├── history/                           # Run index and audit
+└── docs/                              # Documentation
+```
+
+---
+
+## 🎓 Core Concepts
+
+### **Contract**
+Your automation's source of truth — defines:
+- What pages exist in your application
+- What selectors are valid for each page
+- Policy rules for execution
+- Healing strategies
+
+Generated from your codebase, stored in `.mcp-contract/`.
+
+### **Cache**
+Page detection results from your application:
+- Built from the contract
+- Bound to a specific contract version (fingerprint)
+- Detects which pages are accessible
+- Stored in `.mcp-cache/v1/`
+
+### **Integrity**
+Verification that your system is synchronized:
+- Contract is valid and current
+- Cache matches the current contract
+- No drift between artifacts
+- Tests can run safely
+
+### **Run**
+A single test execution with governance:
+- Uses contract for validation
+- Uses cache for page detection
+- Generates deterministic artifacts
+- Records audit trail
+
+---
+
+## 🛠️ Development
 
 ```bash
+# Install all dependencies
 npm install
 
-# build shared libraries
-npm -w @mindtrace/shared run build
-npm -w @mindtrace/promptpacks run build
-npm -w @mindtrace/contracts run build
+# Build shared packages
+npm run build
 
-# build MCPs
-npm -w @mindtrace/frameworks-mcp run build
-npm -w @mindtrace/governance-mcp run build
-npm -w @mindtrace/mcp-orchestrator run build
+# Start development UI
+cd ui-client && npm run dev
 
-# (optional) packaged smoke checks
-cd "frameworks-mcp" && npm run -s smoke:packaged
-cd "../governance-mcp" && npm run -s smoke:packaged
+# Start API server (separate terminal)
+cd ui-server && npm run dev
 
+# Run tests
+npm test
 
-Run MCP servers (stdio):
-# Frameworks MCP (prompt pack discovery + retrieval)
-cd "/Users/davidyang/Desktop/MindTrace Inc/mindtrace-for-playwright/frameworks-mcp"
-node dist/mcp/cli.js
+# Build for production
+npm run build
+```
 
-# Governance MCP (CI/governance validation)
-cd "/Users/davidyang/Desktop/MindTrace Inc/mindtrace-for-playwright/governance-mcp"
-node dist/mcp/cli.js
+---
 
-# Orchestrator MCP (thin façade; optional)
-cd "/Users/davidyang/Desktop/MindTrace Inc/mindtrace-for-playwright/orchestrator-mcp"
-node dist/mcp/cli.js
+## ✨ What Makes MindTrace Different
 
+### **Governance-First**
+Compliance and policy enforcement are primary — AI resilience is secondary and advisory-only.
 
+### **Deterministic by Design**
+Every run produces the same artifacts given the same inputs. No randomness, no surprises.
 
-⸻
+### **Observable**
+Complete visibility into system state, execution history, and integrity status through production UI.
 
-📂 Project Structure
+### **Trustworthy**
+Situation-aware messaging, clear error recovery, and no dead ends. Users always know what's happening and what to do next.
 
-mindtrace-for-playwright/
-├── mindtrace-ai-runtime/              # Playwright runtime + pipeline (Option C runtime)
-├── frameworks-mcp/                    # prompt pack discovery + retrieval (fast-evolving)
-├── governance-mcp/                    # deterministic governance/validation for CI
-├── orchestrator-mcp/                  # optional thin façade over MCPs
-├── shared-packages/
-│   ├── contracts/                     # @mindtrace/contracts (schemas/types/loader)
-│   ├── promptpacks/                   # @mindtrace/promptpacks (prompt packs)
-│   ├── integrity-gates/               # @mindtrace/integrity-gates (GSL enforcement) ✨ NEW
-│   └── shared/                        # @mindtrace/shared (common utils)
-├── prompts/                           # source prompt packs (synced into packages/MCPs at build)
-├── contracts/                         # source contracts (synced into packages/MCPs at build)
-├── runs/
-├── history/
-└── reports/
+### **Contract-Driven**
+Your codebase defines the contract. The contract governs execution. The UI makes it transparent.
 
-⸻
+---
 
-🛡️ Compliance Definition of Done (Locked)
+## 🗺️ Roadmap
 
-A run is considered compliant when:
-
-☑ Contract validation passes
-☑ Manifest snapshot is created (if manifest exists)
-☑ Playwright JSON report is generated deterministically
-☑ normalized-results.json exists
-☑ policy-decision.json exists
-☑ gate-summary.json exists
-☑ artifact-validation.json exists
-☑ audit trail written
-☑ history index updated
-☑ exit code reflects correct governance state
-
-Any violation → exit code 3.
-
-⸻
-
-🔮 Roadmap
-
-**Completed:**
+### **Completed**
 - ✅ Phase 0: Repo Intelligence (contract generation via MCP)
 - ✅ Phase 1: Page Semantic Cache (`.mcp-cache/v1/`)
-- ✅ Phase 2.0: Contract-Awareness Module (deterministic loading + validation)
-- ✅ Phase 2: Runtime Contract Execution (CLI integration)
-- ✅ Phase 2 GSL: Governance Safety Layer (`@mindtrace/integrity-gates` - Phase A complete)
+- ✅ Phase 2: Contract-Awareness Module (deterministic loading + validation)
+- ✅ Phase 2 GSL: Governance Safety Layer (`@mindtrace/integrity-gates`)
+- ✅ Phase 3: Healing Engine (contract-aware selector ranking)
+- ✅ **Stage 5: Operational Clarity UI** (production-ready web interface)
 
-**Next:**
-- 🔄 Phase 3: Healing Engine Upgrade (contract-aware selector ranking)
-- ⏭️ Phase 4: Cross Framework Adapter (contract-driven mapping)
+### **Next**
+- 🔄 Phase 4: Cross Framework Adapter (contract-driven mapping)
 - ⏭️ Phase 5: Runtime Learning Loop (confidence scoring)
-- ⏭️ Phase 6: Enterprise Layer (CLI commands: `mindtrace phase0`, `mindtrace phase1`, etc.)
+- ⏭️ Phase 6: Enterprise Layer (advanced CLI commands)
 
-**Key Principles:**
-- Compliance remains primary
-- AI resilience remains secondary (advisory only)
-- LLM NEVER overrides governance policy
-- Deterministic artifacts required for all phases
+---
 
-⸻
+## 💡 Use Cases
 
-💡 Positioning
+### **For QA Engineers**
+- Generate contracts from existing tests
+- Visual cache management
+- Clear test execution history
+- Integrity verification workflows
 
-MindTrace is:
+### **For DevOps/SRE**
+- CI/CD integration with exit code differentiation
+- Audit trail for compliance
+- Deterministic artifact validation
+- Policy enforcement
 
-• A Compliance-Governed Test Execution Platform
-• A Deterministic Artifact Contract Engine
-• A CI/CD Policy Enforcement Layer
-• An Audit-Ready Automation Runtime
+### **For Engineering Managers**
+- Operational visibility dashboard
+- Compliance status monitoring
+- Test execution trends
+- System health overview
 
-AI-powered resilience features are layered on top — never bypassing governance.
+---
 
-⸻
-
-📄 License
+## 📄 License
 
 MIT License
 
-⸻
+---
+
+## 🏢 About
 
 © 2026 MindTrace Inc.
-Building compliance-first test infrastructure.
-```
+Building compliance-first test infrastructure with operational clarity.
+
+**Status:** Production-ready with Stage 5 complete
+**Version:** v1.0 (Operational Clarity Release)
