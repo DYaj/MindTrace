@@ -1,70 +1,55 @@
 # MindTrace for Playwright
 
-## 🧠 Governance-First Test Automation Platform
+**Governance-first test automation with production UI.**
 
-**MindTrace** is an enterprise-grade compliance and governance platform for Playwright test execution, featuring a production-ready UI for complete operational visibility.
-
-It enforces deterministic artifact contracts, immutable manifest validation, policy decisions, and audit traceability — with a modern web interface that makes the entire system transparent and trustworthy.
+Playwright + compliance layer + operational dashboard. Deterministic artifacts. Contract-driven execution. Complete visibility.
 
 ---
 
-## 🎯 What MindTrace Is
+## What It Does
 
-MindTrace transforms Playwright into a **governed, observable, and resilient** test execution platform:
+Transforms Playwright tests into a governed execution platform:
 
-### **Core Capabilities**
-- **Policy-Controlled Execution** - Contract-based governance enforcement
-- **Deterministic Artifacts** - Machine-validated, immutable test outputs
-- **Integrity Gates** - Automated contract and cache verification
-- **Audit Trail** - Complete execution history and event tracking
-- **Operational Clarity** - Full-stack UI for system visibility and control
+- **Contract** → Define what should be tested
+- **Cache** → Detect what can be tested
+- **Integrity Gates** → Verify everything aligns
+- **Run** → Execute with governance + audit trail
+- **UI** → See exactly what's happening
 
-### **Healing Engine (Phase 3)**
-Contract-aware selector ranking with 5-tier authority system:
-1. **Contract** (governance-first, highest authority)
-2. **Cache** (semantic signals, high confidence)
-3. **Last-Known-Good** (historical fallback)
-4. **Fallback** (deterministic, bounded)
-5. **LLM** (advisory only, never overrides)
+**Exit codes differentiate:** test failures (1) | infrastructure (2) | compliance violations (3)
 
-AI resilience features are layered on top — but **governance comes first**.
+**Healing uses 5-tier authority:** Contract > Cache > Last-Known-Good > Fallback > LLM (advisory only)
 
 ---
 
-## 🖥️ Production UI (Stage 5 Complete)
+## Quick Start
 
-A complete operational dashboard providing:
+```bash
+npm install && npm run dev
+# Open http://localhost:5173
+```
 
-### **System Status**
-- Real-time component health monitoring
-- Contract, cache, and runtime status
-- Situation-aware messaging (setup vs warnings vs critical)
-- Quick actions for common operations
+**First workflow:**
+1. Generate Contract
+2. Build Cache
+3. Check Integrity
+4. Run Tests
 
-### **Contract & Cache Management**
-- Visual contract generation and validation
-- Cache building with drift detection
-- File viewing and exploration
-- Integrity verification workflows
+**See:** [Getting Started Guide](GETTING_STARTED.md) for details.
 
-### **Test Execution**
-- Run history with detailed execution logs
-- Artifact inspection (reports, screenshots, traces)
-- Audit event timeline
-- Exit code interpretation
+---
 
-### **Integrity Gates**
-- Contract integrity verification
-- Cache binding validation
-- Drift detection and resolution
-- Clear failure explanations with remediation steps
+## Why MindTrace
 
-**Design Principles:**
-- **Situation Awareness** - Distinguishes "not created" from "failed" states
-- **No Dead Ends** - Every state explains what to do next
-- **Progressive Disclosure** - Tooltips for details, UI for hierarchy
-- **Error Recovery** - All errors have retry mechanisms
-- **Consistency** - Same patterns across all pages
+**Problem:** Playwright tests break. No governance. Hard to debug. Can't trust results.
+
+**Solution:**
+- **Contracts** enforce what's valid
+- **Integrity gates** prevent drift
+- **Artifacts** are deterministic and auditable
+- **UI** makes everything transparent
+
+**Result:** Tests you can trust. Failures you can debug. Compliance you can prove.
 
 ---
 

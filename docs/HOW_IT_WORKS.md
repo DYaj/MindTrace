@@ -1,103 +1,67 @@
 # How MindTrace Works
 
-A simple explanation of MindTrace's operational model.
+Reference guide for the operational model.
 
 ---
 
-## 🎯 The Big Picture
-
-MindTrace adds **governance** and **observability** to Playwright test automation.
-
-Think of it as adding a compliance layer that:
-1. **Defines** what should be tested (Contract)
-2. **Detects** what can be tested (Cache)
-3. **Verifies** everything is synchronized (Integrity)
-4. **Records** what was tested (Artifacts + Audit)
-
-All visible through a modern web interface.
-
----
-
-## 🔄 The Core Workflow
+## Core Model
 
 ```
-Generate Contract → Build Cache → Check Integrity → Run Tests
-       ↓                ↓              ↓                ↓
-  Source of truth   Page detection  Verification   Execution
+Contract → Cache → Integrity → Run
+   ↓         ↓         ↓         ↓
+Define    Detect    Verify   Execute
 ```
 
-### **1. Generate Contract**
-
-**What it does:**
-- Scans your test repository
-- Identifies test files and patterns
-- Extracts selectors and page objects
-- Creates governance rules
-- Generates a fingerprint (SHA-256 hash)
-
-**Output:**
-- `.mcp-contract/` directory with:
-  - `automation-contract.json` - Your test structure
-  - `page-key-policy.json` - Page definitions
-  - `contract.fingerprint.sha256` - Unique identifier
-  - `contract.meta.json` - Metadata
-
-**Why it matters:**
-The contract is your **source of truth**. Everything else references it.
+**Contract** = Source of truth (what should be tested)
+**Cache** = Detection results (what can be tested)
+**Integrity** = Verification (are they synchronized?)
+**Run** = Execution (governed test run with audit)
 
 ---
 
-### **2. Build Cache**
+## Workflow Steps
 
-**What it does:**
-- Reads the contract to know what pages should exist
-- Connects to your application
-- Detects which pages are actually accessible
-- Records results with contract binding
-- Stores contract fingerprint for drift detection
+### 1. Generate Contract
 
-**Output:**
-- `.mcp-cache/v1/` directory with:
-  - Page detection results (JSON files per page)
-  - `cache.meta.json` - Includes bound contract fingerprint
-  - Metadata about what was detected
+**Scans** → Test repository
+**Extracts** → Selectors, page objects, test structure
+**Creates** → Governance rules + SHA-256 fingerprint
+**Outputs** → `.mcp-contract/` with automation-contract.json, page-key-policy.json, contract.fingerprint.sha256
 
-**Why it matters:**
-The cache tells your tests **which pages are available**. It's bound to a specific contract version to prevent running tests against the wrong configuration.
+**Purpose:** Source of truth for all downstream operations.
 
 ---
 
-### **3. Check Integrity**
+### 2. Build Cache
 
-**What it does:**
-- Validates contract structure and schema
-- Validates cache structure and binding
-- Compares cache fingerprint with current contract
-- Reports any drift or misalignment
+**Reads** → Contract to know expected pages
+**Connects** → Your application
+**Detects** → Which pages are accessible
+**Binds** → Cache to contract fingerprint
+**Outputs** → `.mcp-cache/v1/` with page detection results
 
-**Output:**
-- **Contract Integrity Gate**: Valid | Invalid | Warning
-- **Cache Integrity Gate**: Valid | Invalid | Warning | Not Created
-- **Drift Status**: No drift | Drift detected
-
-**Why it matters:**
-Integrity gates prevent you from running tests when:
-- Contract is corrupted or invalid
-- Cache is out of sync with contract
-- Configuration has changed but cache hasn't been rebuilt
-
-This is **governance** — enforcing rules before execution.
+**Purpose:** Tells tests which pages are available. Binding prevents tests running against wrong config.
 
 ---
 
-### **4. Run Tests**
+### 3. Check Integrity
 
-**What it does:**
-- Loads and validates contract
-- Loads and verifies cache binding
-- Runs integrity checks
-- Executes Playwright tests with contract awareness
-- Generates deterministic artifacts
+**Validates** → Contract structure
+**Validates** → Cache structure and binding
+**Compares** → Cache fingerprint vs current contract
+**Reports** → Valid | Invalid | Warning | Drift Detected
+
+**Purpose:** Prevents execution when contract/cache are corrupted or out of sync.
+
+---
+
+### 4. Run Tests
+
+**Loads** → Contract + cache
+**Validates** → Integrity gates
+**Executes** → Playwright tests with governance
+**Generates** → Deterministic artifacts + audit trail
+**Sets** → Exit code (0=success, 1=test fail, 2=infra, 3=compliance)
 - Records complete audit trail
 - Sets exit code based on governance status
 
@@ -169,70 +133,32 @@ CI/CD systems can differentiate:
 
 ---
 
-## 🔍 The Healing System
+## Healing System (5-Tier Authority)
 
-When a selector breaks, MindTrace has a **5-tier authority system**:
+| Tier | Authority | Purpose |
+|------|-----------|---------|
+| 1. Contract | Highest | Governance-defined selectors |
+| 2. Cache | High | Recently detected elements |
+| 3. Last-Known-Good | Medium | Historical working selectors |
+| 4. Fallback | Low | Bounded alternatives |
+| 5. LLM | Advisory | AI suggestions (never overrides) |
 
-```
-1. Contract (highest authority)
-   ↓ "The contract says this selector should work"
-
-2. Cache (semantic signals)
-   ↓ "The cache detected this element recently"
-
-3. Last-Known-Good (historical)
-   ↓ "This selector worked in the last run"
-
-4. Fallback (deterministic)
-   ↓ "Try these bounded alternatives"
-
-5. LLM (advisory only)
-   ↓ "AI suggests this might work - but governance decides"
-```
-
-**Key principle:**
-- LLM suggestions are **advisory only**
-- Contract and policy **always override AI**
-- All healing attempts are **logged and auditable**
+**Rule:** Contract/policy always wins. LLM is advisory only.
 
 ---
 
-## 📊 The UI System
+## UI Pages
 
-The web interface provides **operational visibility**:
+| Page | Purpose | Key Features |
+|------|---------|-------------|
+| **System Status** | Operational dashboard | Component health, status badge, recent runs, quick actions |
+| **Runs** | Execution history | All runs, exit codes, test results, delete actions |
+| **Run Detail** | Single run deep dive | Overview, artifacts (Core/Integrity/Healing/Debug), audit timeline |
+| **Contract** | Contract management | Generate, view files, validate structure |
+| **Cache** | Cache operations | Build/rebuild, view pages, drift warnings, contract binding |
+| **Integrity** | Verification dashboard | Contract gate, cache gate, drift check, technical details |
 
-### **System Status Page**
-Your operational dashboard:
-- Component health (Contract, Cache, Runtime, MCP)
-- Status badge (System Ready | Setup Required | Issues)
-- Recent run history
-- Quick actions
-
-**Situation awareness:**
-- "Setup Required" when starting fresh → welcoming guidance
-- "System Warnings" when partial issues → clear remediation
-- "Critical Issues" when governance blocked → urgent actions
-
----
-
-### **Contract Page**
-Contract management:
-- View contract existence and location
-- Generate new contracts
-- Browse contract files
-- Validate contract structure
-
-**Empty state:**
-- Shows "No Contract Found" with helpful guidance
-- Single focused action: "Generate Contract"
-- No confusion about what to do first
-
----
-
-### **Cache Page**
-Cache operations:
-- View cache status and page count
-- Build or rebuild cache
+**Design:** Situation-aware (setup vs warnings vs critical), error recovery on all states, no dead ends.
 - Browse detected pages
 - Monitor contract binding
 
@@ -297,158 +223,46 @@ Deep dive into a single run:
 
 ---
 
-## 🎨 Design Principles
+## Design Principles
 
-### **1. Situation Awareness**
-
-The system distinguishes:
-- **"Not created"** → First time setup (blue, welcoming)
-- **"Warning"** → Issue but not critical (orange, informative)
-- **"Failed"** → Actual failure (red, urgent)
-
-Users never see scary error messages for normal empty states.
+| Principle | Implementation |
+|-----------|----------------|
+| **Situation Awareness** | "Not created" (blue) vs "Warning" (orange) vs "Failed" (red) |
+| **Progressive Disclosure** | UI shows essentials → Tooltips for details → Expandable for deep dive |
+| **Error Recovery** | Every error has Retry button + clear next steps |
+| **No Ambiguity** | Every state explains what it is and what to do |
 
 ---
 
-### **2. Progressive Disclosure**
+## Governance Model
 
-Information hierarchy:
-- **UI** → Shows what matters most
-- **Tooltips** → Explain details on demand
-- **Expandable sections** → Reveal technical details when needed
+**Write Strictly:** Use canonical names (camelCase: `schemaVersion`), validate before writing
+**Read Compatibly:** Accept canonical + transitional (`schema_version`), migrate gradually
 
-Not everything is shown at once. Users drill down as needed.
+**Important:** Compatibility is transitional, not permanent.
 
 ---
 
-### **3. Error Recovery**
+## Example Scenarios
 
-Every error state has:
-- Clear explanation of what failed
-- Why it might have failed
-- **Retry button** to try again
-- Alternative actions (Back, Check Docs, etc.)
+### New User Onboarding
+1. See "Setup Required" → 2. Generate Contract → 3. Build Cache → 4. Check Integrity → 5. Run Tests
+**Result:** No confusion, clear guidance at each step.
 
-No dead ends. Users always know what to do next.
+### Contract Changes (Drift)
+1. System shows "Warnings" → 2. Integrity shows "Drift" → 3. Cache shows warning → 4. Click "Rebuild Cache" → 5. Returns to "All Gates Passed"
+**Result:** Clear detection, single action to fix.
 
----
-
-### **4. No Ambiguity**
-
-Every state explains itself:
-- "No Contract Found" → What is a contract? What should I do?
-- "Drift Detected" → What is drift? Why does it matter? How do I fix it?
-- "Cache Built Successfully" → What does this mean? What can I do now?
-
-Users never wonder "Is this broken?" or "What now?"
+### Test Failure
+1. See failed run → 2. Check exit code (1=test, 2=infra, 3=compliance) → 3. View artifacts → 4. Check audit trail → 5. Debug accordingly
+**Result:** Fast diagnosis, right context immediately.
 
 ---
 
-## 🔒 Governance Model
+## Summary
 
-### **Write Strictly, Read Compatibly**
+**Model:** Contract → Cache → Integrity → Run → Audit → UI
 
-When **generating artifacts**:
-- Use canonical field names (camelCase: `schemaVersion`)
-- Follow strict schemas
-- Validate before writing
+**Principles:** Governance first | Determinism | Observability | Trust
 
-When **reading artifacts**:
-- Accept canonical names (prefer `schemaVersion`)
-- Provide transitional compatibility for old names (`schema_version`)
-- Migrate over time to strict canonical only
-
-This allows:
-- **Forward progress** - New systems use canonical names
-- **Backward compatibility** - Old artifacts still work
-- **Migration path** - Gradual transition to strict standards
-
-**Important:** Compatibility is **transitional**, not permanent.
-
----
-
-## 🎯 Real-World Example
-
-Let's walk through a typical scenario:
-
-### **Scenario: New Team Member Onboarding**
-
-**Day 1 - First Time User:**
-
-1. Opens UI → Sees "System Status: Setup Required"
-2. Sees numbered steps with checkmarks
-3. Clicks "Generate Contract" → Job runs → ✓ Complete
-4. Clicks "Build Cache" → Job runs → ✓ Complete
-5. Checks "Integrity" → Sees "All Gates Passed"
-6. Clicks "Run Tests" → First test executes → ✓ Success
-
-**Experience:**
-- No confusion
-- No "is this broken?" moments
-- Clear guidance at every step
-- Success feedback at every milestone
-
----
-
-### **Scenario: Contract Changes**
-
-**Developer updates test structure:**
-
-1. System Status shows "System Warnings" (orange)
-2. Integrity page shows "Drift Detected"
-3. Cache page shows prominent warning: "Your cache was built from an older contract version"
-4. Developer clicks "Rebuild Cache Now"
-5. Cache rebuilds with new contract fingerprint
-6. Integrity page returns to "All Gates Passed"
-7. System Status returns to "System Ready"
-
-**Experience:**
-- Clear detection of the issue
-- Explanation of what drift means
-- Single action to resolve
-- Visual confirmation of fix
-
----
-
-### **Scenario: Test Failure Investigation**
-
-**Tests fail in CI:**
-
-1. Developer opens Runs page
-2. Sees failed run with Exit Code 1 (test failure)
-3. Clicks run → Overview shows 3 passed, 2 failed
-4. Artifacts tab shows detailed Playwright report
-5. Audit tab shows all system operations were normal
-6. Developer investigates test logic (not infrastructure)
-
-**Experience:**
-- Clear differentiation: test failure vs infrastructure vs compliance
-- Easy access to debug artifacts
-- Complete audit trail
-- Knows this is a test issue, not a governance issue
-
----
-
-## 🏁 Summary
-
-MindTrace works by:
-
-1. **Defining** your automation structure (Contract)
-2. **Detecting** what's available (Cache)
-3. **Verifying** everything aligns (Integrity)
-4. **Executing** with governance (Runs)
-5. **Recording** everything (Artifacts + Audit)
-6. **Showing** you what's happening (UI)
-
-All designed with:
-- **Governance first** - Policy over convenience
-- **Determinism** - Same inputs → same outputs
-- **Observability** - See everything that happens
-- **Trust** - Clear communication, no surprises
-
-This transforms test automation from:
-- "I hope this works" → "I know this works"
-- "What happened?" → "Here's exactly what happened"
-- "Is this broken?" → "Here's the status and what to do"
-
-That's the difference between a tool and a product.
+**Result:** Test automation you can trust, debug, and prove compliant.
