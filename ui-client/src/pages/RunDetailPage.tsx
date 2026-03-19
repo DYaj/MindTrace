@@ -1,8 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useRunDetail } from '../hooks/useRunDetail';
-import { ArrowLeft, FileText, Activity } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
+import { RunSummaryHeader } from '../components/run/RunSummaryHeader';
+import { ArtifactGroup, categorizeArtifacts } from '../components/run/ArtifactGroup';
+import { AuditEventItem } from '../components/run/AuditEventItem';
 
 type TabType = 'overview' | 'artifacts' | 'audit';
 
@@ -91,8 +94,17 @@ export function RunDetailPage() {
         </div>
       </div>
 
+      {/* Summary Header */}
+      <RunSummaryHeader
+        runId={run.runId}
+        exitCode={run.exitCode}
+        duration={run.duration}
+        testsPassed={run.testsPassed}
+        testsFailed={run.testsFailed}
+      />
+
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-4 sm:mb-6" data-testid="run-detail-tabs">
+      <div className="border-b border-gray-200 mb-4 sm:mb-6 mt-6" data-testid="run-detail-tabs">
         <nav className="flex gap-2 sm:gap-4 overflow-x-auto">
           <button
             data-testid="run-detail-tab-overview"
@@ -178,90 +190,64 @@ export function RunDetailPage() {
       )}
 
       {activeTab === 'artifacts' && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="run-detail-artifacts">
+        <div className="space-y-4" data-testid="run-detail-artifacts">
           {run.artifacts.length === 0 ? (
-            <div className="p-8 text-center text-gray-500" data-testid="run-detail-artifacts-empty">
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500" data-testid="run-detail-artifacts-empty">
               No artifacts found for this run
             </div>
-          ) : (
-            <table className="w-full" data-testid="run-detail-artifacts-table">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Path
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Size
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {run.artifacts.map((artifact, index) => (
-                  <tr
-                    key={index}
-                    data-testid={`run-detail-artifact-${artifact.name}`}
-                    onClick={() => handleArtifactClick(artifact.path, artifact.name, artifact.type)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <FileText size={16} className="text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">{artifact.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600 font-mono">{artifact.path}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
-                        {artifact.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {(artifact.size / 1024).toFixed(2)} KB
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          ) : (() => {
+            const grouped = categorizeArtifacts(run.artifacts);
+            return (
+              <>
+                <ArtifactGroup
+                  title="Core Artifacts"
+                  description="Primary test artifacts and results"
+                  artifacts={grouped.core}
+                  category="core"
+                  onArtifactClick={handleArtifactClick}
+                />
+                <ArtifactGroup
+                  title="Integrity Artifacts"
+                  description="Contract validation and policy checks"
+                  artifacts={grouped.integrity}
+                  category="integrity"
+                  onArtifactClick={handleArtifactClick}
+                />
+                <ArtifactGroup
+                  title="Healing Artifacts"
+                  description="Self-healing and recovery data"
+                  artifacts={grouped.healing}
+                  category="healing"
+                  onArtifactClick={handleArtifactClick}
+                />
+                <ArtifactGroup
+                  title="Debug Artifacts"
+                  description="Logs, traces, and debugging information"
+                  artifacts={grouped.debug}
+                  category="debug"
+                  onArtifactClick={handleArtifactClick}
+                />
+              </>
+            );
+          })()}
         </div>
       )}
 
       {activeTab === 'audit' && (
-        <div className="bg-white rounded-lg border border-gray-200" data-testid="run-detail-audit">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="run-detail-audit">
           {run.auditEvents.length === 0 ? (
             <div className="p-8 text-center text-gray-500" data-testid="run-detail-audit-empty">
               No audit events found for this run
             </div>
           ) : (
-            <div className="divide-y divide-gray-200">
+            <div>
               {run.auditEvents.map((event, index) => (
-                <div key={index} data-testid={`run-detail-audit-event-${index}`} className="p-4 hover:bg-gray-50">
-                  <div className="flex items-start gap-3">
-                    <Activity size={16} className="text-gray-400 mt-1" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="text-sm font-medium text-gray-900">{event.type}</span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(event.timestamp).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700">{event.message}</p>
-                      {event.details && Object.keys(event.details).length > 0 && (
-                        <pre className="mt-2 text-xs bg-gray-50 p-2 rounded font-mono text-gray-600 overflow-x-auto">
-                          {JSON.stringify(event.details, null, 2)}
-                        </pre>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <AuditEventItem
+                  key={index}
+                  event={event}
+                  index={index}
+                  isLast={index === run.auditEvents.length - 1}
+                />
               ))}
             </div>
           )}

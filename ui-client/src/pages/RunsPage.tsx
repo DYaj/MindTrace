@@ -1,7 +1,8 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRuns } from '../hooks/useRuns';
 import { useSystemStatus } from '../hooks/useSystemStatus';
+import { useJobStatus } from '../hooks/useJobStatus';
 import { formatDistanceToNow } from 'date-fns';
 import ExitCodeBadge from '../components/ExitCodeBadge';
 import { JobStatusCard } from '../components/JobStatusCard';
@@ -20,10 +21,21 @@ function RunsPage() {
     // Initialize from sessionStorage
     return sessionStorage.getItem(STORAGE_KEY);
   });
+  const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check actual job status to determine if button should be disabled
+  const { data: jobStatus } = useJobStatus(currentJobId);
+  const isJobRunning = jobStatus && (jobStatus.status === 'running' || jobStatus.status === 'pending');
 
   // Initialize job from navigation state (if coming from Layout "Run Tests" button)
   useEffect(() => {
     if (location.state?.jobId) {
+      // Clear any existing timeout from previous job
+      if (clearTimeoutRef.current) {
+        clearTimeout(clearTimeoutRef.current);
+        clearTimeoutRef.current = null;
+      }
+
       const jobId = location.state.jobId;
       setCurrentJobId(jobId);
       sessionStorage.setItem(STORAGE_KEY, jobId);
@@ -43,6 +55,12 @@ function RunsPage() {
 
   const handleRunTests = async () => {
     try {
+      // Clear any existing timeout from previous job
+      if (clearTimeoutRef.current) {
+        clearTimeout(clearTimeoutRef.current);
+        clearTimeoutRef.current = null;
+      }
+
       const response = await api.runTests();
       const jobId = response.jobId;
       setCurrentJobId(jobId);
@@ -56,10 +74,25 @@ function RunsPage() {
     if (job.status === 'completed' || job.status === 'failed') {
       // Refresh runs list after job completes
       refetch();
+
+      // Clear any existing timeout
+      if (clearTimeoutRef.current) {
+        clearTimeout(clearTimeoutRef.current);
+      }
+
       // Keep job visible for 30 seconds after completion, then clear
-      setTimeout(() => {
-        setCurrentJobId(null);
-        sessionStorage.removeItem(STORAGE_KEY);
+      // But only if the jobId hasn't changed (i.e., no new job started)
+      const completedJobId = job.jobId;
+      clearTimeoutRef.current = setTimeout(() => {
+        setCurrentJobId(prev => {
+          // Only clear if it's still the same job
+          if (prev === completedJobId) {
+            sessionStorage.removeItem(STORAGE_KEY);
+            return null;
+          }
+          return prev;
+        });
+        clearTimeoutRef.current = null;
       }, 30000);
     }
   };
@@ -107,10 +140,16 @@ function RunsPage() {
           data-testid="runs-button-run-tests"
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           onClick={handleRunTests}
-          disabled={!!currentJobId || cannotRun}
-          title={cannotRun ? 'Contract and Cache required to run tests' : ''}
+          disabled={isJobRunning || cannotRun}
+          title={
+            isJobRunning
+              ? 'Test run in progress'
+              : cannotRun
+              ? 'Contract and Cache required to run tests'
+              : ''
+          }
         >
-          Run Tests
+          {isJobRunning ? 'Test Running...' : 'Run Tests'}
         </button>
       </div>
 

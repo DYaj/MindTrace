@@ -2,16 +2,33 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Activity, Settings, FileCode, Database, Trash2 } from 'lucide-react';
 import { useSystemStatus } from '../hooks/useSystemStatus';
 import StatusIndicator from './StatusIndicator';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useJobStatus } from '../hooks/useJobStatus';
+
+const STORAGE_KEY = 'breakline:runs:currentJobId';
 
 function Layout() {
   const { data: system } = useSystemStatus();
   const navigate = useNavigate();
-  const [runningTests, setRunningTests] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(() => {
+    return sessionStorage.getItem(STORAGE_KEY);
+  });
+
+  // Poll sessionStorage to detect when job ID changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const jobId = sessionStorage.getItem(STORAGE_KEY);
+      setCurrentJobId(jobId);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Check actual job status
+  const { data: jobStatus } = useJobStatus(currentJobId);
+  const isJobRunning = jobStatus && (jobStatus.status === 'running' || jobStatus.status === 'pending');
 
   const handleRunTests = async () => {
-    setRunningTests(true);
     try {
       const response = await fetch('http://localhost:3001/api/actions/run', {
         method: 'POST',
@@ -22,18 +39,20 @@ function Layout() {
       const data = await response.json();
 
       if (data.success) {
+        const jobId = data.data.jobId;
+        // Store job ID in sessionStorage
+        sessionStorage.setItem(STORAGE_KEY, jobId);
+        setCurrentJobId(jobId);
         // Navigate to Runs page with job info
         navigate('/runs', {
           state: {
-            jobId: data.data.jobId,
+            jobId: jobId,
             status: data.data.status
           }
         });
       }
     } catch (error) {
       console.error('Failed to start test run:', error);
-    } finally {
-      setRunningTests(false);
     }
   };
 
@@ -145,15 +164,17 @@ function Layout() {
               <button
                 data-testid="header-button-run-tests"
                 onClick={handleRunTests}
-                disabled={runningTests || system?.contract?.state === 'missing' || system?.cache?.state === 'missing'}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={isJobRunning || system?.contract?.state === 'missing' || system?.cache?.state === 'missing'}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 title={
-                  system?.contract?.state === 'missing' || system?.cache?.state === 'missing'
+                  isJobRunning
+                    ? 'Test run in progress'
+                    : system?.contract?.state === 'missing' || system?.cache?.state === 'missing'
                     ? 'Contract and Cache required to run tests'
                     : ''
                 }
               >
-                {runningTests ? 'Starting...' : 'Run Tests'}
+                {isJobRunning ? 'Test Running...' : 'Run Tests'}
               </button>
               <button
                 data-testid="header-button-clear-all"
