@@ -5,6 +5,7 @@ import { ArrowLeft, RefreshCw, FileX, Activity } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
 import { RunSummaryHeader } from '../components/run/RunSummaryHeader';
 import { FailureSummaryBlock } from '../components/run/FailureSummaryBlock';
+import { QuickNavigationLinks } from '../components/run/QuickNavigationLinks';
 import { ArtifactGroup, categorizeArtifacts } from '../components/run/ArtifactGroup';
 import { AuditEventItem } from '../components/run/AuditEventItem';
 
@@ -138,6 +139,11 @@ export function RunDetailPage() {
           testsFailed={run.testsFailed}
           testsPassed={run.testsPassed}
         />
+      </div>
+
+      {/* Quick Navigation Links */}
+      <div className="mt-6">
+        <QuickNavigationLinks />
       </div>
 
       {/* Tabs */}
