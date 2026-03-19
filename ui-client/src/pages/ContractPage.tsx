@@ -222,16 +222,24 @@ export function ContractPage() {
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-green-900 mb-2">Contract Generated Successfully</h3>
               <p className="text-sm text-green-800 mb-4">
-                Your contract has been generated. Verify that the Contract Integrity Gate now passes.
+                Your contract has been generated. Next step: build the cache.
               </p>
-              <Link
-                to="/integrity"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-              >
-                <Shield size={16} />
-                Check Integrity Gates
-                <ArrowRight size={16} />
-              </Link>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/cache"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                >
+                  Build Cache
+                  <ArrowRight size={16} />
+                </Link>
+                <Link
+                  to="/integrity"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-green-600 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
+                >
+                  <Shield size={16} />
+                  Check Integrity
+                </Link>
+              </div>
             </div>
             <button
               onClick={() => setShowSuccessMessage(false)}

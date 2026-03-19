@@ -266,25 +266,33 @@ export function CachePage() {
         <JobStatusCard jobId={currentJobId} onComplete={handleJobComplete} />
       )}
 
-      {/* Success Message - Verify Integrity */}
+      {/* Success Message - Next Step */}
       {showSuccessMessage && (
         <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6" data-testid="cache-rebuild-success">
           <div className="flex items-start gap-4">
             <CheckCircle className="text-green-600 flex-shrink-0" size={32} />
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-green-900 mb-2">Cache Rebuilt Successfully</h3>
+              <h3 className="text-lg font-semibold text-green-900 mb-2">Cache Built Successfully</h3>
               <p className="text-sm text-green-800 mb-4">
-                Your cache has been rebuilt. Verify that the Cache Integrity Gate now passes.
+                Your cache has been built. Next step: run your tests.
               </p>
-              <Link
-                to="/integrity"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                data-testid="cache-check-integrity-link"
-              >
-                <Shield size={16} />
-                Check Integrity Gates
-                <ArrowRight size={16} />
-              </Link>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/runs"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                >
+                  Run Tests
+                  <ArrowRight size={16} />
+                </Link>
+                <Link
+                  to="/integrity"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-green-600 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
+                  data-testid="cache-check-integrity-link"
+                >
+                  <Shield size={16} />
+                  Check Integrity
+                </Link>
+              </div>
             </div>
             <button
               onClick={() => setShowSuccessMessage(false)}
