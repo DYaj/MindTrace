@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCache } from '../hooks/useCache';
 import { useContract } from '../hooks/useContract';
-import { AlertTriangle, CheckCircle, Database, FileText, Play } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Database, FileText, Play, GitBranch, Link as LinkIcon } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
 import { JobStatusCard } from '../components/JobStatusCard';
 import type { JobStatus } from '@breakline/ui-types';
@@ -81,7 +81,7 @@ export function CachePage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6" data-testid="cache-page-loading">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="h-64 bg-gray-200 rounded"></div>
@@ -92,7 +92,7 @@ export function CachePage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6" data-testid="cache-page-error">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">Failed to load cache: {error instanceof Error ? error.message : 'Unknown error'}</p>
         </div>
@@ -104,189 +104,263 @@ export function CachePage() {
     const contractMissing = !contract || !contract.exists;
 
     return (
-      <div className="p-4 sm:p-6" data-testid="cache-page">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6" data-testid="cache-page-title">Cache</h1>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center" data-testid="cache-empty-state">
-          <Database className="mx-auto mb-4 text-yellow-600" size={48} />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Cache Found</h2>
-          <p className="text-gray-600 mb-2">Build cache to see it here</p>
-          <p className="text-sm text-gray-500 mb-4">Cache is built at .mcp-cache/v1/</p>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6" data-testid="cache-page">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2" data-testid="cache-page-title">Cache</h1>
+        <p className="text-sm sm:text-base text-gray-600 mb-6">Page detection cache derived from your contract</p>
 
-          {/* Contract requirement notice */}
-          {contractMissing && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
-              <strong>Cache requires a contract.</strong>
-              <br />
-              → Generate Contract first
-            </div>
-          )}
-
-          {/* Build Cache Button */}
-          <button
-            data-testid="cache-button-build"
-            onClick={handleBuildCache}
-            disabled={!!currentJobId || contractMissing}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            <Play className="mr-2" size={16} />
-            Build Cache
-          </button>
-
-          {/* Job Status */}
-          {currentJobId && (
-            <div className="mt-4">
-              <JobStatusCard jobId={currentJobId} onComplete={handleJobComplete} />
-            </div>
-          )}
+        {/* What is this? */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="font-semibold text-blue-900 mb-2">What is the Cache?</h3>
+          <p className="text-sm text-blue-800 mb-2">
+            The cache stores information about pages in your application. It's generated from your contract and helps tests run faster by knowing which pages to target.
+          </p>
+          <div className="flex items-center gap-2 text-xs text-blue-700">
+            <LinkIcon size={14} />
+            <span>Cache is always bound to a specific contract version</span>
+          </div>
         </div>
+
+        {/* Contract requirement notice */}
+        {contractMissing ? (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <AlertTriangle className="mx-auto mb-4 text-yellow-600" size={48} />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Contract Required</h2>
+            <p className="text-gray-600 mb-4">Generate a contract before building cache</p>
+            <div className="inline-block px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+              Cache is contract-derived → Generate Contract first
+            </div>
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center" data-testid="cache-empty-state">
+            <Database className="mx-auto mb-4 text-yellow-600" size={48} />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No Cache Found</h2>
+            <p className="text-gray-600 mb-4">Build cache to detect pages from your contract</p>
+            <p className="text-xs text-gray-500 mb-4">Built at .mcp-cache/v1/</p>
+
+            {/* Build Cache Button */}
+            <button
+              data-testid="cache-button-build"
+              onClick={handleBuildCache}
+              disabled={!!currentJobId}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Play className="mr-2" size={16} />
+              Build Cache
+            </button>
+
+            {/* Job Status */}
+            {currentJobId && (
+              <div className="mt-4">
+                <JobStatusCard jobId={currentJobId} onComplete={handleJobComplete} />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
 
+  const hasDrift = cache.binding && !cache.binding.match;
+
   return (
-    <div className="p-4 sm:p-6" data-testid="cache-page">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6" data-testid="cache-page">
       {/* Header */}
-      <div className="mb-4 sm:mb-6">
+      <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="cache-page-title">Cache</h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Page detection cache</p>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">Page detection cache derived from your contract</p>
       </div>
 
-      {/* Status Cards */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        {/* Cache Info Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6" data-testid="cache-status-card">
-          <div className="flex items-center gap-3 mb-4">
-            <Database className="text-blue-600" size={24} />
-            <h2 className="text-xl font-semibold text-gray-900">Cache Status</h2>
+      {/* Summary Section */}
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-white rounded-lg border border-purple-200">
+            <Database className="text-purple-600" size={28} />
           </div>
-          <dl className="space-y-3">
-            <div>
-              <dt className="text-sm text-gray-600">Page Count</dt>
-              <dd className="text-2xl font-bold text-gray-900">{cache.pageCount}</dd>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">What is the Cache?</h2>
+            <p className="text-sm text-gray-700 mb-3">
+              The cache stores page detection results from your application. It's generated from your contract and bound to a specific contract version.
+              Tests use this cache to know which pages to run against.
+            </p>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <LinkIcon size={14} />
+              <span>Always bound to a contract fingerprint. Rebuild when contract changes.</span>
             </div>
-            <div>
-              <dt className="text-sm text-gray-600">Exists</dt>
-              <dd className="text-sm font-medium text-green-600">Yes</dd>
-            </div>
-          </dl>
-        </div>
-
-        {/* Drift Indicator Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6" data-testid="cache-binding-card">
-          {cache.binding ? (
-            <>
-              <div className="flex items-center gap-3 mb-4">
-                {cache.binding.match ? (
-                  <CheckCircle className="text-green-600" size={24} />
-                ) : (
-                  <AlertTriangle className="text-orange-600" size={24} />
-                )}
-                <h2 className="text-xl font-semibold text-gray-900">Contract Binding</h2>
-              </div>
-              <dl className="space-y-3">
-                <div>
-                  <dt className="text-sm text-gray-600">Status</dt>
-                  <dd className={`text-sm font-medium ${
-                    cache.binding.match ? 'text-green-600' : 'text-orange-600'
-                  }`}>
-                    {cache.binding.match ? 'Synchronized' : 'Drift Detected'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-600">Cache SHA256</dt>
-                  <dd className="text-xs font-mono text-gray-700 break-all">
-                    {cache.binding.contractSha256.substring(0, 16)}...
-                  </dd>
-                </div>
-                {cache.binding.currentContractHash && (
-                  <div>
-                    <dt className="text-sm text-gray-600">Current Contract SHA256</dt>
-                    <dd className="text-xs font-mono text-gray-700 break-all">
-                      {cache.binding.currentContractHash.substring(0, 16)}...
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="text-gray-400" size={24} />
-                <h2 className="text-xl font-semibold text-gray-900">Contract Binding</h2>
-              </div>
-              <p className="text-sm text-gray-600">No binding information available</p>
-            </>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Drift Warning */}
-      {cache.binding && !cache.binding.match && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6" data-testid="cache-drift-warning">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="text-orange-600 mt-0.5" size={20} />
-            <div>
-              <h3 className="font-semibold text-orange-900 mb-1">Drift Detected</h3>
-              <p className="text-sm text-orange-800">
-                Cache was built from a different contract version. Rebuild cache to synchronize.
+      {/* Drift Warning (prominent if detected) */}
+      {hasDrift && (
+        <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-6" data-testid="cache-drift-warning">
+          <div className="flex items-start gap-4">
+            <AlertTriangle className="text-orange-600 flex-shrink-0" size={32} />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-orange-900 mb-2">Drift Detected</h3>
+              <p className="text-sm text-orange-800 mb-4">
+                Your cache was built from an older contract version. The contract has changed since the cache was created.
+                Tests may not run correctly until you rebuild the cache.
               </p>
+              <button
+                onClick={handleBuildCache}
+                disabled={!!currentJobId}
+                className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              >
+                <Play className="mr-2" size={16} />
+                Rebuild Cache Now
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Pages List */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="cache-pages-list">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">Cached Pages</h3>
+      {/* Cache Status Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Existence & Pages */}
+        <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
+          <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <Database className="text-blue-600" size={24} />
+              <h2 className="text-lg font-semibold text-gray-900">Cache Status</h2>
+            </div>
+          </div>
+          <div className="px-6 py-4">
+            <dl className="space-y-4">
+              <div>
+                <dt className="text-sm font-medium text-gray-600 mb-1">Existence</dt>
+                <dd className="flex items-center gap-2">
+                  <CheckCircle className="text-green-600" size={18} />
+                  <span className="text-sm font-semibold text-green-600">Cache Built</span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-600 mb-1">Pages Detected</dt>
+                <dd className="text-3xl font-bold text-gray-900">{cache.pageCount}</dd>
+                <p className="text-xs text-gray-500 mt-1">Pages available for testing</p>
+              </div>
+            </dl>
+          </div>
         </div>
 
-        {cache.pages.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            No cached pages
+        {/* Contract Binding & Drift */}
+        <div className={`rounded-lg border-2 overflow-hidden ${
+          hasDrift ? 'border-orange-200' : 'border-green-200'
+        }`}>
+          <div className={`px-6 py-4 border-b ${
+            hasDrift ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'
+          }`}>
+            <div className="flex items-center gap-3">
+              {hasDrift ? (
+                <GitBranch className="text-orange-600" size={24} />
+              ) : (
+                <CheckCircle className="text-green-600" size={24} />
+              )}
+              <h2 className="text-lg font-semibold text-gray-900">Contract Binding</h2>
+            </div>
           </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Key
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Path
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {cache.pages.map((page, index) => (
-                <tr
-                  key={index}
-                  data-testid={`cache-page-item-${page.key}`}
-                  onClick={() => handlePageClick(page.key)}
-                  className="hover:bg-blue-50 cursor-pointer transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <FileText size={16} className="text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">{page.key}</span>
+          <div className="px-6 py-4 bg-white">
+            {cache.binding ? (
+              <dl className="space-y-4">
+                <div>
+                  <dt className="text-sm font-medium text-gray-600 mb-1">Synchronization</dt>
+                  <dd className="flex items-center gap-2">
+                    {cache.binding.match ? (
+                      <>
+                        <CheckCircle className="text-green-600" size={18} />
+                        <span className="text-sm font-semibold text-green-600">Synchronized</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="text-orange-600" size={18} />
+                        <span className="text-sm font-semibold text-orange-600">Drift Detected</span>
+                      </>
+                    )}
+                  </dd>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {cache.binding.match ? 'Cache matches current contract' : 'Cache needs rebuild'}
+                  </p>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-600 mb-2">Fingerprints</dt>
+                  <dd className="space-y-2">
+                    <div className="bg-gray-50 rounded px-3 py-2 border border-gray-200">
+                      <p className="text-xs text-gray-500 mb-1">Cache Binding</p>
+                      <p className="text-xs font-mono text-gray-700 break-all">
+                        {cache.binding.contractSha256}
+                      </p>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 font-mono">
-                    {page.path}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+                    {cache.binding.currentContractHash && (
+                      <div className="bg-gray-50 rounded px-3 py-2 border border-gray-200">
+                        <p className="text-xs text-gray-500 mb-1">Current Contract</p>
+                        <p className="text-xs font-mono text-gray-700 break-all">
+                          {cache.binding.currentContractHash}
+                        </p>
+                      </div>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <div className="text-sm text-gray-600">
+                No binding information available
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Note */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-900">
-          <strong>Note:</strong> Drift detection is a simple hash comparison for visibility only.
-          Full drift analysis is delegated to integrity gates.
-        </p>
+      {/* Cached Pages Section */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Detected Pages</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Pages discovered from your application and available for testing
+          </p>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="cache-pages-list">
+          {cache.pages.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              <FileText className="mx-auto mb-2 text-gray-400" size={48} />
+              <p>No pages detected</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Page Key
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Route Path
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {cache.pages.map((page, index) => (
+                    <tr
+                      key={index}
+                      data-testid={`cache-page-item-${page.key}`}
+                      onClick={() => handlePageClick(page.key)}
+                      className="hover:bg-blue-50 cursor-pointer transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <FileText size={16} className="text-blue-600" />
+                          <span className="text-sm font-medium text-gray-900">{page.key}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-mono text-gray-600">{page.path}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Cache Page Viewer Modal */}
