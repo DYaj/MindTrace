@@ -7,6 +7,7 @@ import { useJobStatus } from '../hooks/useJobStatus';
 import { formatDistanceToNow } from 'date-fns';
 import ExitCodeBadge from '../components/ExitCodeBadge';
 import { JobStatusCard } from '../components/JobStatusCard';
+import { RunFilterBar } from '../components/runs/RunFilterBar';
 import { api } from '../api/client';
 import { AlertTriangle, Trash2, Play } from 'lucide-react';
 import type { JobStatus } from '@breakline/ui-types';
@@ -27,6 +28,9 @@ function RunsPage() {
   // Delete confirmation modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [runToDelete, setRunToDelete] = useState<string | null>(null);
+
+  // Filter state
+  const [filter, setFilter] = useState<'all' | 'passed' | 'failed'>('all');
 
   // Check actual job status to determine if button should be disabled
   const { data: jobStatus } = useJobStatus(currentJobId);
@@ -144,6 +148,20 @@ function RunsPage() {
   const cacheMissing = system?.cache?.state === 'missing';
   const cannotRun = contractMissing || cacheMissing;
 
+  // Filter runs based on selected filter
+  const filteredRuns = runs?.filter(run => {
+    if (filter === 'passed') return run.exitCode === 0;
+    if (filter === 'failed') return run.exitCode !== 0;
+    return true; // 'all'
+  }) || [];
+
+  // Calculate counts for filter bar
+  const counts = {
+    total: runs?.length || 0,
+    passed: runs?.filter(r => r.exitCode === 0).length || 0,
+    failed: runs?.filter(r => r.exitCode !== 0).length || 0
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6" data-testid="runs-page">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -221,9 +239,18 @@ function RunsPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px]" data-testid="runs-table">
+        <div className="space-y-4">
+          {/* Run Filter Bar */}
+          <RunFilterBar
+            currentFilter={filter}
+            onFilterChange={setFilter}
+            counts={counts}
+          />
+
+          {/* Runs Table */}
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]" data-testid="runs-table">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -247,7 +274,7 @@ function RunsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {runs.map((run) => (
+              {filteredRuns.map((run) => (
                 <tr
                   key={run.runId}
                   data-testid={`runs-row-${run.runId}`}
@@ -309,6 +336,7 @@ function RunsPage() {
             </tbody>
           </table>
           </div>
+        </div>
         </div>
       )}
 
