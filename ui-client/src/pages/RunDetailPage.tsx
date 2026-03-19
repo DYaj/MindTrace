@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useRunDetail } from '../hooks/useRunDetail';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw, FileX, Activity } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
 import { RunSummaryHeader } from '../components/run/RunSummaryHeader';
 import { ArtifactGroup, categorizeArtifacts } from '../components/run/ArtifactGroup';
@@ -49,8 +49,34 @@ export function RunDetailPage() {
   if (error || !run) {
     return (
       <div className="p-4 sm:p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm sm:text-base text-red-800">Failed to load run details: {error instanceof Error ? error.message : 'Unknown error'}</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <FileX size={20} className="text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-red-900 mb-1">Failed to Load Run Details</h3>
+              <p className="text-sm text-red-800 mb-4">
+                {error instanceof Error ? error.message : 'An unknown error occurred while loading this run.'}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                >
+                  <RefreshCw size={16} />
+                  Retry
+                </button>
+                <button
+                  onClick={() => navigate('/runs')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
+                >
+                  <ArrowLeft size={16} />
+                  Back to Runs
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -192,8 +218,16 @@ export function RunDetailPage() {
       {activeTab === 'artifacts' && (
         <div className="space-y-4" data-testid="run-detail-artifacts">
           {run.artifacts.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500" data-testid="run-detail-artifacts-empty">
-              No artifacts found for this run
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center" data-testid="run-detail-artifacts-empty">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                  <FileX size={32} className="text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">No Artifacts</h3>
+                <p className="text-sm text-gray-600 max-w-md">
+                  This run produced no saved artifacts (reports, screenshots, traces, or logs).
+                </p>
+              </div>
             </div>
           ) : (() => {
             const grouped = categorizeArtifacts(run.artifacts);
@@ -236,8 +270,16 @@ export function RunDetailPage() {
       {activeTab === 'audit' && (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="run-detail-audit">
           {run.auditEvents.length === 0 ? (
-            <div className="p-8 text-center text-gray-500" data-testid="run-detail-audit-empty">
-              No audit events found for this run
+            <div className="p-12 text-center" data-testid="run-detail-audit-empty">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Activity size={32} className="text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">No Audit Events</h3>
+                <p className="text-sm text-gray-600 max-w-md">
+                  No audit events were recorded during this run.
+                </p>
+              </div>
             </div>
           ) : (
             <div>
