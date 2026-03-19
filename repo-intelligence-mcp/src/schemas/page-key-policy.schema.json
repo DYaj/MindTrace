@@ -5,7 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
+    "schemaVersion",
     "mode",
     "patterns",
     "collision_resolution",
@@ -14,9 +14,10 @@
     "evidence"
   ],
   "properties": {
-    "schema_version": {
+    "schemaVersion": {
       "type": "string",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "CANONICAL field name (camelCase). See: docs/standards/contract-bundle-schema.md"
     },
     "mode": {
       "type": "string",

@@ -145,25 +145,43 @@ export function computeContractFingerprint(
   return { ok: true, fingerprint, files: sortedFiles };
 }
 
+// ============================================================================
+// CANONICAL CONTRACT FINGERPRINT FILE - BreakLine Official Standard
+// ============================================================================
+// ARCHITECTURE: Write strictly - emit ONLY canonical, then legacy for compat
+// See: docs/standards/contract-bundle-schema.md
+//
+// CANONICAL FILE (master): contract.fingerprint.sha256
+// LEGACY FILE (backward compat): automation-contract.hash
+//
+// PRINCIPLE: Contract generator writes strictly to canonical standard
+// Integrity validator reads compatibly (prefer canonical, surgical fallback)
+//
+// DUAL-WRITE STRATEGY (temporary):
+// - Write canonical atomically (primary marker)
+// - Write legacy non-atomically (backward compatibility only)
+// - Future: Remove legacy write after migration period
+// ============================================================================
+
 /**
  * Write fingerprint to disk atomically using temp→rename strategy.
  * DUAL-WRITE: Writes both canonical and legacy markers for compatibility.
  *
- * Canonical: automation-contract.hash (master spec)
- * Legacy: contract.fingerprint.sha256 (backward compat)
+ * Canonical: contract.fingerprint.sha256 (master spec)
+ * Legacy: automation-contract.hash (backward compat, will be deprecated)
  *
  * @param contractDir - Directory containing contract files
  * @param fingerprint - The computed fingerprint hash
  */
 export function writeFingerprintAtomic(contractDir: string, fingerprint: string): void {
-  const canonicalPath = path.join(contractDir, "automation-contract.hash");
-  const legacyPath = path.join(contractDir, "contract.fingerprint.sha256");
+  const canonicalPath = path.join(contractDir, "contract.fingerprint.sha256");
+  const legacyPath = path.join(contractDir, "automation-contract.hash");
   const tempHashPath = path.join(contractDir, `.hash.tmp.${crypto.randomUUID()}`);
 
   try {
     writeFileSync(tempHashPath, fingerprint + "\n", "utf-8");
 
-    // Write CANONICAL marker: automation-contract.hash
+    // Write CANONICAL marker: contract.fingerprint.sha256 (atomic)
     // On Windows, renameSync fails if target exists, so delete first
     // On POSIX, renameSync is atomic even if target exists
     if (process.platform === 'win32' && existsSync(canonicalPath)) {
@@ -173,6 +191,7 @@ export function writeFingerprintAtomic(contractDir: string, fingerprint: string)
 
     // DUAL-WRITE: Also write LEGACY marker for backward compatibility
     // Direct write (not atomic) since this is secondary marker
+    // TODO: Remove this after migration period (when all consumers use canonical)
     writeFileSync(legacyPath, fingerprint + "\n", "utf-8");
 
   } catch (error) {

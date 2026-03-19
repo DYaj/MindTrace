@@ -19,8 +19,19 @@ export function generateAutomationContract(params: {
     stylesDetected: params.stylesDetected
   });
 
+  // ============================================================================
+  // CANONICAL CONTRACT FIELDS - BreakLine Official Standard
+  // ============================================================================
+  // See: docs/standards/contract-bundle-schema.md
+  //
+  // REQUIRED CANONICAL FIELD NAMES (exact casing):
+  // - schemaVersion (camelCase) - NOT schema_version
+  // - contractVersion (camelCase) - NOT contract_version
+  // - generated_by (snake_case for legacy compatibility)
+  // - framework (lowercase)
+  // ============================================================================
   return {
-    schema_version: "0.1.0",
+    schemaVersion: "0.1.0",
     contractVersion: "0.1.0",
     framework: params.framework.framework,
     stylesDetected: params.stylesDetected,

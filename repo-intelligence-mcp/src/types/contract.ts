@@ -146,8 +146,8 @@ export type Entrypoint = {
 };
 
 export type AutomationContract = {
-  schema_version: string;
-  contractVersion: string; // legacy compat
+  schemaVersion: string;  // CANONICAL (camelCase) - NOT schema_version
+  contractVersion: string;
   framework: Framework;
 
   stylesDetected: string[];
@@ -180,7 +180,7 @@ export type AutomationContract = {
 };
 
 export type PageKeyPolicy = {
-  schema_version: string;
+  schemaVersion: string;  // CANONICAL (camelCase) - NOT schema_version
   mode: "hybrid" | "detected" | "hardcoded";
 
   patterns: Record<
@@ -206,7 +206,7 @@ export type PageKeyPolicy = {
 };
 
 export type ContractMeta = {
-  schema_version: string;
+  schemaVersion: string;  // CANONICAL (camelCase) - NOT schema_version
   generated_at: string;
 
   scan_summary: {

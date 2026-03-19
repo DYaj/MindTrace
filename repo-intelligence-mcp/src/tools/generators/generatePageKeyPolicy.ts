@@ -38,8 +38,13 @@ export function generatePageKeyPolicy(params: { topology: RepoTopologyJSON; styl
     }
   }
 
+  // ============================================================================
+  // CANONICAL FIELD NAMES - BreakLine Official Standard
+  // See: docs/standards/contract-bundle-schema.md
+  // Use schemaVersion (camelCase), NOT schema_version (snake_case)
+  // ============================================================================
   return {
-    schema_version: "0.1.0",
+    schemaVersion: "0.1.0",
     mode: "hybrid",
     patterns,
     collision_resolution: "deterministic_suffix",
