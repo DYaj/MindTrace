@@ -8,8 +8,9 @@ import { formatDistanceToNow } from 'date-fns';
 import ExitCodeBadge from '../components/ExitCodeBadge';
 import { JobStatusCard } from '../components/JobStatusCard';
 import { RunFilterBar } from '../components/runs/RunFilterBar';
+import { RunComparisonPanel } from '../components/runs/RunComparisonPanel';
 import { api } from '../api/client';
-import { AlertTriangle, Trash2, Play } from 'lucide-react';
+import { AlertTriangle, Trash2, Play, GitCompare } from 'lucide-react';
 import type { JobStatus } from '@breakline/ui-types';
 
 const STORAGE_KEY = 'breakline:runs:currentJobId';
@@ -31,6 +32,10 @@ function RunsPage() {
 
   // Filter state
   const [filter, setFilter] = useState<'all' | 'passed' | 'failed'>('all');
+
+  // Comparison state
+  const [selectedRuns, setSelectedRuns] = useState<string[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
 
   // Check actual job status to determine if button should be disabled
   const { data: jobStatus } = useJobStatus(currentJobId);
@@ -134,6 +139,26 @@ function RunsPage() {
   const cancelDelete = () => {
     setDeleteModalOpen(false);
     setRunToDelete(null);
+  };
+
+  const handleToggleSelect = (runId: string) => {
+    setSelectedRuns(prev => {
+      if (prev.includes(runId)) {
+        return prev.filter(id => id !== runId);
+      } else {
+        // Only allow selecting 2 runs max
+        if (prev.length >= 2) {
+          return [prev[1], runId]; // Replace oldest selection
+        }
+        return [...prev, runId];
+      }
+    });
+  };
+
+  const handleCompare = () => {
+    if (selectedRuns.length === 2) {
+      setShowComparison(true);
+    }
   };
 
   if (isLoading) {
@@ -240,12 +265,24 @@ function RunsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Run Filter Bar */}
-          <RunFilterBar
-            currentFilter={filter}
-            onFilterChange={setFilter}
-            counts={counts}
-          />
+          {/* Filter Bar and Compare Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <RunFilterBar
+              currentFilter={filter}
+              onFilterChange={setFilter}
+              counts={counts}
+            />
+            {selectedRuns.length > 0 && (
+              <button
+                onClick={handleCompare}
+                disabled={selectedRuns.length !== 2}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              >
+                <GitCompare size={16} />
+                Compare Selected ({selectedRuns.length}/2)
+              </button>
+            )}
+          </div>
 
           {/* Runs Table */}
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -253,6 +290,9 @@ function RunsPage() {
               <table className="w-full min-w-[640px]" data-testid="runs-table">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="px-4 py-3 w-12">
+                  {/* Checkbox column */}
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Run Name
                 </th>
@@ -280,6 +320,15 @@ function RunsPage() {
                   data-testid={`runs-row-${run.runId}`}
                   className="hover:bg-blue-50 transition-colors"
                 >
+                  <td className="px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedRuns.includes(run.runId)}
+                      onChange={() => handleToggleSelect(run.runId)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </td>
                   <td
                     className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer"
                     onClick={() => navigate(`/runs/${run.runId}`)}
@@ -376,6 +425,15 @@ function RunsPage() {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Run Comparison Modal */}
+      {showComparison && selectedRuns.length === 2 && runs && (
+        <RunComparisonPanel
+          runA={runs.find(r => r.runId === selectedRuns[0])!}
+          runB={runs.find(r => r.runId === selectedRuns[1])!}
+          onClose={() => setShowComparison(false)}
+        />
       )}
     </div>
   );
