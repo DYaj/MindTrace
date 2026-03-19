@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCache } from '../hooks/useCache';
 import { useContract } from '../hooks/useContract';
 import { AlertTriangle, CheckCircle, Database, FileText, Play } from 'lucide-react';
@@ -6,12 +6,25 @@ import { FileViewerModal } from '../components/FileViewerModal';
 import { JobStatusCard } from '../components/JobStatusCard';
 import type { JobStatus } from '@breakline/ui-types';
 
+const STORAGE_KEY = 'breakline:cache:currentJobId';
+
 export function CachePage() {
   const { data: cache, isLoading, error, refetch } = useCache();
   const { data: contract } = useContract();
 
-  // Build cache job state
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  // Build cache job state (persisted in sessionStorage)
+  const [currentJobId, setCurrentJobId] = useState<string | null>(() => {
+    return sessionStorage.getItem(STORAGE_KEY);
+  });
+
+  // Persist currentJobId to sessionStorage
+  useEffect(() => {
+    if (currentJobId) {
+      sessionStorage.setItem(STORAGE_KEY, currentJobId);
+    } else {
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+  }, [currentJobId]);
 
   // Cache page viewer state
   const [selectedPage, setSelectedPage] = useState<{ key: string; content: string } | null>(null);
@@ -43,7 +56,9 @@ export function CachePage() {
       const data = await response.json();
 
       if (data.success && data.data.jobId) {
-        setCurrentJobId(data.data.jobId);
+        const jobId = data.data.jobId;
+        setCurrentJobId(jobId);
+        sessionStorage.setItem(STORAGE_KEY, jobId);
       }
     } catch (err) {
       console.error('Failed to start cache build:', err);
@@ -54,6 +69,13 @@ export function CachePage() {
     if (job.status === 'completed') {
       // Refresh cache data after successful build
       refetch();
+    }
+    // Keep job visible for 30 seconds after completion, then clear
+    if (job.status === 'completed' || job.status === 'failed') {
+      setTimeout(() => {
+        setCurrentJobId(null);
+        sessionStorage.removeItem(STORAGE_KEY);
+      }, 30000);
     }
   };
 
@@ -82,9 +104,9 @@ export function CachePage() {
     const contractMissing = !contract || !contract.exists;
 
     return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Cache</h1>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+      <div className="p-4 sm:p-6" data-testid="cache-page">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6" data-testid="cache-page-title">Cache</h1>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center" data-testid="cache-empty-state">
           <Database className="mx-auto mb-4 text-yellow-600" size={48} />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Cache Found</h2>
           <p className="text-gray-600 mb-2">Build cache to see it here</p>
@@ -101,6 +123,7 @@ export function CachePage() {
 
           {/* Build Cache Button */}
           <button
+            data-testid="cache-button-build"
             onClick={handleBuildCache}
             disabled={!!currentJobId || contractMissing}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -121,17 +144,17 @@ export function CachePage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6" data-testid="cache-page">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Cache</h1>
-        <p className="text-gray-600 mt-2">Page detection cache</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="cache-page-title">Cache</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Page detection cache</p>
       </div>
 
       {/* Status Cards */}
       <div className="grid grid-cols-2 gap-6 mb-6">
         {/* Cache Info Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6" data-testid="cache-status-card">
           <div className="flex items-center gap-3 mb-4">
             <Database className="text-blue-600" size={24} />
             <h2 className="text-xl font-semibold text-gray-900">Cache Status</h2>
@@ -149,7 +172,7 @@ export function CachePage() {
         </div>
 
         {/* Drift Indicator Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6" data-testid="cache-binding-card">
           {cache.binding ? (
             <>
               <div className="flex items-center gap-3 mb-4">
@@ -199,7 +222,7 @@ export function CachePage() {
 
       {/* Drift Warning */}
       {cache.binding && !cache.binding.match && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6" data-testid="cache-drift-warning">
           <div className="flex items-start gap-3">
             <AlertTriangle className="text-orange-600 mt-0.5" size={20} />
             <div>
@@ -213,7 +236,7 @@ export function CachePage() {
       )}
 
       {/* Pages List */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="cache-pages-list">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h3 className="font-semibold text-gray-900">Cached Pages</h3>
         </div>
@@ -238,6 +261,7 @@ export function CachePage() {
               {cache.pages.map((page, index) => (
                 <tr
                   key={index}
+                  data-testid={`cache-page-item-${page.key}`}
                   onClick={() => handlePageClick(page.key)}
                   className="hover:bg-blue-50 cursor-pointer transition-colors"
                 >

@@ -80,7 +80,7 @@ export function JobStatusCard({ jobId, onComplete }: JobStatusCardProps) {
   };
 
   return (
-    <div className={`border rounded-lg p-4 ${config.bg} ${config.border}`}>
+    <div className={`border rounded-lg p-4 ${config.bg} ${config.border}`} data-testid={`job-status-card-${jobId}`}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <Icon
@@ -108,10 +108,12 @@ export function JobStatusCard({ jobId, onComplete }: JobStatusCardProps) {
       {job.status === 'completed' && job.result && (
         <div className="mt-3 pt-3 border-t border-green-200">
           {job.result.stdout && (
-            <p className="text-sm text-gray-700">{job.result.stdout}</p>
+            <pre className="text-xs text-gray-700 whitespace-pre-wrap overflow-x-auto bg-gray-50 p-3 rounded border border-gray-200">
+              {job.result.stdout}
+            </pre>
           )}
           {job.result.runId && (
-            <p className="text-xs text-gray-500 mt-1">Run ID: {job.result.runId}</p>
+            <p className="text-sm font-medium text-gray-900 mt-2">Run ID: {job.result.runId}</p>
           )}
         </div>
       )}

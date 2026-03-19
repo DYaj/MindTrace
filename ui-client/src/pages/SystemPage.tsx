@@ -49,20 +49,21 @@ function SystemPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 p-4 sm:p-6" data-testid="system-page">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">System Status</h1>
-        <p className="text-gray-600 mt-2">Monitor system readiness and health</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="system-page-title">System Status</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Monitor system readiness and health</p>
       </div>
 
       {/* FIRST-TIME USER GUIDANCE */}
       {system.contract.state === 'missing' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6" data-testid="system-getting-started">
           <h3 className="font-semibold text-blue-900 mb-2">Getting Started</h3>
           <p className="text-sm text-blue-800 mb-3">No contract detected. Follow these steps:</p>
           <div className="space-y-2">
             <Link
               to="/contract"
+              data-testid="system-link-generate-contract"
               className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
             >
               <span>1. Generate Contract</span>
@@ -71,6 +72,7 @@ function SystemPage() {
             </Link>
             <Link
               to="/cache"
+              data-testid="system-link-build-cache"
               className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
             >
               <span>2. Build Cache</span>
@@ -79,6 +81,7 @@ function SystemPage() {
             </Link>
             <Link
               to="/runs"
+              data-testid="system-link-run-tests"
               className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
             >
               <span>3. Run Tests</span>
@@ -90,10 +93,11 @@ function SystemPage() {
       )}
 
       {/* STATUS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-testid="system-status-cards">
         {statusCards.map(({ label, icon: Icon, ok, detail }) => (
           <div
             key={label}
+            data-testid={`system-card-${label.toLowerCase()}`}
             className="bg-white border border-gray-200 rounded-lg p-6"
           >
             <div className="flex items-start justify-between mb-4">

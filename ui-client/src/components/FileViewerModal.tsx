@@ -29,12 +29,13 @@ export function FileViewerModal({ isOpen, onClose, fileName, content, fileType }
     : content;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" data-testid="file-viewer-modal">
       <div className="bg-white rounded-lg shadow-xl w-[90vw] h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900">{fileName}</h2>
+          <h2 className="text-xl font-semibold text-gray-900" data-testid="file-viewer-modal-title">{fileName}</h2>
           <button
+            data-testid="file-viewer-modal-close-x"
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
@@ -44,7 +45,7 @@ export function FileViewerModal({ isOpen, onClose, fileName, content, fileType }
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
-          <pre className="text-sm font-mono text-gray-700 whitespace-pre-wrap">
+          <pre className="text-sm font-mono text-gray-700 whitespace-pre-wrap" data-testid="file-viewer-modal-content">
             {displayContent}
           </pre>
         </div>
@@ -52,6 +53,7 @@ export function FileViewerModal({ isOpen, onClose, fileName, content, fileType }
         {/* Footer */}
         <div className="border-t border-gray-200 px-6 py-4 flex justify-end">
           <button
+            data-testid="file-viewer-modal-close-button"
             onClick={onClose}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
           >

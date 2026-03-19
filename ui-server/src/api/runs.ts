@@ -89,6 +89,38 @@ const runsRoutes: FastifyPluginAsync = async (server) => {
       });
     }
   });
+
+  /**
+   * DELETE /api/runs/:runId
+   * Delete a test run
+   */
+  server.delete<{
+    Params: { runId: string };
+    Reply: ApiResponse<{ deleted: boolean }>;
+  }>('/:runId', async (request, reply) => {
+    try {
+      const { runId } = request.params;
+      const deleted = RunsService.deleteRun(runId);
+
+      if (!deleted) {
+        return reply.code(404).send({
+          success: false,
+          error: `Run not found: ${runId}`
+        });
+      }
+
+      return reply.send({
+        success: true,
+        data: { deleted: true }
+      });
+    } catch (error) {
+      server.log.error(error);
+      return reply.code(500).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete run'
+      });
+    }
+  });
 };
 
 export default runsRoutes;
