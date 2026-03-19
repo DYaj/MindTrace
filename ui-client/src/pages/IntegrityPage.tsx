@@ -61,8 +61,8 @@ function getContractExplanation(gate: GateResult): { meaning: string; action: st
   if (gate.status === 'valid') {
     return {
       meaning: 'Your automation contract is properly structured and ready to use. All required fields are present and valid.',
-      action: 'No action needed. You can proceed to build your cache.',
-      actionLink: '/cache'
+      action: 'No action needed. You can proceed to build your cache.'
+      // No actionLink for passed state - informational only
     };
   }
 
@@ -109,8 +109,8 @@ function getCacheExplanation(gate: GateResult, contractValid: boolean, contractN
   if (gate.status === 'valid') {
     return {
       meaning: 'Your page detection cache is properly structured and bound to the current contract. Tests can use this cache.',
-      action: 'No action needed. Your cache is ready for test runs.',
-      actionLink: '/runs'
+      action: 'No action needed. Your cache is ready for test runs.'
+      // No actionLink for passed state - informational only
     };
   }
 
