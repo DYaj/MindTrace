@@ -167,8 +167,120 @@ function SystemPage() {
     }
   ];
 
+  // Show onboarding when: no contract OR no first run
+  const showOnboarding = contractMissing || !hasRunHistory;
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6" data-testid="system-page">
+      {/* Onboarding Panel */}
+      {showOnboarding && (
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6" data-testid="onboarding-panel">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome to BreakLine</h2>
+          <p className="text-sm text-gray-700 mb-6">
+            BreakLine helps you define automation contracts, build cache, and run governed tests.
+          </p>
+
+          <div className="space-y-4">
+            {/* Step 1: Generate Contract */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">
+                1
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-1">Generate Contract</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Create the automation definition for this repository.
+                </p>
+                {!contractMissing ? (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle size={16} />
+                    <span className="font-medium">Contract generated</span>
+                  </div>
+                ) : (
+                  <Link
+                    to="/contract"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Generate Contract
+                    <ArrowRight size={16} />
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Step 2: Build Cache */}
+            <div className="flex items-start gap-4">
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+                contractMissing ? 'bg-gray-300 text-gray-600' : 'bg-blue-600 text-white'
+              }`}>
+                2
+              </div>
+              <div className="flex-1">
+                <h3 className={`font-semibold mb-1 ${contractMissing ? 'text-gray-500' : 'text-gray-900'}`}>
+                  Build Cache
+                </h3>
+                <p className={`text-sm mb-3 ${contractMissing ? 'text-gray-500' : 'text-gray-600'}`}>
+                  Generate runtime context from the contract.
+                </p>
+                {!cacheMissing ? (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle size={16} />
+                    <span className="font-medium">Cache built</span>
+                  </div>
+                ) : contractMissing ? (
+                  <div className="text-sm text-gray-500 italic">
+                    Requires contract
+                  </div>
+                ) : (
+                  <Link
+                    to="/cache"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Build Cache
+                    <ArrowRight size={16} />
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Step 3: Run Tests */}
+            <div className="flex items-start gap-4">
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+                (contractMissing || cacheMissing) ? 'bg-gray-300 text-gray-600' : 'bg-blue-600 text-white'
+              }`}>
+                3
+              </div>
+              <div className="flex-1">
+                <h3 className={`font-semibold mb-1 ${(contractMissing || cacheMissing) ? 'text-gray-500' : 'text-gray-900'}`}>
+                  Run Tests
+                </h3>
+                <p className={`text-sm mb-3 ${(contractMissing || cacheMissing) ? 'text-gray-500' : 'text-gray-600'}`}>
+                  Execute tests using the defined contract and cache.
+                </p>
+                {hasRunHistory ? (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle size={16} />
+                    <span className="font-medium">Tests executed</span>
+                  </div>
+                ) : (contractMissing || cacheMissing) ? (
+                  <div className="text-sm text-gray-500 italic">
+                    Requires contract + cache
+                  </div>
+                ) : (
+                  <Link
+                    to="/runs"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Run Tests
+                    <ArrowRight size={16} />
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header with Status Badge */}
       <div>
         <div className="flex items-center gap-3 flex-wrap">
