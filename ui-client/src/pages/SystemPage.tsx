@@ -26,13 +26,13 @@ function SystemPage() {
       label: 'Runtime',
       icon: Activity,
       ok: system.runtime.state === 'available',
-      detail: system.runtime.state === 'available' ? 'Available' : 'Missing'
+      detail: system.runtime.state === 'available' ? 'Available' : 'Not Available'
     },
     {
       label: 'Contract',
       icon: FileCode,
       ok: system.contract.state === 'available',
-      detail: system.contract.state === 'available' ? 'Present' : 'Missing'
+      detail: system.contract.state === 'available' ? 'Generated' : 'Not Generated'
     },
     {
       label: 'Cache',
@@ -44,7 +44,7 @@ function SystemPage() {
       label: 'MCP',
       icon: Cpu,
       ok: system.mcp.state === 'available',
-      detail: system.mcp.state === 'available' ? 'Installed' : 'Missing'
+      detail: system.mcp.state === 'available' ? 'Installed' : 'Not Installed'
     }
   ];
 
@@ -77,7 +77,7 @@ function SystemPage() {
             >
               <span>2. Build Cache</span>
               <ArrowRight size={16} />
-              <span className="text-xs font-normal">(optional - improves page detection)</span>
+              <span className="text-xs font-normal">(required - detects pages for testing)</span>
             </Link>
             <Link
               to="/runs"

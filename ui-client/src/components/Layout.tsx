@@ -199,12 +199,12 @@ function Layout() {
                 <StatusIndicator
                   data-testid="header-status-contract"
                   label="Contract"
-                  status={system.contract.state === 'available' ? 'ok' : 'warning'}
+                  status={system.contract.state === 'available' ? 'ok' : 'error'}
                 />
                 <StatusIndicator
                   data-testid="header-status-cache"
                   label="Cache"
-                  status={system.cache.state === 'available' ? 'ok' : 'warning'}
+                  status={system.cache.state === 'available' ? 'ok' : 'error'}
                 />
               </div>
             )}

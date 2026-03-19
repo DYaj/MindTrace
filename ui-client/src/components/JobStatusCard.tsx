@@ -108,9 +108,23 @@ export function JobStatusCard({ jobId, onComplete }: JobStatusCardProps) {
       {job.status === 'completed' && job.result && (
         <div className="mt-3 pt-3 border-t border-green-200">
           {job.result.stdout && (
-            <pre className="text-xs text-gray-700 whitespace-pre-wrap overflow-x-auto bg-gray-50 p-3 rounded border border-gray-200">
-              {job.result.stdout}
-            </pre>
+            <div className="text-xs text-gray-700 bg-gray-50 p-3 rounded border border-gray-200 space-y-1">
+              {job.result.stdout.split('\n').map((line, idx) => {
+                // Check if line contains a label-value pair (e.g., "   - Run folder:   /path")
+                const match = line.match(/^(\s*-\s+[^:]+:)\s*(.+)$/);
+                if (match) {
+                  const [, label, value] = match;
+                  return (
+                    <div key={idx} className="grid grid-cols-[auto_1fr] gap-2">
+                      <span className="whitespace-pre text-right">{label}</span>
+                      <span className="break-all min-w-0">{value}</span>
+                    </div>
+                  );
+                }
+                // Regular line without special formatting
+                return <div key={idx} className="whitespace-pre-wrap">{line}</div>;
+              })}
+            </div>
           )}
           {job.result.runId && (
             <p className="text-sm font-medium text-gray-900 mt-2">Run ID: {job.result.runId}</p>

@@ -4,10 +4,7 @@ import {
   XCircle,
   AlertTriangle,
   Shield,
-  Play,
-  StopCircle,
-  FileCheck,
-  Code
+  Play
 } from 'lucide-react';
 
 interface AuditEvent {
