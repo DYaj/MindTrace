@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import type { SystemStatus } from '@breakline/ui-types';
 import { PathValidator } from '../utils/paths.js';
-import { getRepoRoot } from '../utils/repo-root.js';
+import { getBreaklineRoot } from '../utils/breakline-root.js';
+import { getTargetRepoRoot } from '../utils/target-repo-root.js';
 
 /**
  * System health service
@@ -16,26 +17,23 @@ import { getRepoRoot } from '../utils/repo-root.js';
  * This rule is FROZEN for all future implementations.
  */
 export class SystemService {
-  private static getRepoRoot(): string {
-    return getRepoRoot();
-  }
-
   /**
    * Get overall system status
    *
    * Checks:
-   * - Runtime CLI availability
-   * - Contract presence
-   * - Cache presence
-   * - MCP executable presence
+   * - Runtime CLI availability (from BreakLine installation)
+   * - Contract presence (in target repo)
+   * - Cache presence (in target repo)
+   * - MCP executable presence (from BreakLine installation)
    *
    * CORRECTED: Drift field removed - use /api/integrity endpoint for authoritative drift detection
    */
   static async getSystemStatus(): Promise<SystemStatus> {
-    const repoRoot = this.getRepoRoot();
+    const breaklineRoot = getBreaklineRoot();
+    const targetRepoRoot = getTargetRepoRoot();
 
-    // Check runtime
-    const runtimePath = join(repoRoot, 'mindtrace-ai-runtime/dist/cli.js');
+    // Check runtime (from BreakLine installation)
+    const runtimePath = join(breaklineRoot, 'mindtrace-ai-runtime/dist/cli.js');
     const runtime = {
       state: existsSync(runtimePath) ? 'available' as const : 'missing' as const,
       detail: existsSync(runtimePath) ? runtimePath : undefined
@@ -94,8 +92,8 @@ export class SystemService {
       detail: pageCount !== undefined ? `${pageCount} pages` : undefined
     };
 
-    // Check MCP
-    const mcpPath = join(repoRoot, 'repo-intelligence-mcp/dist/mcp/cli.js');
+    // Check MCP (from BreakLine installation)
+    const mcpPath = join(breaklineRoot, 'repo-intelligence-mcp/dist/mcp/cli.js');
     const mcp = {
       state: existsSync(mcpPath) ? 'available' as const : 'missing' as const,
       detail: existsSync(mcpPath) ? 'Installed on disk' : undefined

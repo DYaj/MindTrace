@@ -1,5 +1,6 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRuns } from '../hooks/useRuns';
 import { useSystemStatus } from '../hooks/useSystemStatus';
 import { useJobStatus } from '../hooks/useJobStatus';
@@ -22,6 +23,10 @@ function RunsPage() {
     return sessionStorage.getItem(STORAGE_KEY);
   });
   const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Delete confirmation modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [runToDelete, setRunToDelete] = useState<string | null>(null);
 
   // Check actual job status to determine if button should be disabled
   const { data: jobStatus } = useJobStatus(currentJobId);
@@ -97,15 +102,17 @@ function RunsPage() {
     }
   };
 
-  const handleDeleteRun = async (e: React.MouseEvent, runId: string) => {
+  const handleDeleteRun = (e: React.MouseEvent, runId: string) => {
     e.stopPropagation(); // Prevent navigation to run detail
+    setRunToDelete(runId);
+    setDeleteModalOpen(true);
+  };
 
-    if (!confirm('Delete this test run? This cannot be undone.')) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!runToDelete) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/runs/${runId}`, {
+      const response = await fetch(`http://localhost:3001/api/runs/${runToDelete}`, {
         method: 'DELETE'
       });
 
@@ -114,7 +121,15 @@ function RunsPage() {
       }
     } catch (error) {
       console.error('Failed to delete run:', error);
+    } finally {
+      setDeleteModalOpen(false);
+      setRunToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setRunToDelete(null);
   };
 
   if (isLoading) {
@@ -236,7 +251,7 @@ function RunsPage() {
                 <tr
                   key={run.runId}
                   data-testid={`runs-row-${run.runId}`}
-                  className="hover:bg-gray-50 transition-colors"
+                  className="hover:bg-blue-50 transition-colors"
                 >
                   <td
                     className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer"
@@ -254,13 +269,24 @@ function RunsPage() {
                     className="px-6 py-4 whitespace-nowrap cursor-pointer"
                     onClick={() => navigate(`/runs/${run.runId}`)}
                   >
-                    <ExitCodeBadge code={run.exitCode} size="sm" />
+                    <ExitCodeBadge
+                      code={run.exitCode}
+                      size="sm"
+                      testsPassed={run.testsPassed}
+                      testsFailed={run.testsFailed}
+                    />
                   </td>
                   <td
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 cursor-pointer"
+                    className="px-6 py-4 whitespace-nowrap text-sm cursor-pointer"
                     onClick={() => navigate(`/runs/${run.runId}`)}
                   >
-                    {run.testsPassed} passed / {run.testsFailed} failed
+                    {run.testsPassed === 0 && run.testsFailed === 0 ? (
+                      <span className="text-yellow-600 font-medium">No tests found</span>
+                    ) : (
+                      <span className="text-gray-600">
+                        {run.testsPassed} passed / {run.testsFailed} failed
+                      </span>
+                    )}
                   </td>
                   <td
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 cursor-pointer"
@@ -284,6 +310,44 @@ function RunsPage() {
           </table>
           </div>
         </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={cancelDelete}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                    <AlertTriangle className="text-red-600" size={24} />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Test Run</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Are you sure you want to delete this test run? This action cannot be undone.
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={cancelDelete}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={confirmDelete}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

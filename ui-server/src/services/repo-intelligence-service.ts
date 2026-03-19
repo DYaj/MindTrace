@@ -2,7 +2,7 @@ import { join } from 'path';
 import { readFile } from 'fs/promises';
 import type { JobResult } from '@breakline/ui-types';
 import { JobService } from './job-service.js';
-import { getRepoRoot } from '../utils/repo-root.js';
+import { getTargetRepoRoot } from '../utils/target-repo-root.js';
 
 // Direct imports from @mindtrace/repo-intelligence-mcp
 import { generateContractBundle } from '@mindtrace/repo-intelligence-mcp/dist/tools/generateContractBundle.js';
@@ -20,20 +20,18 @@ import { buildPageCache } from '@mindtrace/repo-intelligence-mcp/dist/tools/buil
  * Cache build is contract-derived: loads existing contract files and builds cache from them.
  */
 export class RepoIntelligenceService {
-  private static getRepoRoot(): string {
-    return getRepoRoot();
-  }
-
   /**
    * Generate contract bundle
    *
    * Spawns contract generation as async job.
    * Uses: generateContractBundle({ repoRoot, mode: 'best_effort' })
+   *
+   * NOTE: Generates contract for the target repository
    */
   static async generateContract(jobId: string): Promise<void> {
     JobService.startJob(jobId);
 
-    const repoRoot = this.getRepoRoot();
+    const repoRoot = getTargetRepoRoot();
 
     try {
       // Call producer function directly (stable API)
@@ -65,11 +63,13 @@ export class RepoIntelligenceService {
    * Loads existing contract from disk, then builds cache from contract.
    *
    * CRITICAL: Contract must exist first. This action will fail if contract is missing.
+   *
+   * NOTE: Builds cache for the target repository
    */
   static async buildCache(jobId: string): Promise<void> {
     JobService.startJob(jobId);
 
-    const repoRoot = this.getRepoRoot();
+    const repoRoot = getTargetRepoRoot();
 
     try {
       // Step 1: Determine contract directory location

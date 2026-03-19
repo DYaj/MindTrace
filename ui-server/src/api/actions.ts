@@ -3,9 +3,10 @@ import type { ApiResponse, JobResponse, RunTestsRequest } from '@breakline/ui-ty
 import { JobService } from '../services/job-service.js';
 import { CliService } from '../services/cli-service.js';
 import { RepoIntelligenceService } from '../services/repo-intelligence-service.js';
+import { CompatibilityService } from '../services/compatibility-service.js';
 import { rmSync, existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { getRepoRoot } from '../utils/repo-root.js';
+import { getTargetRepoRoot } from '../utils/target-repo-root.js';
 
 const actionsRoutes: FastifyPluginAsync = async (server) => {
   /**
@@ -40,6 +41,31 @@ const actionsRoutes: FastifyPluginAsync = async (server) => {
       return reply.code(500).send({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to start test run'
+      });
+    }
+  });
+
+  /**
+   * GET /api/actions/check-compatibility
+   * Check if repository is compatible with Breakline
+   *
+   * Returns compatibility status and details.
+   */
+  server.get<{
+    Reply: ApiResponse<any>;
+  }>('/check-compatibility', async (request, reply) => {
+    try {
+      const result = CompatibilityService.checkCompatibility();
+
+      return reply.send({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      server.log.error(error);
+      return reply.code(500).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to check compatibility'
       });
     }
   });
@@ -126,9 +152,9 @@ const actionsRoutes: FastifyPluginAsync = async (server) => {
     Reply: ApiResponse<{ cleared: boolean }>;
   }>('/clear-all', async (request, reply) => {
     try {
-      const repoRoot = getRepoRoot();
+      const repoRoot = getTargetRepoRoot();
 
-      // Clear contract
+      // Clear contract (from target repo)
       const contractPath = join(repoRoot, '.mcp-contract');
       if (existsSync(contractPath)) {
         rmSync(contractPath, { recursive: true, force: true });

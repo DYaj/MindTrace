@@ -4,8 +4,25 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useContract } from '../hooks/useContract';
 import { FileText, CheckCircle, XCircle, AlertTriangle, Play, FileCode, Shield, ArrowRight } from 'lucide-react';
 import { JobStatusCard } from '../components/JobStatusCard';
+import { CompatibilityCheckModal } from '../components/CompatibilityCheckModal';
 import InfoTooltip from '../components/InfoTooltip';
 import type { JobStatus } from '@breakline/ui-types';
+
+interface CompatibilityResult {
+  compatible: boolean;
+  level: 'full' | 'partial' | 'unsupported';
+  checks: {
+    playwrightConfig: boolean;
+    testFiles: boolean;
+    pagePatterns: boolean;
+  };
+  details: {
+    configFile?: string;
+    testFileCount: number;
+    pageCount: number;
+    message: string;
+  };
+}
 
 const STORAGE_KEY = 'breakline:contract:currentJobId';
 const TIMESTAMP_KEY = 'breakline:contract:currentJobId:timestamp';
@@ -16,6 +33,11 @@ export function ContractPage() {
   const { data: contract, isLoading, error, refetch } = useContract();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Compatibility check modal state
+  const [showCompatibilityModal, setShowCompatibilityModal] = useState(false);
+  const [compatibilityResult, setCompatibilityResult] = useState<CompatibilityResult | null>(null);
+  const [isCheckingCompatibility, setIsCheckingCompatibility] = useState(false);
 
   // Generate contract job state (persisted in sessionStorage, with expiry check)
   const [currentJobId, setCurrentJobId] = useState<string | null>(() => {
@@ -45,7 +67,64 @@ export function ContractPage() {
     }
   }, [currentJobId]);
 
-  const handleGenerateContract = async () => {
+  const handleCheckCompatibility = async () => {
+    console.log('Starting compatibility check...');
+    setShowCompatibilityModal(true);
+    setIsCheckingCompatibility(true);
+    setCompatibilityResult(null);
+
+    try {
+      console.log('Fetching from:', 'http://localhost:3001/api/actions/check-compatibility');
+      const response = await fetch('http://localhost:3001/api/actions/check-compatibility');
+      console.log('Response status:', response.status);
+
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (data.success) {
+        setCompatibilityResult(data.data);
+      } else {
+        console.error('API returned error:', data.error);
+        setCompatibilityResult({
+          compatible: false,
+          level: 'unsupported',
+          checks: {
+            playwrightConfig: false,
+            testFiles: false,
+            pagePatterns: false
+          },
+          details: {
+            testFileCount: 0,
+            pageCount: 0,
+            message: data.error || 'Failed to check repository compatibility. Please try again.'
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to check compatibility:', err);
+      // Show error in modal
+      setCompatibilityResult({
+        compatible: false,
+        level: 'unsupported',
+        checks: {
+          playwrightConfig: false,
+          testFiles: false,
+          pagePatterns: false
+        },
+        details: {
+          testFileCount: 0,
+          pageCount: 0,
+          message: `Network error: ${err instanceof Error ? err.message : 'Server not responding'}. Make sure ui-server is running.`
+        }
+      });
+    } finally {
+      setIsCheckingCompatibility(false);
+    }
+  };
+
+  const handleProceedWithGeneration = async () => {
+    setShowCompatibilityModal(false);
+
     try {
       const response = await fetch('http://localhost:3001/api/actions/generate-contract', {
         method: 'POST',
@@ -140,12 +219,21 @@ export function ContractPage() {
           {/* Generate Contract Button */}
           <button
             data-testid="contract-button-generate"
-            onClick={handleGenerateContract}
-            disabled={!!currentJobId}
+            onClick={handleCheckCompatibility}
+            disabled={!!currentJobId || isCheckingCompatibility}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <Play className="mr-2" size={16} />
-            Generate Contract
+            {isCheckingCompatibility ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                Checking Compatibility...
+              </>
+            ) : (
+              <>
+                <Play className="mr-2" size={16} />
+                Generate Contract
+              </>
+            )}
           </button>
 
           {/* Job Status */}
@@ -185,6 +273,15 @@ export function ContractPage() {
             </div>
           )}
         </div>
+
+        {/* Compatibility Check Modal */}
+        <CompatibilityCheckModal
+          isOpen={showCompatibilityModal}
+          onClose={() => setShowCompatibilityModal(false)}
+          onProceed={handleProceedWithGeneration}
+          result={compatibilityResult}
+          isLoading={isCheckingCompatibility}
+        />
       </div>
     );
   }
@@ -222,16 +319,24 @@ export function ContractPage() {
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-green-900 mb-2">Contract Generated Successfully</h3>
               <p className="text-sm text-green-800 mb-4">
-                Your contract has been generated. Verify that the Contract Integrity Gate now passes.
+                Your contract has been generated. Next step: build the cache.
               </p>
-              <Link
-                to="/integrity"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-              >
-                <Shield size={16} />
-                Check Integrity Gates
-                <ArrowRight size={16} />
-              </Link>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/cache"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                >
+                  Build Cache
+                  <ArrowRight size={16} />
+                </Link>
+                <Link
+                  to="/integrity"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-green-600 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
+                >
+                  <Shield size={16} />
+                  Check Integrity
+                </Link>
+              </div>
             </div>
             <button
               onClick={() => setShowSuccessMessage(false)}
@@ -328,12 +433,12 @@ export function ContractPage() {
                     key={file.name}
                     data-testid={`contract-file-item-${file.name}`}
                     onClick={() => setSelectedFile(file.name)}
-                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                      selectedFile === file.name ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                    className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-l-4 ${
+                      selectedFile === file.name ? 'bg-blue-50 border-blue-600' : 'border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <FileText size={16} className={selectedFile === file.name ? 'text-blue-600' : 'text-gray-400'} />
+                      <FileText size={16} className={selectedFile === file.name ? 'text-blue-900' : 'text-blue-600'} />
                       <span className={`text-sm font-medium ${
                         selectedFile === file.name ? 'text-blue-900' : 'text-gray-900'
                       }`}>
@@ -373,6 +478,15 @@ export function ContractPage() {
           </div>
         </div>
       )}
+
+      {/* Compatibility Check Modal */}
+      <CompatibilityCheckModal
+        isOpen={showCompatibilityModal}
+        onClose={() => setShowCompatibilityModal(false)}
+        onProceed={handleProceedWithGeneration}
+        result={compatibilityResult}
+        isLoading={isCheckingCompatibility}
+      />
     </div>
   );
 }

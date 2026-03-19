@@ -55,7 +55,7 @@ export function ArtifactGroup({ title, description, artifacts, category, onArtif
               key={index}
               data-testid={`artifact-item-${artifact.name}`}
               onClick={() => onArtifactClick(artifact.path, artifact.name, artifact.type)}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-50 transition-colors text-left"
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <FileText size={16} className="text-gray-400 flex-shrink-0" />
