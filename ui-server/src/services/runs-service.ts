@@ -2,7 +2,7 @@ import { readFileSync, statSync, readdirSync, existsSync, rmSync, writeFileSync 
 import { join } from 'path';
 import type { RunListItem, AuditEvent, RunDetail, ArtifactListItem } from '@breakline/ui-types';
 import { PathValidator } from '../utils/paths.js';
-import { getRepoRoot } from '../utils/repo-root.js';
+import { getTargetRepoRoot } from '../utils/target-repo-root.js';
 
 /**
  * Runs data service
@@ -313,7 +313,7 @@ export class RunsService {
     try {
       PathValidator.validateRunId(runId);
       const runPath = PathValidator.getRunPath(runId);
-      const historyPath = join(getRepoRoot(), 'history', 'run-index.jsonl');
+      const historyPath = join(getTargetRepoRoot(), 'history', 'run-index.jsonl');
 
       // Check if run exists
       if (!existsSync(runPath)) {

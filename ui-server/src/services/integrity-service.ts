@@ -9,7 +9,7 @@ import {
   type CacheMissing,
   type CacheVersionIncompatible
 } from '@mindtrace/integrity-gates';
-import { getRepoRoot } from '../utils/repo-root.js';
+import { getTargetRepoRoot } from '../utils/target-repo-root.js';
 
 /**
  * Integrity gates service
@@ -21,18 +21,16 @@ import { getRepoRoot } from '../utils/repo-root.js';
  * AUTHORITATIVE SOURCE: @mindtrace/integrity-gates package
  */
 export class IntegrityService {
-  private static getRepoRoot(): string {
-    return getRepoRoot();
-  }
-
   /**
    * Get integrity status from all gates
    *
    * DELEGATES to @mindtrace/integrity-gates for all checks.
    * Maps results to UI types only.
+   *
+   * NOTE: Checks integrity of target repository
    */
   static async getIntegrityStatus(): Promise<IntegrityStatus> {
-    const repoRoot = this.getRepoRoot();
+    const repoRoot = getTargetRepoRoot();
 
     // Step 1: Verify contract integrity
     const contractResult: ContractIntegrityResult = await verifyContractIntegrity(

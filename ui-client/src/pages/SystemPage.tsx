@@ -590,7 +590,7 @@ function SystemPage() {
                 {recentRuns.map((run) => (
                   <tr
                     key={run.runId}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className="hover:bg-blue-50 cursor-pointer transition-colors"
                     onClick={() => window.location.href = `/runs/${run.runId}`}
                   >
                     <td className="px-4 py-3">

@@ -2,7 +2,8 @@ import { spawn } from 'child_process';
 import { join } from 'path';
 import type { JobResult } from '@breakline/ui-types';
 import { JobService } from './job-service.js';
-import { getRepoRoot } from '../utils/repo-root.js';
+import { getBreaklineRoot } from '../utils/breakline-root.js';
+import { getTargetRepoRoot } from '../utils/target-repo-root.js';
 
 /**
  * CLI execution service
@@ -14,14 +15,15 @@ import { getRepoRoot } from '../utils/repo-root.js';
  * - exitCode (authoritative)
  * - runId from artifacts (authoritative)
  * - stdout/stderr (supplemental diagnostics only)
+ *
+ * ARCHITECTURE:
+ * - Runtime CLI path: resolved from BreakLine installation root
+ * - Working directory: set to target repository root
  */
 export class CliService {
-  private static getRepoRoot(): string {
-    return getRepoRoot();
-  }
-
   private static getRuntimeCli(): string {
-    return join(this.getRepoRoot(), 'mindtrace-ai-runtime/dist/cli.js');
+    const breaklineRoot = getBreaklineRoot();
+    return join(breaklineRoot, 'mindtrace-ai-runtime/dist/cli.js');
   }
 
   /**
@@ -31,21 +33,25 @@ export class CliService {
    *
    * DEFENSIVE: Captures stdout/stderr but treats them as supplemental.
    * Authoritative result comes from exit code + artifacts.
+   *
+   * NOTE: Runs CLI from BreakLine installation, but executes in target repo context
    */
   static async runTests(jobId: string): Promise<void> {
     return new Promise((resolve) => {
       // Mark job as running
       JobService.startJob(jobId);
 
-      const repoRoot = this.getRepoRoot();
+      const targetRepoRoot = getTargetRepoRoot();
       const runtimeCli = this.getRuntimeCli();
 
       let stdout = '';
       let stderr = '';
 
       // Spawn CLI process
+      // - CLI executable from BreakLine installation
+      // - Working directory set to target repo
       const child = spawn('node', [runtimeCli, 'run'], {
-        cwd: repoRoot,
+        cwd: targetRepoRoot,
         env: process.env
       });
 

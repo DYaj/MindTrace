@@ -1,16 +1,24 @@
 import { resolve, normalize, relative, sep } from 'path';
 import { existsSync } from 'fs';
-import { getRepoRoot } from './repo-root.js';
+import { getTargetRepoRoot } from './target-repo-root.js';
 
-const REPO_ROOT = getRepoRoot();
+/**
+ * Get target repo root (lazy evaluation to avoid circular deps)
+ */
+function getRepoRoot(): string {
+  return getTargetRepoRoot();
+}
 
 /**
  * Path validation for UI server
  *
  * SAFETY RULES:
- * 1. All paths must stay within repo root
+ * 1. All paths must stay within target repo root
  * 2. No parent directory traversal (..)
  * 3. Artifact paths must be under approved roots
+ *
+ * NOTE: Uses target repo root (where contracts/cache/runs live),
+ * not BreakLine installation root
  */
 export class PathValidator {
   /**
@@ -18,6 +26,7 @@ export class PathValidator {
    * Throws if path escapes repo boundary
    */
   static validateRepoPath(relativePath: string): string {
+    const REPO_ROOT = getRepoRoot();
     const normalized = normalize(relativePath);
     const absolute = resolve(REPO_ROOT, normalized);
 
