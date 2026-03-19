@@ -1,6 +1,7 @@
 import { useSystemStatus } from '../hooks/useSystemStatus';
 import { useRuns } from '../hooks/useRuns';
 import { useIntegrity } from '../hooks/useIntegrity';
+import { useState } from 'react';
 import {
   CheckCircle,
   XCircle,
@@ -12,11 +13,52 @@ import {
   AlertTriangle,
   Shield,
   Clock,
-  TrendingUp
+  TrendingUp,
+  HelpCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import ExitCodeBadge from '../components/ExitCodeBadge';
+
+/**
+ * Status badge with integrated tooltip
+ */
+interface StatusBadgeProps {
+  icon: React.ElementType;
+  label: string;
+  tooltipContent: string;
+  bgColor: string;
+  textColor: string;
+}
+
+function StatusBadge({ icon: Icon, label, tooltipContent, bgColor, textColor }: StatusBadgeProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <div className="relative inline-flex items-center">
+      <button
+        type="button"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={() => setIsVisible(!isVisible)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1 ${bgColor} ${textColor} rounded-full text-sm font-medium cursor-help transition-opacity hover:opacity-90`}
+      >
+        <Icon size={16} />
+        {label}
+      </button>
+
+      {isVisible && (
+        <div className="absolute left-0 top-full mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg shadow-lg p-4 z-50">
+          <div className="text-gray-200 leading-relaxed">
+            {tooltipContent}
+          </div>
+          {/* Arrow */}
+          <div className="absolute -top-2 left-4 w-4 h-4 bg-gray-900 transform rotate-45"></div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function SystemPage() {
   const { data: system, isLoading: systemLoading } = useSystemStatus();
@@ -60,8 +102,19 @@ function SystemPage() {
     integrity.driftCheck.drift === true
   );
 
+  // Check if system has been used (has run history)
+  const hasRunHistory = runs && runs.length > 0;
+
+  // Detect "not created" state - no data exists yet
+  const isNotCreated = !hasRunHistory && (contractMissing || cacheMissing);
+
+  // Only show critical issues if system has been used before
+  // On initial/empty state, show "Getting Started" instead of critical warnings
+  const showCriticalCallouts = hasRunHistory && (contractMissing || cacheMissing || runtimeMissing);
+
   const isSystemReady = !contractMissing && !cacheMissing && !runtimeMissing && !hasIntegrityIssues;
-  const hasCriticalIssues = contractMissing || cacheMissing || runtimeMissing;
+  const hasCriticalIssues = showCriticalCallouts;
+  const hasWarnings = !isSystemReady && !hasCriticalIssues && !isNotCreated;
 
   const recentRuns = runs?.slice(0, 5) || [];
 
@@ -98,48 +151,80 @@ function SystemPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6" data-testid="system-page">
-      {/* Header */}
+      {/* Header with Status Badge */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="system-page-title">System Status</h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-1">Monitor system readiness and health at a glance</p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="system-page-title">System Status</h1>
+          {isSystemReady ? (
+            <StatusBadge
+              icon={CheckCircle}
+              label="System Ready"
+              tooltipContent="All components are operational and integrity checks have passed. Your system is ready to run tests."
+              bgColor="bg-green-100"
+              textColor="text-green-800"
+            />
+          ) : hasCriticalIssues ? (
+            <StatusBadge
+              icon={XCircle}
+              label="Critical Issues"
+              tooltipContent="Required components are missing. Cannot run tests until resolved."
+              bgColor="bg-red-100"
+              textColor="text-red-800"
+            />
+          ) : hasWarnings ? (
+            <StatusBadge
+              icon={AlertTriangle}
+              label="System Warnings"
+              tooltipContent="System is partially operational. Some components may need attention. Check integrity for details."
+              bgColor="bg-yellow-100"
+              textColor="text-yellow-800"
+            />
+          ) : isNotCreated ? (
+            <StatusBadge
+              icon={HelpCircle}
+              label="Setup Required"
+              tooltipContent="Get started by generating your contract and building your cache. These are the foundational components needed to run tests."
+              bgColor="bg-blue-100"
+              textColor="text-blue-800"
+            />
+          ) : null}
+        </div>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">
+          {isSystemReady
+            ? 'All components operational. Ready to run tests.'
+            : 'Monitor system readiness and health at a glance'}
+        </p>
       </div>
 
-      {/* CURRENT STATE SUMMARY */}
-      <div className={`rounded-lg border-2 p-6 ${
-        isSystemReady ? 'bg-green-50 border-green-200' :
-        hasCriticalIssues ? 'bg-red-50 border-red-200' :
-        'bg-yellow-50 border-yellow-200'
-      }`} data-testid="system-current-state">
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0">
-            {isSystemReady ? (
-              <CheckCircle className="text-green-600" size={36} />
-            ) : hasCriticalIssues ? (
-              <XCircle className="text-red-600" size={36} />
-            ) : (
-              <AlertTriangle className="text-yellow-600" size={36} />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className={`text-xl font-semibold mb-2 ${
-              isSystemReady ? 'text-green-900' :
-              hasCriticalIssues ? 'text-red-900' :
-              'text-yellow-900'
-            }`}>
-              {isSystemReady ? 'System Ready' :
-               hasCriticalIssues ? 'Critical Issues Detected' :
-               'System Warnings'}
-            </h2>
-            <p className={`text-sm mb-3 ${
-              isSystemReady ? 'text-green-800' :
-              hasCriticalIssues ? 'text-red-800' :
-              'text-yellow-800'
-            }`}>
-              {isSystemReady ? 'All components operational. Ready to run tests.' :
-               hasCriticalIssues ? 'Required components are missing. Cannot run tests until resolved.' :
-               'System is partially operational. Check integrity for details.'}
-            </p>
-            {!isSystemReady && (
+      {/* ISSUES BANNER - Only show when there are actual warnings or critical issues (not for setup required) */}
+      {(hasCriticalIssues || hasWarnings) && (
+        <div className={`rounded-lg border-2 p-6 ${
+          hasCriticalIssues ? 'bg-red-50 border-red-200' :
+          'bg-yellow-50 border-yellow-200'
+        }`} data-testid="system-current-state">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              {hasCriticalIssues ? (
+                <XCircle className="text-red-600" size={36} />
+              ) : (
+                <AlertTriangle className="text-yellow-600" size={36} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className={`text-xl font-semibold mb-2 ${
+                hasCriticalIssues ? 'text-red-900' :
+                'text-yellow-900'
+              }`}>
+                {hasCriticalIssues ? 'Critical Issues Detected' :
+                 'System Warnings'}
+              </h2>
+              <p className={`text-sm mb-3 ${
+                hasCriticalIssues ? 'text-red-800' :
+                'text-yellow-800'
+              }`}>
+                {hasCriticalIssues ? 'Required components are missing. Cannot run tests until resolved.' :
+                 'System is partially operational. Some components may need attention.'}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {contractMissing && (
                   <Link
@@ -169,13 +254,13 @@ function SystemPage() {
                   </Link>
                 )}
               </div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* CRITICAL CALLOUTS */}
-      {contractMissing && (
+      {/* CRITICAL CALLOUTS - Only show if system has been used before */}
+      {showCriticalCallouts && contractMissing && (
         <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6" data-testid="system-contract-missing-callout">
           <div className="flex items-start gap-4">
             <AlertTriangle className="text-red-600 flex-shrink-0" size={28} />
@@ -196,7 +281,7 @@ function SystemPage() {
         </div>
       )}
 
-      {!contractMissing && cacheMissing && (
+      {showCriticalCallouts && !contractMissing && cacheMissing && (
         <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6" data-testid="system-cache-missing-callout">
           <div className="flex items-start gap-4">
             <AlertTriangle className="text-red-600 flex-shrink-0" size={28} />
@@ -238,8 +323,8 @@ function SystemPage() {
         </div>
       )}
 
-      {/* GETTING STARTED (only if contract missing and no callout shown) */}
-      {contractMissing && (
+      {/* GETTING STARTED - Only show on initial/empty state (no run history) */}
+      {!hasRunHistory && contractMissing && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6" data-testid="system-getting-started">
           <h3 className="font-semibold text-blue-900 mb-2">Getting Started</h3>
           <p className="text-sm text-blue-800 mb-3">Follow these steps to set up your test automation:</p>
@@ -274,6 +359,53 @@ function SystemPage() {
           </div>
         </div>
       )}
+
+      {/* QUICK ACTIONS */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link
+            to="/runs"
+            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
+          >
+            <Activity className="text-blue-600" size={24} />
+            <div>
+              <p className="font-medium text-gray-900">Test Runs</p>
+              <p className="text-xs text-gray-500">View execution history</p>
+            </div>
+          </Link>
+          <Link
+            to="/contract"
+            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
+          >
+            <FileCode className="text-purple-600" size={24} />
+            <div>
+              <p className="font-medium text-gray-900">Contract</p>
+              <p className="text-xs text-gray-500">Automation specification</p>
+            </div>
+          </Link>
+          <Link
+            to="/cache"
+            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
+          >
+            <Database className="text-green-600" size={24} />
+            <div>
+              <p className="font-medium text-gray-900">Cache</p>
+              <p className="text-xs text-gray-500">Page detection</p>
+            </div>
+          </Link>
+          <Link
+            to="/integrity"
+            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
+          >
+            <Shield className="text-orange-600" size={24} />
+            <div>
+              <p className="font-medium text-gray-900">Integrity</p>
+              <p className="text-xs text-gray-500">Safety gates</p>
+            </div>
+          </Link>
+        </div>
+      </div>
 
       {/* STATUS CARDS WITH LINKS */}
       <div>
@@ -396,53 +528,6 @@ function SystemPage() {
           </div>
         </div>
       )}
-
-      {/* QUICK ACTIONS */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link
-            to="/runs"
-            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
-          >
-            <Activity className="text-blue-600" size={24} />
-            <div>
-              <p className="font-medium text-gray-900">Test Runs</p>
-              <p className="text-xs text-gray-500">View execution history</p>
-            </div>
-          </Link>
-          <Link
-            to="/contract"
-            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
-          >
-            <FileCode className="text-purple-600" size={24} />
-            <div>
-              <p className="font-medium text-gray-900">Contract</p>
-              <p className="text-xs text-gray-500">Automation specification</p>
-            </div>
-          </Link>
-          <Link
-            to="/cache"
-            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
-          >
-            <Database className="text-green-600" size={24} />
-            <div>
-              <p className="font-medium text-gray-900">Cache</p>
-              <p className="text-xs text-gray-500">Page detection</p>
-            </div>
-          </Link>
-          <Link
-            to="/integrity"
-            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
-          >
-            <Shield className="text-orange-600" size={24} />
-            <div>
-              <p className="font-medium text-gray-900">Integrity</p>
-              <p className="text-xs text-gray-500">Safety gates</p>
-            </div>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }

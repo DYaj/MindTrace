@@ -85,8 +85,52 @@ export function verifyCacheIntegrity(
     };
   }
 
+  // ============================================================================
+  // Step 3.5: Extract contract binding
+  // ============================================================================
+  // ARCHITECTURE: Read compatibly - prefer canonical, fallback to legacy
+  // See: docs/standards/cache-metadata-schema.md
+  //
+  // CANONICAL FIELD: contractSha256
+  // LEGACY FIELDS (compatibility only): contractBinding, contract_hash
+  //
+  // TODO: Add logging/warning when legacy fields are used
+  // TODO: Support strict mode to reject legacy fields
+  // ============================================================================
+  const contractBinding =
+    cacheMeta.contractSha256 ||           // ← CANONICAL (preferred)
+    cacheMeta.contractBinding ||          // ← LEGACY (compatibility fallback)
+    cacheMeta.contract_hash;              // ← LEGACY (compatibility fallback)
+
+  if (!contractBinding) {
+    return {
+      status: 'invalid',
+      reason: {
+        type: 'drift',
+        driftType: 'binding_missing',
+        expectedHash: verifiedContract.fingerprint,
+        actualHash: '<missing>',
+        code: 'CACHE_BINDING_MISSING'
+      },
+      required: options.cacheRequiredForPath,
+      recommendedAction: determineAction(options),
+      failureExitCode: shouldFailHard(options) ? 3 : undefined
+    };
+  }
+
+  // ============================================================================
+  // Step 3.6: Determine page count
+  // ============================================================================
+  // CANONICAL FIELD: pages_count
+  // LEGACY FALLBACK: pages.length (derived)
+  // ============================================================================
+  const pageCount =
+    cacheMeta.pages_count ||              // ← CANONICAL (preferred)
+    cacheMeta.pages?.length ||            // ← LEGACY (compatibility fallback)
+    0;
+
   // Step 4: Detect drift (pure logic)
-  const driftResult = detectDrift(verifiedContract, cacheMeta.contractSha256);
+  const driftResult = detectDrift(verifiedContract, contractBinding);
 
   if (driftResult.drift) {
     // Cache is IMMEDIATELY INVALID (hard invariant)
@@ -108,9 +152,9 @@ export function verifyCacheIntegrity(
   // Step 5: Success - cache is valid
   const cache: VerifiedCacheContext = {
     cacheDir,
-    contractBinding: cacheMeta.contractSha256,
+    contractBinding,
     cacheVersion: cacheMeta.cacheVersion,
-    pageCount: cacheMeta.pages?.length || 0,
+    pageCount,
     mode: options.mode,
     cacheRequiredForPath: options.cacheRequiredForPath
   };

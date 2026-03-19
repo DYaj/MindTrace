@@ -1,4 +1,5 @@
 import { useIntegrity } from '../hooks/useIntegrity';
+import { useState } from 'react';
 import {
   CheckCircle,
   XCircle,
@@ -13,6 +14,46 @@ import { Link } from 'react-router-dom';
 import type { GateResult, DriftResult } from '@breakline/ui-types';
 
 /**
+ * Status badge with integrated tooltip
+ */
+interface StatusBadgeProps {
+  icon: React.ElementType;
+  label: string;
+  tooltipContent: string;
+  bgColor: string;
+  textColor: string;
+}
+
+function StatusBadge({ icon: Icon, label, tooltipContent, bgColor, textColor }: StatusBadgeProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <div className="relative inline-flex items-center">
+      <button
+        type="button"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={() => setIsVisible(!isVisible)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1 ${bgColor} ${textColor} rounded-full text-sm font-medium cursor-help transition-opacity hover:opacity-90`}
+      >
+        <Icon size={16} />
+        {label}
+      </button>
+
+      {isVisible && (
+        <div className="absolute left-0 top-full mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg shadow-lg p-4 z-50">
+          <div className="text-gray-200 leading-relaxed">
+            {tooltipContent}
+          </div>
+          {/* Arrow */}
+          <div className="absolute -top-2 left-4 w-4 h-4 bg-gray-900 transform rotate-45"></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * Get plain-English explanation for contract gate state
  */
 function getContractExplanation(gate: GateResult): { meaning: string; action: string; actionLink?: string } {
@@ -21,6 +62,20 @@ function getContractExplanation(gate: GateResult): { meaning: string; action: st
       meaning: 'Your automation contract is properly structured and ready to use. All required fields are present and valid.',
       action: 'No action needed. You can proceed to build your cache.',
       actionLink: '/cache'
+    };
+  }
+
+  // Check if contract simply doesn't exist yet
+  const reason = gate.reason || '';
+  const isNotCreated = reason.toLowerCase().includes('missing') ||
+                       reason.toLowerCase().includes('not found') ||
+                       reason.toLowerCase().includes('not generated');
+
+  if (isNotCreated) {
+    return {
+      meaning: 'No contract has been generated yet. A contract defines your test automation scope and is required before running tests.',
+      action: 'Generate your first contract to get started. This will scan your repository and create the automation specification.',
+      actionLink: '/contract'
     };
   }
 
@@ -34,8 +89,15 @@ function getContractExplanation(gate: GateResult): { meaning: string; action: st
 /**
  * Get plain-English explanation for cache gate state
  */
-function getCacheExplanation(gate: GateResult, contractValid: boolean): { meaning: string; action: string; actionLink?: string } {
+function getCacheExplanation(gate: GateResult, contractValid: boolean, contractNotCreated: boolean): { meaning: string; action: string; actionLink?: string } {
   if (!contractValid) {
+    if (contractNotCreated) {
+      return {
+        meaning: 'No cache can be built until a contract exists. The contract defines what pages to cache and is a prerequisite for cache creation.',
+        action: 'Start by generating your contract. Once the contract exists, you can build the cache.',
+        actionLink: '/contract'
+      };
+    }
     return {
       meaning: 'Cache verification requires a valid contract first. Fix the contract before building cache.',
       action: 'Start by ensuring your contract passes validation.',
@@ -51,11 +113,15 @@ function getCacheExplanation(gate: GateResult, contractValid: boolean): { meanin
     };
   }
 
-  // Check reason for specific guidance
+  // Check if it's a warning (non-critical) or failure (critical)
+  const isWarning = gate.status === 'warning';
   const reason = gate.reason || '';
+
   if (reason.includes('missing')) {
     return {
-      meaning: 'No cache has been built yet. Tests need a cache to know which pages to run against.',
+      meaning: isWarning
+        ? 'No cache has been built. Tests can continue without cache, but building one is recommended for better performance.'
+        : 'No cache has been built yet. Tests need a cache to know which pages to run against.',
       action: 'Build your cache by running the cache builder. This scans your application to detect pages.',
       actionLink: '/cache'
     };
@@ -63,7 +129,9 @@ function getCacheExplanation(gate: GateResult, contractValid: boolean): { meanin
 
   if (reason.includes('Drift detected')) {
     return {
-      meaning: 'Your cache was built for an older version of the contract. The contract has changed since the cache was created.',
+      meaning: isWarning
+        ? 'Your cache was built for an older contract version. Tests can still run, but rebuilding is recommended for consistency.'
+        : 'Your cache was built for an older version of the contract. The contract has changed since the cache was created.',
       action: 'Rebuild your cache to synchronize it with the current contract version.',
       actionLink: '/cache'
     };
@@ -71,14 +139,18 @@ function getCacheExplanation(gate: GateResult, contractValid: boolean): { meanin
 
   if (reason.includes('schema')) {
     return {
-      meaning: 'Your cache file structure is corrupted or incompatible with the expected format.',
+      meaning: isWarning
+        ? 'Your cache file structure has issues. Tests can continue without cache, but rebuilding is recommended.'
+        : 'Your cache file structure is corrupted or incompatible with the expected format.',
       action: 'Rebuild your cache from scratch. This will create a fresh cache with the correct structure.',
       actionLink: '/cache'
     };
   }
 
   return {
-    meaning: 'Your cache has validation issues that prevent tests from running safely.',
+    meaning: isWarning
+      ? 'Your cache has validation issues. Tests can still run, but rebuilding the cache is recommended.'
+      : 'Your cache has validation issues that prevent tests from running safely.',
     action: 'Rebuild your cache to resolve the issues.',
     actionLink: '/cache'
   };
@@ -140,18 +212,38 @@ interface EnhancedGateCardProps {
   gateResult: GateResult;
   explanation: { meaning: string; action: string; actionLink?: string };
   testId: string;
+  forceNotCreated?: boolean; // Explicitly mark as "not created" regardless of reason string
 }
 
-function EnhancedGateCard({ title, description, icon: Icon, gateResult, explanation, testId }: EnhancedGateCardProps) {
-  const isValid = gateResult.status === 'valid';
+function EnhancedGateCard({ title, description, icon: Icon, gateResult, explanation, testId, forceNotCreated = false }: EnhancedGateCardProps) {
+  // Detect if this is a "not created yet" state vs actual failure
+  const reason = (gateResult.status !== 'valid' && gateResult.reason) ? gateResult.reason : '';
+  const isNotCreated = forceNotCreated || (gateResult.status === 'invalid' &&
+    (reason.toLowerCase().includes('missing') ||
+     reason.toLowerCase().includes('not found') ||
+     reason.toLowerCase().includes('not generated')));
 
-  const config = isValid ? {
+  const config = gateResult.status === 'valid' ? {
     iconColor: 'text-green-600',
     bgColor: 'bg-green-50',
     borderColor: 'border-green-200',
     label: 'Passed',
     labelBg: 'bg-green-100',
     labelText: 'text-green-800'
+  } : gateResult.status === 'warning' ? {
+    iconColor: 'text-yellow-600',
+    bgColor: 'bg-yellow-50',
+    borderColor: 'border-yellow-200',
+    label: 'Warning',
+    labelBg: 'bg-yellow-100',
+    labelText: 'text-yellow-800'
+  } : isNotCreated ? {
+    iconColor: 'text-gray-600',
+    bgColor: 'bg-gray-50',
+    borderColor: 'border-gray-200',
+    label: 'Not Created',
+    labelBg: 'bg-gray-100',
+    labelText: 'text-gray-800'
   } : {
     iconColor: 'text-red-600',
     bgColor: 'bg-red-50',
@@ -204,13 +296,13 @@ function EnhancedGateCard({ title, description, icon: Icon, gateResult, explanat
         </div>
 
         {/* Technical details (collapsible) */}
-        {((gateResult.status === 'invalid' && gateResult.reason) || gateResult.details) && (
+        {(((gateResult.status === 'invalid' || gateResult.status === 'warning') && gateResult.reason) || gateResult.details) && (
           <details className="mt-4">
             <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-900 font-medium">
               Show technical details
             </summary>
             <div className="mt-2 space-y-2">
-              {gateResult.status === 'invalid' && gateResult.reason && (
+              {(gateResult.status === 'invalid' || gateResult.status === 'warning') && gateResult.reason && (
                 <div>
                   <span className="text-xs text-gray-500 uppercase">Reason:</span>
                   <p className="text-sm text-gray-700 mt-1">{gateResult.reason}</p>
@@ -393,65 +485,85 @@ export function IntegrityPage() {
   const noDrift = integrity.driftCheck.drift === false;
 
   const allValid = contractValid && cacheValid && noDrift;
-  const anyInvalid = integrity.contractGate.status === 'invalid' || integrity.cacheGate.status === 'invalid';
+
+  // Detect "not created" vs actual failures
+  const contractReason = (integrity.contractGate.status !== 'valid' && integrity.contractGate.reason) ? integrity.contractGate.reason : '';
+  const cacheReason = (integrity.cacheGate.status !== 'valid' && integrity.cacheGate.reason) ? integrity.cacheGate.reason : '';
+  const contractNotCreated = integrity.contractGate.status === 'invalid' &&
+    (contractReason.toLowerCase().includes('missing') ||
+     contractReason.toLowerCase().includes('not found') ||
+     contractReason.toLowerCase().includes('not generated'));
+  const cacheNotCreated = integrity.cacheGate.status === 'invalid' &&
+    (cacheReason.toLowerCase().includes('missing') ||
+     cacheReason.toLowerCase().includes('not found') ||
+     contractNotCreated); // Cache is "not created" if contract is "not created"
+
+  // Only count as "invalid" if it's an actual failure (not just "not created")
+  const contractActuallyInvalid = integrity.contractGate.status === 'invalid' && !contractNotCreated;
+  const cacheActuallyInvalid = integrity.cacheGate.status === 'invalid' && !cacheNotCreated;
+  const anyInvalid = contractActuallyInvalid || cacheActuallyInvalid;
+  const anyWarning = integrity.contractGate.status === 'warning' || integrity.cacheGate.status === 'warning';
+  const anyNotCreated = contractNotCreated || cacheNotCreated;
 
   const contractExplanation = getContractExplanation(integrity.contractGate);
-  const cacheExplanation = getCacheExplanation(integrity.cacheGate, contractValid);
+  const cacheExplanation = getCacheExplanation(integrity.cacheGate, contractValid, contractNotCreated);
   const driftExplanation = getDriftExplanation(integrity.driftCheck, contractValid, cacheValid);
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6" data-testid="integrity-page">
-      {/* Header */}
+      {/* Header with Status Badge */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Integrity Gates</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Integrity Gates</h1>
+          {allValid ? (
+            <StatusBadge
+              icon={CheckCircle}
+              label="All Gates Passed"
+              tooltipContent="Contract is valid, cache is properly built and bound to the contract, and no drift has been detected. Your system is ready to run tests."
+              bgColor="bg-green-100"
+              textColor="text-green-800"
+            />
+          ) : anyInvalid ? (
+            <StatusBadge
+              icon={XCircle}
+              label="Critical Failures"
+              tooltipContent="Critical integrity checks have failed. Tests cannot run until these issues are resolved."
+              bgColor="bg-red-100"
+              textColor="text-red-800"
+            />
+          ) : anyWarning ? (
+            <StatusBadge
+              icon={AlertTriangle}
+              label="Warnings Detected"
+              tooltipContent="Non-critical warnings detected. Tests can still run, but review the warnings below."
+              bgColor="bg-yellow-100"
+              textColor="text-yellow-800"
+            />
+          ) : anyNotCreated ? (
+            <StatusBadge
+              icon={HelpCircle}
+              label="Setup Required"
+              tooltipContent="Get started by generating your contract and building your cache. Follow the steps below to set up your test automation."
+              bgColor="bg-blue-100"
+              textColor="text-blue-800"
+            />
+          ) : (
+            <StatusBadge
+              icon={HelpCircle}
+              label="Incomplete"
+              tooltipContent="Integrity verification is incomplete. Ensure contract and cache are properly configured."
+              bgColor="bg-gray-100"
+              textColor="text-gray-800"
+            />
+          )}
+        </div>
         <p className="text-sm sm:text-base text-gray-600 mt-2">
-          Automated safety checks that protect your test runs from invalid or inconsistent state
+          {allValid
+            ? 'Your system is ready to run tests. All integrity checks have passed.'
+            : 'Automated safety checks that protect your test runs from invalid or inconsistent state'}
         </p>
       </div>
 
-      {/* Overall Status Banner */}
-      <div
-        className={`rounded-lg border-2 p-4 sm:p-6 ${
-          allValid ? 'bg-green-50 border-green-200' :
-          anyInvalid ? 'bg-red-50 border-red-200' :
-          'bg-yellow-50 border-yellow-200'
-        }`}
-        data-testid="integrity-overall-status"
-      >
-        <div className="flex items-start gap-3 sm:gap-4">
-          {allValid ? (
-            <CheckCircle className="text-green-600 flex-shrink-0" size={28} />
-          ) : anyInvalid ? (
-            <XCircle className="text-red-600 flex-shrink-0" size={28} />
-          ) : (
-            <HelpCircle className="text-yellow-600 flex-shrink-0" size={28} />
-          )}
-          <div className="flex-1 min-w-0">
-            <h2
-              className={`text-lg sm:text-xl font-semibold ${
-                allValid ? 'text-green-900' :
-                anyInvalid ? 'text-red-900' :
-                'text-yellow-900'
-              }`}
-            >
-              {allValid ? 'All Gates Passed' :
-               anyInvalid ? 'Gate Failures Detected' :
-               'Incomplete Verification'}
-            </h2>
-            <p
-              className={`text-sm sm:text-base mt-1 ${
-                allValid ? 'text-green-800' :
-                anyInvalid ? 'text-red-800' :
-                'text-yellow-800'
-              }`}
-            >
-              {allValid ? 'Your system is ready to run tests. All integrity checks have passed.' :
-               anyInvalid ? 'Some integrity checks have failed. Review and fix the issues below before running tests.' :
-               'Integrity verification is incomplete. Ensure contract and cache are properly configured.'}
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Visual Flow Diagram */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 sm:p-6">
@@ -486,6 +598,7 @@ export function IntegrityPage() {
           gateResult={integrity.contractGate}
           explanation={contractExplanation}
           testId="contract-gate"
+          forceNotCreated={contractNotCreated}
         />
 
         <EnhancedGateCard
@@ -495,6 +608,7 @@ export function IntegrityPage() {
           gateResult={integrity.cacheGate}
           explanation={cacheExplanation}
           testId="cache-gate"
+          forceNotCreated={cacheNotCreated}
         />
 
         <DriftCard

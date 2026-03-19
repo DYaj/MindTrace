@@ -18,11 +18,17 @@ interface JobStatusCardProps {
  * Polls every 2s until job completes or fails.
  */
 export function JobStatusCard({ jobId, onComplete }: JobStatusCardProps) {
-  const { data: job, isLoading } = useJobStatus(jobId);
+  const { data: job, isLoading, error } = useJobStatus(jobId);
 
   // Call onComplete callback when job finishes
   if (job && (job.status === 'completed' || job.status === 'failed') && onComplete) {
     onComplete(job);
+  }
+
+  // If job not found (stale jobId), silently return null
+  if (error) {
+    console.log('Job not found, likely stale job ID');
+    return null;
   }
 
   if (!jobId || isLoading || !job) {

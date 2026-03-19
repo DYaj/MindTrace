@@ -83,7 +83,14 @@ export class IntegrityService {
     if (result.status === 'valid') {
       return {
         status: 'valid',
-        details: `Fingerprint: ${result.contract.fingerprint.substring(0, 16)}..., Source: ${result.contract.verificationSource}`
+        details: JSON.stringify({
+          fingerprint: result.contract.fingerprint,
+          version: result.contract.version,
+          verificationSource: result.contract.verificationSource,
+          contractDir: result.contract.contractDir,
+          fileCount: result.contract.files.length,
+          files: result.contract.files
+        }, null, 2)
       };
     } else {
       return {
@@ -108,7 +115,14 @@ export class IntegrityService {
       return {
         gate: {
           status: 'valid',
-          details: `Pages: ${result.cache.pageCount}, Binding: ${result.cache.contractBinding.substring(0, 16)}...`
+          details: JSON.stringify({
+            cacheDir: result.cache.cacheDir,
+            contractBinding: result.cache.contractBinding,
+            cacheVersion: result.cache.cacheVersion,
+            pageCount: result.cache.pageCount,
+            mode: result.cache.mode,
+            cacheRequiredForPath: result.cache.cacheRequiredForPath
+          }, null, 2)
         },
         drift: {
           drift: false,
@@ -118,15 +132,37 @@ export class IntegrityService {
       };
     }
 
-    // Invalid cache - narrow type and check if reason is drift
+    // Invalid cache - check if it's critical or just a warning
     const reason = result.reason;
     const isDrift = reason.type === 'drift';
+    const isCritical = result.recommendedAction === 'fail_hard';
+
+    // Build detailed error information
+    let detailsInfo: any = {
+      required: result.required,
+      action: result.recommendedAction,
+      code: reason.type === 'drift' ? reason.code :
+            reason.type === 'missing' ? reason.code :
+            reason.type === 'schema_invalid' ? reason.code :
+            reason.type === 'version_incompatible' ? reason.code : undefined
+    };
+
+    // Add schema errors if available
+    if (reason.type === 'schema_invalid') {
+      detailsInfo.schemaErrors = reason.schemaErrors;
+    }
+
+    // Add version info if available
+    if (reason.type === 'version_incompatible') {
+      detailsInfo.cacheVersion = reason.cacheVersion;
+      detailsInfo.supportedVersions = reason.supportedVersions;
+    }
 
     return {
       gate: {
-        status: 'invalid',
+        status: isCritical ? 'invalid' : 'warning',
         reason: this.formatCacheReason(reason),
-        details: `Required: ${result.required}, Action: ${result.recommendedAction}`
+        details: JSON.stringify(detailsInfo, null, 2)
       },
       drift: isDrift && reason.type === 'drift'
         ? {

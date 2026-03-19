@@ -119,14 +119,41 @@ export async function buildPageCache(
       await fs.writeFile(pagePath, JSON.stringify(page, null, 2));
     }
 
-    // Build canonical meta.json structure (master spec format)
-    // NOTE: Excludes created_at for byte-identical determinism (same repo → identical cache)
+    // ============================================================================
+    // CANONICAL META.JSON - Official BreakLine Cache Metadata Standard
+    // ============================================================================
+    // ARCHITECTURE: Write strictly - emit ONLY canonical field names
+    // See: docs/standards/cache-metadata-schema.md
+    //
+    // REQUIRED FIELDS (exact names, exact casing):
+    //   - schemaVersion (schema evolution)
+    //   - cacheVersion (cache format version)
+    //   - contractSha256 (contract binding)
+    //   - pages_count (explicit count)
+    //
+    // OPTIONAL FIELDS:
+    //   - pages (page summaries)
+    //   - cache_format (internal format identifier)
+    //   - generated_by (provenance)
+    //
+    // DO NOT emit legacy field names (contractBinding, contract_hash, etc.)
+    // ============================================================================
     const meta = {
-      schema_version: "1.0.0",
-      contract_hash: contractSha256, // ✅ CRITICAL: Link cache to contract
+      // Required canonical fields
+      schemaVersion: "1.0.0",
+      cacheVersion: "v1",
+      contractSha256,
       pages_count: pages.length,
+
+      // Optional canonical fields
+      pages: pages.map(p => ({
+        pageId: p.pageId,
+        sourcePath: p.sourcePath,
+        inferredName: p.inferredName,
+        confidence: p.confidence
+      })),
       cache_format: "semantic-v1",
-      generated_by: automationContract.generated_by // Provenance without timestamp
+      generated_by: automationContract.generated_by
     };
 
     // Write CANONICAL meta.json

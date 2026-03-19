@@ -12,9 +12,10 @@ export function useJobStatus(jobId: string | null) {
     queryKey: ['job', jobId],
     queryFn: () => api.getJob(jobId!),
     enabled: !!jobId,
-    refetchInterval: (data) => {
+    retry: false, // Don't retry if job not found
+    refetchInterval: (query) => {
       // Stop polling if job is completed or failed
-      if (data?.status === 'completed' || data?.status === 'failed') {
+      if (query.state.data?.status === 'completed' || query.state.data?.status === 'failed') {
         return false;
       }
       // Poll every 2 seconds for pending/running jobs

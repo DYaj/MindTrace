@@ -102,11 +102,17 @@ export interface CachePage {
 /**
  * Gate result - mapped from @mindtrace/integrity-gates
  * CORRECTED: Simple status field, no artificial codes
+ * Added 'warning' for non-critical issues (e.g. cache drift with continue_without_cache)
  */
 export type GateResult =
   | {
       status: 'valid';
       details?: string;  // Human-readable supplementary info
+    }
+  | {
+      status: 'warning';
+      reason: string;    // Human-readable warning
+      details?: string;  // Additional context
     }
   | {
       status: 'invalid';

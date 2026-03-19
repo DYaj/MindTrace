@@ -7,6 +7,14 @@
  * - Hard authority - All failures are fatal (exit code 3)
  * - Canonical first - .mcp-contract/ takes precedence over .mindtrace/contracts/
  * - Runtime authority - Verification BEFORE cache
+ *
+ * ARCHITECTURE: Read compatibly with surgical fallback (not permissive)
+ * See: docs/standards/contract-bundle-schema.md
+ *
+ * Contract is the IDENTITY LAYER - stricter than cache by design:
+ * - Cache: supporting/derived layer (moderate compatibility)
+ * - Contract: foundational/identity layer (surgical compatibility)
+ * - Compatibility is narrow and controlled, not "anything goes"
  */
 
 import { existsSync, readFileSync } from 'fs';
@@ -19,6 +27,25 @@ import {
 } from './integrity-types.js';
 import { computeContractFingerprint, FINGERPRINT_FILES } from './deterministic.js';
 
+// ============================================================================
+// CANONICAL CONTRACT BUNDLE PATHS - BreakLine Official Standard
+// ============================================================================
+// ARCHITECTURE: Read compatibly - prefer canonical, narrow surgical fallback
+// See: docs/standards/contract-bundle-schema.md
+//
+// CANONICAL DIRECTORY: .mcp-contract/
+// LEGACY DIRECTORY (surgical fallback): .mindtrace/contracts/
+//
+// CANONICAL FINGERPRINT FILE: contract.fingerprint.sha256
+// LEGACY FINGERPRINT FILE (surgical fallback): automation-contract.hash
+//
+// PRINCIPLE: Contract is STRICTER than cache (identity layer vs supporting layer)
+// Compatibility must be surgical, not permissive.
+//
+// TODO: Add logging/warning when legacy directory or fingerprint file is used
+// TODO: Support strict mode to reject legacy variants entirely
+// ============================================================================
+
 /**
  * Canonical contract directory path (.mcp-contract/)
  */
@@ -26,18 +53,20 @@ const CANONICAL_CONTRACT_DIR = '.mcp-contract';
 
 /**
  * Legacy contract directory path (.mindtrace/contracts/)
+ * COMPATIBILITY FALLBACK ONLY - not the standard
  */
 const LEGACY_CONTRACT_DIR = join('.mindtrace', 'contracts');
 
 /**
- * Canonical fingerprint file (automation-contract.hash)
+ * Canonical fingerprint file (contract.fingerprint.sha256)
  */
-const CANONICAL_FINGERPRINT_FILE = 'automation-contract.hash';
+const CANONICAL_FINGERPRINT_FILE = 'contract.fingerprint.sha256';
 
 /**
- * Legacy fingerprint file (contract.fingerprint.sha256)
+ * Legacy fingerprint file (automation-contract.hash)
+ * COMPATIBILITY FALLBACK ONLY - not the standard
  */
-const LEGACY_FINGERPRINT_FILE = 'contract.fingerprint.sha256';
+const LEGACY_FINGERPRINT_FILE = 'automation-contract.hash';
 
 /**
  * Verifies contract integrity with hard authority
@@ -65,7 +94,26 @@ export function verifyContractIntegrity(
   const requiredFiles = options?.requiredFiles ?? [...FINGERPRINT_FILES];  // Use FINGERPRINT_FILES as default
   const skipSchemaValidation = options?.skipSchemaValidation ?? false;
 
-  // Step 1: Resolve contract directory (canonical first, then legacy fallback)
+  // ============================================================================
+  // Step 1: Resolve contract directory (canonical first, surgical fallback)
+  // ============================================================================
+  // ARCHITECTURE: Read compatibly - prefer canonical, narrow surgical fallback
+  // See: docs/standards/contract-bundle-schema.md
+  //
+  // CANONICAL FIRST: .mcp-contract/
+  // LEGACY FALLBACK (surgical): .mindtrace/contracts/ (only if canonical missing)
+  //
+  // CRITICAL: This is STRICTER than cache compatibility
+  // - Contract is the identity/foundation layer
+  // - Cache is the supporting/derived layer
+  // - Compatibility must be surgical, not permissive
+  // - No broad directory searching
+  //
+  // Pattern: existsSync(canonical) ? canonical : existsSync(legacy) ? legacy : REJECT
+  //
+  // TODO: Log warning when legacy directory is used
+  // TODO: Strict mode to reject legacy entirely
+  // ============================================================================
   const canonicalPath = join(repoRoot, CANONICAL_CONTRACT_DIR);
   const legacyPath = join(repoRoot, LEGACY_CONTRACT_DIR);
 
@@ -73,12 +121,13 @@ export function verifyContractIntegrity(
   let isCanonical: boolean;
 
   if (existsSync(canonicalPath)) {
-    contractDir = canonicalPath;
+    contractDir = canonicalPath;                  // ← CANONICAL (preferred)
     isCanonical = true;
   } else if (mode === 'legacy_fallback' && existsSync(legacyPath)) {
-    contractDir = legacyPath;
+    contractDir = legacyPath;                     // ← LEGACY (surgical fallback)
     isCanonical = false;
   } else {
+    // ← REJECT (no broad searching)
     const expectedPaths = mode === 'canonical'
       ? canonicalPath
       : `${canonicalPath} or ${legacyPath}`;
@@ -189,7 +238,19 @@ export function verifyContractIntegrity(
 
   const computedFingerprint = fingerprintResult.fingerprint;
 
+  // ============================================================================
   // Step 5: Verify fingerprint matches stored value
+  // ============================================================================
+  // ARCHITECTURE: Surgical compatibility - fingerprint file matches directory
+  // - Canonical directory → canonical fingerprint file (contract.fingerprint.sha256)
+  // - Legacy directory → legacy fingerprint file (automation-contract.hash)
+  //
+  // This is STRICTER than cache compatibility because contract is the identity layer.
+  // We don't try multiple fallbacks - the fingerprint file must match the directory type.
+  //
+  // TODO: Log warning when legacy directory/fingerprint is used
+  // TODO: Strict mode to reject legacy entirely
+  // ============================================================================
   const fingerprintFile = isCanonical ? CANONICAL_FINGERPRINT_FILE : LEGACY_FINGERPRINT_FILE;
   const fingerprintPath = join(contractDir, fingerprintFile);
 

@@ -5,16 +5,17 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
+    "schemaVersion",
     "generated_at",
     "scan_summary",
     "tool_versions",
     "contract_inputs"
   ],
   "properties": {
-    "schema_version": {
+    "schemaVersion": {
       "type": "string",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "CANONICAL field name (camelCase). See: docs/standards/contract-bundle-schema.md"
     },
     "generated_at": {
       "type": "string",
