@@ -222,7 +222,7 @@ function SystemPage() {
         <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6" data-testid="onboarding-panel">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome to Breakline</h2>
           <p className="text-sm text-gray-700 mb-6">
-            Breakline helps you define automation contracts, build cache, and run governed tests.
+            Set up and run your first governed test in 3 steps.
           </p>
 
           <div className="space-y-4">
