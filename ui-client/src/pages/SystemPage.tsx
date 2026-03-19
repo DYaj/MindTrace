@@ -172,12 +172,57 @@ function SystemPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6" data-testid="system-page">
+      {/* Header with Status Badge */}
+      <div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="system-page-title">System Status</h1>
+          {isSystemReady ? (
+            <StatusBadge
+              icon={CheckCircle}
+              label="System Ready"
+              tooltipContent="All components are operational and integrity checks have passed. Your system is ready to run tests."
+              bgColor="bg-green-100"
+              textColor="text-green-800"
+            />
+          ) : hasCriticalIssues ? (
+            <StatusBadge
+              icon={XCircle}
+              label="Critical Issues"
+              tooltipContent="Required components are missing. Cannot run tests until resolved."
+              bgColor="bg-red-100"
+              textColor="text-red-800"
+            />
+          ) : hasWarnings ? (
+            <StatusBadge
+              icon={AlertTriangle}
+              label="System Warnings"
+              tooltipContent="System is partially operational. Some components may need attention. Check integrity for details."
+              bgColor="bg-yellow-100"
+              textColor="text-yellow-800"
+            />
+          ) : isNotCreated ? (
+            <StatusBadge
+              icon={HelpCircle}
+              label="Setup Required"
+              tooltipContent="Get started by generating your contract and building your cache. These are the foundational components needed to run tests."
+              bgColor="bg-blue-100"
+              textColor="text-blue-800"
+            />
+          ) : null}
+        </div>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">
+          {isSystemReady
+            ? 'All components operational. Ready to run tests.'
+            : 'Monitor system readiness and health at a glance'}
+        </p>
+      </div>
+
       {/* Onboarding Panel */}
       {showOnboarding && (
         <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6" data-testid="onboarding-panel">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome to BreakLine</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome to Breakline</h2>
           <p className="text-sm text-gray-700 mb-6">
-            BreakLine helps you define automation contracts, build cache, and run governed tests.
+            Breakline helps you define automation contracts, build cache, and run governed tests.
           </p>
 
           <div className="space-y-4">
@@ -280,51 +325,6 @@ function SystemPage() {
           </div>
         </div>
       )}
-
-      {/* Header with Status Badge */}
-      <div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="system-page-title">System Status</h1>
-          {isSystemReady ? (
-            <StatusBadge
-              icon={CheckCircle}
-              label="System Ready"
-              tooltipContent="All components are operational and integrity checks have passed. Your system is ready to run tests."
-              bgColor="bg-green-100"
-              textColor="text-green-800"
-            />
-          ) : hasCriticalIssues ? (
-            <StatusBadge
-              icon={XCircle}
-              label="Critical Issues"
-              tooltipContent="Required components are missing. Cannot run tests until resolved."
-              bgColor="bg-red-100"
-              textColor="text-red-800"
-            />
-          ) : hasWarnings ? (
-            <StatusBadge
-              icon={AlertTriangle}
-              label="System Warnings"
-              tooltipContent="System is partially operational. Some components may need attention. Check integrity for details."
-              bgColor="bg-yellow-100"
-              textColor="text-yellow-800"
-            />
-          ) : isNotCreated ? (
-            <StatusBadge
-              icon={HelpCircle}
-              label="Setup Required"
-              tooltipContent="Get started by generating your contract and building your cache. These are the foundational components needed to run tests."
-              bgColor="bg-blue-100"
-              textColor="text-blue-800"
-            />
-          ) : null}
-        </div>
-        <p className="text-sm sm:text-base text-gray-600 mt-1">
-          {isSystemReady
-            ? 'All components operational. Ready to run tests.'
-            : 'Monitor system readiness and health at a glance'}
-        </p>
-      </div>
 
       {/* ISSUES BANNER - Only show when there are actual warnings or critical issues (not for setup required) */}
       {(hasCriticalIssues || hasWarnings) && (
@@ -449,43 +449,6 @@ function SystemPage() {
                 <ArrowRight size={16} />
               </Link>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* GETTING STARTED - Only show on initial/empty state (no run history) */}
-      {!hasRunHistory && contractMissing && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6" data-testid="system-getting-started">
-          <h3 className="font-semibold text-blue-900 mb-2">Getting Started</h3>
-          <p className="text-sm text-blue-800 mb-3">Follow these steps to set up your test automation:</p>
-          <div className="space-y-2">
-            <Link
-              to="/contract"
-              data-testid="system-link-generate-contract"
-              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
-            >
-              <span>1. Generate Contract</span>
-              <ArrowRight size={16} />
-              <span className="text-xs font-normal">(defines what to test)</span>
-            </Link>
-            <Link
-              to="/cache"
-              data-testid="system-link-build-cache"
-              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
-            >
-              <span>2. Build Cache</span>
-              <ArrowRight size={16} />
-              <span className="text-xs font-normal">(required - detects pages)</span>
-            </Link>
-            <Link
-              to="/runs"
-              data-testid="system-link-run-tests"
-              className="flex items-center gap-2 text-sm text-blue-800 hover:text-blue-600 hover:bg-blue-100 font-medium p-3 rounded-md transition-colors"
-            >
-              <span>3. Run Tests</span>
-              <ArrowRight size={16} />
-              <span className="text-xs font-normal">(executes test suite)</span>
-            </Link>
           </div>
         </div>
       )}
