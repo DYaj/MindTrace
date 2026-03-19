@@ -34,7 +34,7 @@ export function RunDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
@@ -45,9 +45,9 @@ export function RunDetailPage() {
 
   if (error || !run) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Failed to load run details: {error instanceof Error ? error.message : 'Unknown error'}</p>
+          <p className="text-sm sm:text-base text-red-800">Failed to load run details: {error instanceof Error ? error.message : 'Unknown error'}</p>
         </div>
       </div>
     );
@@ -68,33 +68,34 @@ export function RunDetailPage() {
   } as const;
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <button
           onClick={() => navigate('/runs')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="flex items-center gap-2 text-sm sm:text-base text-gray-600 hover:text-gray-900 mb-3 sm:mb-4"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
           <span>Back to Runs</span>
         </button>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{run.runName}</h1>
-            <p className="text-gray-600">{new Date(run.timestamp).toLocaleString()}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{run.runName}</h1>
+            <p className="text-sm sm:text-base text-gray-600">{new Date(run.timestamp).toLocaleString()}</p>
           </div>
 
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${exitCodeColors[run.exitCode]}`}>
+          <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${exitCodeColors[run.exitCode]} self-start sm:self-auto`}>
             {exitCodeLabels[run.exitCode]}
           </span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex gap-4">
+      <div className="border-b border-gray-200 mb-4 sm:mb-6" data-testid="run-detail-tabs">
+        <nav className="flex gap-2 sm:gap-4 overflow-x-auto">
           <button
+            data-testid="run-detail-tab-overview"
             onClick={() => setActiveTab('overview')}
             className={`px-4 py-2 border-b-2 font-medium ${
               activeTab === 'overview'
@@ -105,6 +106,7 @@ export function RunDetailPage() {
             Overview
           </button>
           <button
+            data-testid="run-detail-tab-artifacts"
             onClick={() => setActiveTab('artifacts')}
             className={`px-4 py-2 border-b-2 font-medium ${
               activeTab === 'artifacts'
@@ -115,6 +117,7 @@ export function RunDetailPage() {
             Artifacts ({run.artifacts.length})
           </button>
           <button
+            data-testid="run-detail-tab-audit"
             onClick={() => setActiveTab('audit')}
             className={`px-4 py-2 border-b-2 font-medium ${
               activeTab === 'audit'
@@ -129,7 +132,7 @@ export function RunDetailPage() {
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6" data-testid="run-detail-overview">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-lg font-semibold mb-4">Test Results</h2>
             <dl className="space-y-3">
@@ -175,13 +178,13 @@ export function RunDetailPage() {
       )}
 
       {activeTab === 'artifacts' && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="run-detail-artifacts">
           {run.artifacts.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-gray-500" data-testid="run-detail-artifacts-empty">
               No artifacts found for this run
             </div>
           ) : (
-            <table className="w-full">
+            <table className="w-full" data-testid="run-detail-artifacts-table">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -202,6 +205,7 @@ export function RunDetailPage() {
                 {run.artifacts.map((artifact, index) => (
                   <tr
                     key={index}
+                    data-testid={`run-detail-artifact-${artifact.name}`}
                     onClick={() => handleArtifactClick(artifact.path, artifact.name, artifact.type)}
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
@@ -231,15 +235,15 @@ export function RunDetailPage() {
       )}
 
       {activeTab === 'audit' && (
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="bg-white rounded-lg border border-gray-200" data-testid="run-detail-audit">
           {run.auditEvents.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-gray-500" data-testid="run-detail-audit-empty">
               No audit events found for this run
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
               {run.auditEvents.map((event, index) => (
-                <div key={index} className="p-4 hover:bg-gray-50">
+                <div key={index} data-testid={`run-detail-audit-event-${index}`} className="p-4 hover:bg-gray-50">
                   <div className="flex items-start gap-3">
                     <Activity size={16} className="text-gray-400 mt-1" />
                     <div className="flex-1">

@@ -1,17 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useCache } from '../hooks/useCache';
 import { useContract } from '../hooks/useContract';
-import { AlertTriangle, CheckCircle, Database, FileText, Play, Loader } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Database, FileText, Play } from 'lucide-react';
 import { FileViewerModal } from '../components/FileViewerModal';
+import { JobStatusCard } from '../components/JobStatusCard';
+import type { JobStatus } from '@breakline/ui-types';
+
+const STORAGE_KEY = 'breakline:cache:currentJobId';
 
 export function CachePage() {
   const { data: cache, isLoading, error, refetch } = useCache();
   const { data: contract } = useContract();
 
-  // Build cache job state
-  const [buildingJob, setBuildingJob] = useState<string | null>(null);
-  const [jobError, setJobError] = useState<string | null>(null);
-  const [jobSuccess, setJobSuccess] = useState<boolean>(false);
+  // Build cache job state (persisted in sessionStorage)
+  const [currentJobId, setCurrentJobId] = useState<string | null>(() => {
+    return sessionStorage.getItem(STORAGE_KEY);
+  });
+
+  // Persist currentJobId to sessionStorage
+  useEffect(() => {
+    if (currentJobId) {
+      sessionStorage.setItem(STORAGE_KEY, currentJobId);
+    } else {
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+  }, [currentJobId]);
 
   // Cache page viewer state
   const [selectedPage, setSelectedPage] = useState<{ key: string; content: string } | null>(null);
@@ -32,46 +45,7 @@ export function CachePage() {
     }
   };
 
-  // Poll job status
-  useEffect(() => {
-    if (!buildingJob) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`http://localhost:3001/api/jobs/${buildingJob}`);
-        const data = await response.json();
-
-        if (!data.success) {
-          setJobError(data.error || 'Job failed');
-          setBuildingJob(null);
-          return;
-        }
-
-        const job = data.data;
-
-        if (job.status === 'completed') {
-          setBuildingJob(null);
-          setJobError(null);
-          setJobSuccess(true);
-          refetch(); // Refresh cache data
-          // Clear success message after 5 seconds
-          setTimeout(() => setJobSuccess(false), 5000);
-        } else if (job.status === 'failed') {
-          setJobError(job.result?.error || 'Job failed');
-          setBuildingJob(null);
-        }
-      } catch (err) {
-        setJobError(err instanceof Error ? err.message : 'Failed to check job status');
-        setBuildingJob(null);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [buildingJob, refetch]);
-
   const handleBuildCache = async () => {
-    setJobError(null);
-    setJobSuccess(false);
     try {
       const response = await fetch('http://localhost:3001/api/actions/build-cache', {
         method: 'POST',
@@ -81,14 +55,27 @@ export function CachePage() {
 
       const data = await response.json();
 
-      if (!data.success) {
-        setJobError(data.error || 'Failed to start cache build');
-        return;
+      if (data.success && data.data.jobId) {
+        const jobId = data.data.jobId;
+        setCurrentJobId(jobId);
+        sessionStorage.setItem(STORAGE_KEY, jobId);
       }
-
-      setBuildingJob(data.data.jobId);
     } catch (err) {
-      setJobError(err instanceof Error ? err.message : 'Failed to start cache build');
+      console.error('Failed to start cache build:', err);
+    }
+  };
+
+  const handleJobComplete = (job: JobStatus) => {
+    if (job.status === 'completed') {
+      // Refresh cache data after successful build
+      refetch();
+    }
+    // Keep job visible for 30 seconds after completion, then clear
+    if (job.status === 'completed' || job.status === 'failed') {
+      setTimeout(() => {
+        setCurrentJobId(null);
+        sessionStorage.removeItem(STORAGE_KEY);
+      }, 30000);
     }
   };
 
@@ -117,9 +104,9 @@ export function CachePage() {
     const contractMissing = !contract || !contract.exists;
 
     return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Cache</h1>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+      <div className="p-4 sm:p-6" data-testid="cache-page">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6" data-testid="cache-page-title">Cache</h1>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center" data-testid="cache-empty-state">
           <Database className="mx-auto mb-4 text-yellow-600" size={48} />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Cache Found</h2>
           <p className="text-gray-600 mb-2">Build cache to see it here</p>
@@ -136,39 +123,19 @@ export function CachePage() {
 
           {/* Build Cache Button */}
           <button
+            data-testid="cache-button-build"
             onClick={handleBuildCache}
-            disabled={!!buildingJob || contractMissing}
+            disabled={!!currentJobId || contractMissing}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {buildingJob ? (
-              <>
-                <Loader className="animate-spin mr-2" size={16} />
-                Building Cache...
-              </>
-            ) : (
-              <>
-                <Play className="mr-2" size={16} />
-                Build Cache
-              </>
-            )}
+            <Play className="mr-2" size={16} />
+            Build Cache
           </button>
 
-          {buildingJob && (
-            <p className="mt-3 text-sm text-gray-600">
-              This may take a few seconds...
-            </p>
-          )}
-
-          {jobSuccess && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm flex items-center gap-2">
-              <CheckCircle size={16} />
-              <span>Cache built successfully!</span>
-            </div>
-          )}
-
-          {jobError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-              {jobError}
+          {/* Job Status */}
+          {currentJobId && (
+            <div className="mt-4">
+              <JobStatusCard jobId={currentJobId} onComplete={handleJobComplete} />
             </div>
           )}
         </div>
@@ -177,17 +144,17 @@ export function CachePage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6" data-testid="cache-page">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Cache</h1>
-        <p className="text-gray-600 mt-2">Page detection cache</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="cache-page-title">Cache</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Page detection cache</p>
       </div>
 
       {/* Status Cards */}
       <div className="grid grid-cols-2 gap-6 mb-6">
         {/* Cache Info Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6" data-testid="cache-status-card">
           <div className="flex items-center gap-3 mb-4">
             <Database className="text-blue-600" size={24} />
             <h2 className="text-xl font-semibold text-gray-900">Cache Status</h2>
@@ -205,7 +172,7 @@ export function CachePage() {
         </div>
 
         {/* Drift Indicator Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6" data-testid="cache-binding-card">
           {cache.binding ? (
             <>
               <div className="flex items-center gap-3 mb-4">
@@ -255,7 +222,7 @@ export function CachePage() {
 
       {/* Drift Warning */}
       {cache.binding && !cache.binding.match && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6" data-testid="cache-drift-warning">
           <div className="flex items-start gap-3">
             <AlertTriangle className="text-orange-600 mt-0.5" size={20} />
             <div>
@@ -269,7 +236,7 @@ export function CachePage() {
       )}
 
       {/* Pages List */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="cache-pages-list">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h3 className="font-semibold text-gray-900">Cached Pages</h3>
         </div>
@@ -294,6 +261,7 @@ export function CachePage() {
               {cache.pages.map((page, index) => (
                 <tr
                   key={index}
+                  data-testid={`cache-page-item-${page.key}`}
                   onClick={() => handlePageClick(page.key)}
                   className="hover:bg-blue-50 cursor-pointer transition-colors"
                 >

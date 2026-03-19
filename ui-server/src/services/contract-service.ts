@@ -78,10 +78,20 @@ export class ContractService {
       // IMPORTANT: We do NOT validate the contract here.
       // Validation is delegated to integrity-gates in future stages.
       // For now, assume valid: true if files exist.
+
+      // If no contract files found, treat as non-existent
+      if (files.length === 0) {
+        return {
+          exists: false,
+          valid: false,
+          files: []
+        };
+      }
+
       return {
         exists: true,
         fingerprint,
-        valid: files.length > 0,
+        valid: true,
         files
       };
     } catch (error) {

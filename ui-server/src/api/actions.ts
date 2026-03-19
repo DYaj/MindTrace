@@ -3,6 +3,9 @@ import type { ApiResponse, JobResponse, RunTestsRequest } from '@breakline/ui-ty
 import { JobService } from '../services/job-service.js';
 import { CliService } from '../services/cli-service.js';
 import { RepoIntelligenceService } from '../services/repo-intelligence-service.js';
+import { rmSync, existsSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { getRepoRoot } from '../utils/repo-root.js';
 
 const actionsRoutes: FastifyPluginAsync = async (server) => {
   /**
@@ -109,6 +112,57 @@ const actionsRoutes: FastifyPluginAsync = async (server) => {
       return reply.code(500).send({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to start cache build'
+      });
+    }
+  });
+
+  /**
+   * POST /api/actions/clear-all
+   * TESTING ONLY: Clear all data (contract, cache, runs, history)
+   *
+   * WARNING: Destructive action. Clears everything.
+   */
+  server.post<{
+    Reply: ApiResponse<{ cleared: boolean }>;
+  }>('/clear-all', async (request, reply) => {
+    try {
+      const repoRoot = getRepoRoot();
+
+      // Clear contract
+      const contractPath = join(repoRoot, '.mcp-contract');
+      if (existsSync(contractPath)) {
+        rmSync(contractPath, { recursive: true, force: true });
+      }
+
+      // Clear cache
+      const cachePath = join(repoRoot, '.mcp-cache');
+      if (existsSync(cachePath)) {
+        rmSync(cachePath, { recursive: true, force: true });
+      }
+
+      // Clear runs
+      const runsPath = join(repoRoot, 'runs');
+      if (existsSync(runsPath)) {
+        rmSync(runsPath, { recursive: true, force: true });
+      }
+
+      // Clear history
+      const historyPath = join(repoRoot, 'history', 'run-index.jsonl');
+      if (existsSync(historyPath)) {
+        writeFileSync(historyPath, '', 'utf-8');
+      }
+
+      server.log.info('Testing: All data cleared (contract, cache, runs, history)');
+
+      return reply.send({
+        success: true,
+        data: { cleared: true }
+      });
+    } catch (error) {
+      server.log.error(error);
+      return reply.code(500).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to clear data'
       });
     }
   });

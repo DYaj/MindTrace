@@ -1,7 +1,8 @@
-import { readFileSync, statSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, statSync, readdirSync, existsSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import type { RunListItem, AuditEvent, RunDetail, ArtifactListItem } from '@breakline/ui-types';
 import { PathValidator } from '../utils/paths.js';
+import { getRepoRoot } from '../utils/repo-root.js';
 
 /**
  * Runs data service
@@ -296,6 +297,53 @@ export class RunsService {
       return readFileSync(artifactFullPath, 'utf-8');
     } catch (error) {
       return null;
+    }
+  }
+
+  /**
+   * Delete a test run
+   *
+   * Removes:
+   * - Run directory (runs/runId/)
+   * - Entry from history index
+   *
+   * DEFENSIVE: Returns false if run doesn't exist
+   */
+  static deleteRun(runId: string): boolean {
+    try {
+      PathValidator.validateRunId(runId);
+      const runPath = PathValidator.getRunPath(runId);
+      const historyPath = join(getRepoRoot(), 'history', 'run-index.jsonl');
+
+      // Check if run exists
+      if (!existsSync(runPath)) {
+        return false;
+      }
+
+      // Delete run directory
+      rmSync(runPath, { recursive: true, force: true });
+
+      // Remove from history index
+      if (existsSync(historyPath)) {
+        const lines = readFileSync(historyPath, 'utf-8')
+          .split('\n')
+          .filter(line => line.trim());
+
+        const updatedLines = lines.filter(line => {
+          try {
+            const entry = JSON.parse(line);
+            return entry.runId !== runId;
+          } catch {
+            return true; // Keep malformed lines
+          }
+        });
+
+        writeFileSync(historyPath, updatedLines.join('\n') + '\n', 'utf-8');
+      }
+
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 }

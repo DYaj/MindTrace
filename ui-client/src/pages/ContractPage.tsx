@@ -1,56 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useContract } from '../hooks/useContract';
-import { FileText, CheckCircle, XCircle, AlertTriangle, Play, Loader } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, AlertTriangle, Play } from 'lucide-react';
+import { JobStatusCard } from '../components/JobStatusCard';
+import type { JobStatus } from '@breakline/ui-types';
+
+const STORAGE_KEY = 'breakline:contract:currentJobId';
 
 export function ContractPage() {
   const { data: contract, isLoading, error, refetch } = useContract();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
-  // Generate contract job state
-  const [generatingJob, setGeneratingJob] = useState<string | null>(null);
-  const [jobError, setJobError] = useState<string | null>(null);
-  const [jobSuccess, setJobSuccess] = useState<boolean>(false);
+  // Generate contract job state (persisted in sessionStorage)
+  const [currentJobId, setCurrentJobId] = useState<string | null>(() => {
+    return sessionStorage.getItem(STORAGE_KEY);
+  });
 
-  // Poll job status
+  // Persist currentJobId to sessionStorage
   useEffect(() => {
-    if (!generatingJob) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`http://localhost:3001/api/jobs/${generatingJob}`);
-        const data = await response.json();
-
-        if (!data.success) {
-          setJobError(data.error || 'Job failed');
-          setGeneratingJob(null);
-          return;
-        }
-
-        const job = data.data;
-
-        if (job.status === 'completed') {
-          setGeneratingJob(null);
-          setJobError(null);
-          setJobSuccess(true);
-          refetch(); // Refresh contract data
-          // Clear success message after 5 seconds
-          setTimeout(() => setJobSuccess(false), 5000);
-        } else if (job.status === 'failed') {
-          setJobError(job.result?.error || 'Job failed');
-          setGeneratingJob(null);
-        }
-      } catch (err) {
-        setJobError(err instanceof Error ? err.message : 'Failed to check job status');
-        setGeneratingJob(null);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [generatingJob, refetch]);
+    if (currentJobId) {
+      sessionStorage.setItem(STORAGE_KEY, currentJobId);
+    } else {
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+  }, [currentJobId]);
 
   const handleGenerateContract = async () => {
-    setJobError(null);
-    setJobSuccess(false);
     try {
       const response = await fetch('http://localhost:3001/api/actions/generate-contract', {
         method: 'POST',
@@ -60,14 +34,27 @@ export function ContractPage() {
 
       const data = await response.json();
 
-      if (!data.success) {
-        setJobError(data.error || 'Failed to start contract generation');
-        return;
+      if (data.success && data.data.jobId) {
+        const jobId = data.data.jobId;
+        setCurrentJobId(jobId);
+        sessionStorage.setItem(STORAGE_KEY, jobId);
       }
-
-      setGeneratingJob(data.data.jobId);
     } catch (err) {
-      setJobError(err instanceof Error ? err.message : 'Failed to start contract generation');
+      console.error('Failed to start contract generation:', err);
+    }
+  };
+
+  const handleJobComplete = (job: JobStatus) => {
+    if (job.status === 'completed') {
+      // Refresh contract data after successful generation
+      refetch();
+    }
+    // Keep job visible for 30 seconds after completion, then clear
+    if (job.status === 'completed' || job.status === 'failed') {
+      setTimeout(() => {
+        setCurrentJobId(null);
+        sessionStorage.removeItem(STORAGE_KEY);
+      }, 30000);
     }
   };
 
@@ -94,9 +81,9 @@ export function ContractPage() {
 
   if (!contract || !contract.exists) {
     return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Contract</h1>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+      <div className="p-4 sm:p-6" data-testid="contract-page">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6" data-testid="contract-page-title">Contract</h1>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center" data-testid="contract-empty-state">
           <AlertTriangle className="mx-auto mb-4 text-yellow-600" size={48} />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Contract Found</h2>
           <p className="text-gray-600 mb-4">Generate a contract to see it here</p>
@@ -104,39 +91,19 @@ export function ContractPage() {
 
           {/* Generate Contract Button */}
           <button
+            data-testid="contract-button-generate"
             onClick={handleGenerateContract}
-            disabled={!!generatingJob}
+            disabled={!!currentJobId}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {generatingJob ? (
-              <>
-                <Loader className="animate-spin mr-2" size={16} />
-                Generating Contract...
-              </>
-            ) : (
-              <>
-                <Play className="mr-2" size={16} />
-                Generate Contract
-              </>
-            )}
+            <Play className="mr-2" size={16} />
+            Generate Contract
           </button>
 
-          {generatingJob && (
-            <p className="mt-3 text-sm text-gray-600">
-              This may take a few seconds...
-            </p>
-          )}
-
-          {jobSuccess && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm flex items-center gap-2">
-              <CheckCircle size={16} />
-              <span>Contract generated successfully!</span>
-            </div>
-          )}
-
-          {jobError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-              {jobError}
+          {/* Job Status */}
+          {currentJobId && (
+            <div className="mt-4">
+              <JobStatusCard jobId={currentJobId} onComplete={handleJobComplete} />
             </div>
           )}
         </div>
@@ -147,15 +114,15 @@ export function ContractPage() {
   const selectedFileData = contract.files.find(f => f.name === selectedFile);
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6" data-testid="contract-page">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Contract</h1>
-        <p className="text-gray-600 mt-2">Automation contract specification</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" data-testid="contract-page-title">Contract</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Automation contract specification</p>
       </div>
 
       {/* Status Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6" data-testid="contract-status-card">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -188,13 +155,13 @@ export function ContractPage() {
 
       {/* File Viewer */}
       {contract.files.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500" data-testid="contract-no-files">
           No contract files found
         </div>
       ) : (
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
           {/* File List */}
-          <div className="col-span-3 bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="lg:col-span-3 bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="contract-file-list">
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900">Files</h3>
             </div>
@@ -202,6 +169,7 @@ export function ContractPage() {
               {contract.files.map((file) => (
                 <button
                   key={file.name}
+                  data-testid={`contract-file-item-${file.name}`}
                   onClick={() => setSelectedFile(file.name)}
                   className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
                     selectedFile === file.name ? 'bg-blue-50' : ''
@@ -219,20 +187,20 @@ export function ContractPage() {
           </div>
 
           {/* File Content */}
-          <div className="col-span-9 bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="lg:col-span-9 bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="contract-file-viewer">
             {selectedFileData ? (
               <div>
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900">{selectedFileData.name}</h3>
+                  <h3 className="font-semibold text-gray-900" data-testid="contract-file-viewer-name">{selectedFileData.name}</h3>
                 </div>
                 <div className="p-4">
-                  <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-x-auto">
+                  <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-x-auto" data-testid="contract-file-viewer-content">
                     {JSON.stringify(selectedFileData.content, null, 2)}
                   </pre>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-96 text-gray-500">
+              <div className="flex items-center justify-center h-96 text-gray-500" data-testid="contract-file-viewer-empty">
                 Select a file to view its content
               </div>
             )}
