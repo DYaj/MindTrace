@@ -5,8 +5,8 @@
 
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import type { PageCacheBindResult } from "./types";
-import { createIssue } from "./helpers";
+import type { PageCacheBindResult } from "./types.js";
+import { createIssue } from "./helpers.js";
 
 /**
  * Load page semantic cache using dual-read strategy.

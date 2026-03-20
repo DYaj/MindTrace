@@ -50,9 +50,13 @@ export class CliService {
       // Spawn CLI process
       // - CLI executable from BreakLine installation
       // - Working directory set to target repo
+      // - BREAKLINE_ROOT env var for compliance DoD resolution
       const child = spawn('node', [runtimeCli, 'run'], {
         cwd: targetRepoRoot,
-        env: process.env
+        env: {
+          ...process.env,
+          BREAKLINE_ROOT: getBreaklineRoot()
+        }
       });
 
       // Capture stdout (supplemental)

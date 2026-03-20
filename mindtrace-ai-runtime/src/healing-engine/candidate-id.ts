@@ -1,6 +1,6 @@
 // mindtrace-ai-runtime/src/healing-engine/candidate-id.ts
 import crypto from "crypto";
-import type { TierName, LocatorType } from "./types";
+import type { TierName, LocatorType } from "./types.js";
 
 /**
  * Generate stable candidate ID

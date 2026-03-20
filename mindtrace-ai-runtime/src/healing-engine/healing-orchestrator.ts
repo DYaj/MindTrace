@@ -1,13 +1,13 @@
 // mindtrace-ai-runtime/src/healing-engine/healing-orchestrator.ts
 import crypto from "crypto";
-import { BudgetTracker } from "./budget-tracker";
-import { LedgerWriter } from "./ledger-writer";
-import { CandidateTester } from "./candidate-tester";
-import { Tier1Contract } from "./tiers/tier1-contract";
-import { Tier2Cache } from "./tiers/tier2-cache";
-import { Tier3LKG } from "./tiers/tier3-lkg";
-import { Tier4Fallback } from "./tiers/tier4-fallback";
-import type { HealingContext, HealResult, TierResult, Candidate, AttemptRecord } from "./types";
+import { BudgetTracker } from "./budget-tracker.js";
+import { LedgerWriter } from "./ledger-writer.js";
+import { CandidateTester } from "./candidate-tester.js";
+import { Tier1Contract } from "./tiers/tier1-contract.js";
+import { Tier2Cache } from "./tiers/tier2-cache.js";
+import { Tier3LKG } from "./tiers/tier3-lkg.js";
+import { Tier4Fallback } from "./tiers/tier4-fallback.js";
+import type { HealingContext, HealResult, TierResult, Candidate, AttemptRecord } from "./types.js";
 
 /**
  * HealingOrchestrator - coordinates tier execution with budget enforcement

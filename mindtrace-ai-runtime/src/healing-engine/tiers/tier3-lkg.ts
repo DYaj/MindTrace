@@ -1,7 +1,7 @@
 // mindtrace-ai-runtime/src/healing-engine/tiers/tier3-lkg.ts
-import type { HealingContext, TierResult, Candidate } from "../types";
-import type { HistoryReader } from "../history-reader";
-import type { LKGExtractor } from "../lkg-extractor";
+import type { HealingContext, TierResult, Candidate } from "../types.js";
+import type { HistoryReader } from "../history-reader.js";
+import type { LKGExtractor } from "../lkg-extractor.js";
 
 /**
  * Tier 3: Last-Known-Good (historical fallback)

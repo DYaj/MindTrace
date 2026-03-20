@@ -8,8 +8,8 @@ import type {
   ContractValidationResult,
   PageCacheBindResult,
   RuntimeStrategyContext,
-} from "./types";
-import { issuesBySeverity } from "./helpers";
+} from "./types.js";
+import { issuesBySeverity } from "./helpers.js";
 
 /**
  * Build the runtime strategy context from validated contract and cache.

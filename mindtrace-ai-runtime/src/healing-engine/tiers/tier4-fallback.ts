@@ -1,6 +1,6 @@
 // mindtrace-ai-runtime/src/healing-engine/tiers/tier4-fallback.ts
-import type { HealingContext, TierResult } from "../types";
-import type { ProbePlanGenerator } from "../probe-plan-generator";
+import type { HealingContext, TierResult } from "../types.js";
+import type { ProbePlanGenerator } from "../probe-plan-generator.js";
 
 /**
  * Tier 4: Deterministic fallback (algorithmic, action-aware, strict caps)

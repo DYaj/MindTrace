@@ -1,6 +1,6 @@
 // mindtrace-ai-runtime/src/healing-engine/tiers/tier1-contract.ts
-import { generateCandidateId } from "../candidate-id";
-import type { HealingContext, TierResult, Candidate, LocatorType } from "../types";
+import { generateCandidateId } from "../candidate-id.js";
+import type { HealingContext, TierResult, Candidate, LocatorType } from "../types.js";
 
 interface ContractLocator {
   type: LocatorType;

@@ -209,7 +209,12 @@ program
       // ---------------------------------------------------------------------
       try {
         // PHASE_2_2_3_ENV_AFTER_CONTEXT
-        applyRuntimeContractContextEnv({ artifactsDir: layout.artifactsDir });
+        const mode = process.env.MINDTRACE_MODE === "strict" ? "COMPLIANCE" : "BEST_EFFORT";
+        applyRuntimeContractContextEnv({
+          artifactsDir: layout.artifactsDir,
+          repoRoot,
+          mode
+        });
       } catch {
         // non-fatal
       }

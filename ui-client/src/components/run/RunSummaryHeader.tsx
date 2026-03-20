@@ -8,13 +8,19 @@ interface RunSummaryHeaderProps {
   testsFailed: number;
 }
 
-type FailureType = 'success' | 'no-tests' | 'test-failure' | 'infra-failure' | 'policy-failure';
+type FailureType = 'success' | 'no-tests' | 'failed-no-tests' | 'test-failure' | 'infra-failure' | 'policy-failure';
 
 function getFailureType(exitCode: number, testsPassed: number, testsFailed: number): FailureType {
-  // Check if no tests ran (critical for external repo debugging)
   const totalTests = testsPassed + testsFailed;
-  if (exitCode === 0 && totalTests === 0) return 'no-tests';
 
+  // Check if no tests ran (critical for external repo debugging)
+  if (totalTests === 0) {
+    if (exitCode === 0) return 'no-tests';
+    // Run failed AND no tests found
+    return 'failed-no-tests';
+  }
+
+  // Tests were found, categorize by exit code
   if (exitCode === 0) return 'success';
   if (exitCode === 3) return 'policy-failure';
   if (exitCode === 2) return 'infra-failure';
@@ -40,6 +46,14 @@ export function RunSummaryHeader({ exitCode, duration, testsPassed, testsFailed 
       border: 'border-yellow-200',
       label: 'No Tests Found',
       description: 'Test run completed but no tests were executed — check test configuration'
+    },
+    'failed-no-tests': {
+      icon: AlertTriangle,
+      color: 'text-red-600',
+      bg: 'bg-red-50',
+      border: 'border-red-200',
+      label: 'Run Failed - No Tests Found',
+      description: 'Test run failed and no tests were executed — check test file discovery and configuration'
     },
     'test-failure': {
       icon: XCircle,

@@ -1,5 +1,5 @@
 // mindtrace-ai-runtime/src/healing-engine/selector-synthesis.ts
-import type { ActionType, LocatorType } from "./types";
+import type { ActionType, LocatorType } from "./types.js";
 
 export interface SelectorCandidate {
   type: LocatorType;
