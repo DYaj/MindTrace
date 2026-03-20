@@ -175,7 +175,8 @@ function RunsPage() {
 
   // Filter runs based on selected filter
   const filteredRuns = runs?.filter(run => {
-    if (filter === 'passed') return run.exitCode === 0;
+    const totalTests = run.testsPassed + run.testsFailed;
+    if (filter === 'passed') return run.exitCode === 0 && totalTests > 0;
     if (filter === 'failed') return run.exitCode !== 0;
     return true; // 'all'
   }) || [];
@@ -183,7 +184,7 @@ function RunsPage() {
   // Calculate counts for filter bar
   const counts = {
     total: runs?.length || 0,
-    passed: runs?.filter(r => r.exitCode === 0).length || 0,
+    passed: runs?.filter(r => r.exitCode === 0 && (r.testsPassed + r.testsFailed) > 0).length || 0,
     failed: runs?.filter(r => r.exitCode !== 0).length || 0
   };
 
