@@ -257,9 +257,9 @@ function RunsPage() {
             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
               <Play size={32} className="text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">No Test Runs Yet</h3>
+            <h3 className="text-lg font-semibold text-gray-900">No Runs Yet</h3>
             <p className="text-sm text-gray-600 max-w-md">
-              Your test execution history will appear here. {system?.contract.state === 'available' && system?.cache.state === 'available' ? 'Click "Run Tests" above to start your first test execution.' : 'Complete the prerequisites above, then run your tests.'}
+              Your execution history will appear here. {system?.contract.state === 'available' && system?.cache.state === 'available' ? 'Click "Run Tests" above to start your first execution.' : 'Complete the prerequisites above, then run your tests.'}
             </p>
           </div>
         </div>

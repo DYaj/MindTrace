@@ -70,7 +70,7 @@ export function JobStatusCard({ jobId, onComplete }: JobStatusCardProps) {
   const Icon = config.icon;
 
   const typeLabels = {
-    'run': 'Test Run',
+    'run': 'Run',
     'generate-contract': 'Contract Generation',
     'build-cache': 'Cache Build'
   };

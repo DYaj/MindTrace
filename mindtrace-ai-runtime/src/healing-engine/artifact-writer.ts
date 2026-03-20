@@ -1,7 +1,7 @@
 // mindtrace-ai-runtime/src/healing-engine/artifact-writer.ts
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { dirname } from "path";
-import type { HealResult } from "./types";
+import type { HealResult } from "./types.js";
 
 /**
  * ArtifactWriter - write healing-outcome.json and healing-summary.json

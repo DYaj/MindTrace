@@ -1,7 +1,7 @@
 // mindtrace-ai-runtime/src/healing-engine/cache-parser.ts
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
-import { deriveSiteKey, derivePageKey } from "./key-derivation";
+import { deriveSiteKey, derivePageKey } from "./key-derivation.js";
 
 export interface PageCacheEntry {
   pageId: string;

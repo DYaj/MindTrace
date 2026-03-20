@@ -1,6 +1,6 @@
 // mindtrace-ai-runtime/src/healing-engine/candidate-tester.ts
-import type { Candidate, ActionType, ProbeMethodId } from "./types";
-import type { PageAdapter } from "./page-adapter";
+import type { Candidate, ActionType, ProbeMethodId } from "./types.js";
+import type { PageAdapter } from "./page-adapter.js";
 
 /**
  * CandidateTester - deterministic probe of selector candidates

@@ -1,5 +1,5 @@
 // mindtrace-ai-runtime/src/healing-engine/lkg-extractor.ts
-import type { Candidate } from "./types";
+import type { Candidate } from "./types.js";
 
 export interface LKGCandidate extends Candidate {
   fromRun: string;

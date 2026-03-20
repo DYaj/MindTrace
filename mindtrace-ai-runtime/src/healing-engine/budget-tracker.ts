@@ -1,6 +1,6 @@
 // mindtrace-ai-runtime/src/healing-engine/budget-tracker.ts
 import { readFileSync, existsSync } from "fs";
-import type { AttemptRecord, HealingBudgets } from "./types";
+import type { AttemptRecord, HealingBudgets } from "./types.js";
 
 /**
  * BudgetTracker - pure reduction from healing-attempts.jsonl

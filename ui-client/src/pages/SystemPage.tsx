@@ -217,6 +217,30 @@ function SystemPage() {
         </p>
       </div>
 
+      {/* Active Repository Display */}
+      {system.repository && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" data-testid="active-repository">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="text-sm font-semibold text-gray-900">Active Repository</h2>
+                {system.repository.isExternal && (
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                    External Repo
+                  </span>
+                )}
+              </div>
+              <p className="text-lg font-mono font-semibold text-gray-900 mb-1">
+                {system.repository.name}
+              </p>
+              <p className="text-xs font-mono text-gray-600 break-all">
+                {system.repository.path}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Onboarding Panel */}
       {showOnboarding && (
         <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6" data-testid="onboarding-panel">

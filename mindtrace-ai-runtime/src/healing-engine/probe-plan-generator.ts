@@ -1,5 +1,5 @@
 // mindtrace-ai-runtime/src/healing-engine/probe-plan-generator.ts
-import type { ActionType, Candidate } from "./types";
+import type { ActionType, Candidate } from "./types.js";
 
 export interface ProbePlan {
   candidates: Candidate[];

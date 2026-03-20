@@ -21,8 +21,8 @@ import {
   bindCacheToContract,
   buildRuntimeStrategyContext,
   writeContractAwarenessArtifact,
-} from "../contract-awareness/index";
-import type { RuntimeStrategyContext } from "../contract-awareness/index";
+} from "../contract-awareness/index.js";
+import type { RuntimeStrategyContext } from "../contract-awareness/index.js";
 
 export type AutomationContractContextSnapshot = {
   ok: boolean;

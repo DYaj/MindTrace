@@ -3,17 +3,22 @@
 // Phase 2.0: Contract-Awareness Module — Validator
 // AJV schema validation + fingerprint verification
 
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
-import { readFileSync } from "fs";
-import { join } from "path";
-import type { LoadContractBundleResult, ContractValidationResult } from "./types";
-import { createIssue } from "./helpers";
+// Safe interop for NodeNext ESM/CJS variance
+import Ajv2020Import from "ajv/dist/2020.js";
+const Ajv2020: any = (Ajv2020Import as any)?.default ?? (Ajv2020Import as any);
 
-// In CommonJS (jest/ts-jest), __dirname is globally available
-// In ESM runtime, we'd need import.meta.url, but for now we rely on CommonJS transpilation
-// This is safe because ts-jest transforms to CommonJS where __dirname exists
-declare const __dirname: string;
+import addFormatsImport from "ajv-formats";
+const addFormats: any = (addFormatsImport as any)?.default ?? (addFormatsImport as any);
+
+import { readFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import type { LoadContractBundleResult, ContractValidationResult } from "./types.js";
+import { createIssue } from "./helpers.js";
+
+// ESM __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Schema files copied from repo-intelligence-mcp at build-time
 const SCHEMA_FILES: Record<string, string> = {
@@ -32,8 +37,8 @@ const SCHEMA_FILES: Record<string, string> = {
  * Schemas are copied from repo-intelligence-mcp/src/schemas/ at build-time
  * to avoid runtime path resolution into sibling packages.
  */
-function initializeAjv(): Ajv {
-  const ajv = new Ajv({
+function initializeAjv(): any {
+  const ajv = new Ajv2020({
     allErrors: true,
     strict: false,
     validateSchema: false, // Don't validate the schema itself (skip $schema meta-validation)

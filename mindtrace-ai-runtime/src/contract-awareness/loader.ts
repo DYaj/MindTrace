@@ -6,8 +6,8 @@
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 import { createHash } from "crypto";
-import type { LoadContractBundleResult, ComplianceMode, ContractAwarenessIssue } from "./types";
-import { createIssue } from "./helpers";
+import type { LoadContractBundleResult, ComplianceMode, ContractAwarenessIssue } from "./types.js";
+import { createIssue } from "./helpers.js";
 
 /**
  * Required contract files in strict mode (COMPLIANCE).

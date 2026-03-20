@@ -1,7 +1,7 @@
 // mindtrace-ai-runtime/src/healing-engine/failure-classifier.ts
 
 import { createHash } from "crypto";
-import { FailureClass, FailureCategory } from "./types";
+import type { FailureClass, FailureCategory } from "./types.js";
 
 const CLASSIFIER_VERSION = "1.0.0";
 

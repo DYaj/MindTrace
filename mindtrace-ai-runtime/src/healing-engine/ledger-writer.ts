@@ -1,7 +1,7 @@
 // mindtrace-ai-runtime/src/healing-engine/ledger-writer.ts
 import { appendFileSync, mkdirSync, existsSync } from "fs";
 import { dirname } from "path";
-import type { AttemptRecord } from "./types";
+import type { AttemptRecord } from "./types.js";
 
 /**
  * LedgerWriter - append-only writer for healing-attempts.jsonl

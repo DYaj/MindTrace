@@ -56,8 +56,11 @@ function readJsonSafe(p: string): any {
 }
 
 function loadAndValidateComplianceDoD(repoRoot: string): ComplianceDoD {
-  const contractPath = join(repoRoot, "contracts", "compliance-definition-of-done.json");
-  const schemaPath = join(repoRoot, "contracts", "schemas", "compliance-definition-of-done.schema.json");
+  // Compliance DoD comes from BreakLine installation, not target repo
+  // This ensures all repos use the same governance rules
+  const breaklineRoot = process.env.BREAKLINE_ROOT || repoRoot;
+  const contractPath = join(breaklineRoot, "contracts", "compliance-definition-of-done.json");
+  const schemaPath = join(breaklineRoot, "contracts", "schemas", "compliance-definition-of-done.schema.json");
 
   if (!existsSync(contractPath)) throw new Error(`Missing compliance contract: ${contractPath}`);
   if (!existsSync(schemaPath)) throw new Error(`Missing compliance schema: ${schemaPath}`);

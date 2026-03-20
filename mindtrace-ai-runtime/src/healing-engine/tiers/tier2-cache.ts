@@ -1,8 +1,8 @@
 // mindtrace-ai-runtime/src/healing-engine/tiers/tier2-cache.ts
-import { generateCandidateId } from "../candidate-id";
-import { synthesizeSelectors } from "../selector-synthesis";
-import type { HealingContext, TierResult, Candidate } from "../types";
-import type { CacheIndex } from "../cache-parser";
+import { generateCandidateId } from "../candidate-id.js";
+import { synthesizeSelectors } from "../selector-synthesis.js";
+import type { HealingContext, TierResult, Candidate } from "../types.js";
+import type { CacheIndex } from "../cache-parser.js";
 
 /**
  * Tier 2: Page semantic cache (high confidence)
