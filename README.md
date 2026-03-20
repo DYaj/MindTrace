@@ -55,23 +55,47 @@ npm install && npm run dev
 
 ## 🚀 Quick Start
 
+### **Prerequisites**
+
+- **Node.js** 18+ and npm
+- **Git** for version control
+- A Playwright project (or use the included demo)
+
+### **Installation**
+
+```bash
+# Clone the repository
+git clone https://github.com/DYaj/MindTrace.git
+cd MindTrace
+
+# Install all dependencies (this may take a few minutes)
+npm install
+
+# Build shared packages
+npm run build
+```
+
 ### **Option 1: Use the UI (Recommended)**
 
 ```bash
-# Install dependencies
-npm install
-
-# Start the UI
+# Start the UI development server
+cd ui-client
 npm run dev
+# Opens at http://localhost:5173
 
-# Open http://localhost:5173
+# In a separate terminal, start the API server
+cd ui-server
+npm start
+# API runs at http://localhost:3001
 ```
 
-Then follow the in-app guidance:
-1. **Generate Contract** - Define what to test
-2. **Build Cache** - Detect pages from your application
-3. **Run Tests** - Execute with governance enforcement
-4. **Check Integrity** - Verify contract and cache alignment
+**First-time workflow in UI:**
+1. Navigate to **Contract** page → Click "Generate Contract"
+2. Navigate to **Cache** page → Click "Build Cache"
+3. Navigate to **Integrity** page → Verify all gates show "Valid"
+4. Navigate to **Runs** page → Click "Run Tests"
+
+**Active Repository:** The UI displays which repository is active in the System page. By default, it uses the MindTrace repository itself.
 
 ### **Option 2: CLI Usage**
 
@@ -82,14 +106,30 @@ npm run contract:generate
 # Build page cache
 npm run cache:build
 
-# Run tests with governance
-npm run test
-
 # Check integrity gates
 npm run integrity:check
+
+# Run tests with governance
+npm run test
 ```
 
-For detailed setup, see **[Getting Started Guide](GETTING_STARTED.md)**.
+### **Testing Against External Repositories**
+
+To run MindTrace against your own Playwright project:
+
+```bash
+# Set the target repository path
+export BREAKLINE_TARGET_REPO=/path/to/your/playwright/project
+
+# Start UI server with external repo
+cd ui-server
+npm start
+
+# UI will now operate on your repository
+# Contract, cache, and runs will be created in your project
+```
+
+For detailed setup, see **[Getting Started Guide](GETTING_STARTED.md)** | **[Troubleshooting](TROUBLESHOOTING.md)**.
 
 ---
 
@@ -281,6 +321,35 @@ A single test execution with governance:
 
 ---
 
+## 🔧 Environment Variables
+
+MindTrace supports the following environment variables for configuration:
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `BREAKLINE_TARGET_REPO` | Target repository for operations | Current directory | `/path/to/your/project` |
+| `BREAKLINE_ROOT` | BreakLine installation root | Auto-detected | `/path/to/mindtrace` |
+| `MINDTRACE_MODE` | Execution mode | `BEST_EFFORT` | `COMPLIANCE` or `BEST_EFFORT` |
+
+### **Using External Repositories**
+
+To operate on an external Playwright project:
+
+```bash
+# Set target repository
+export BREAKLINE_TARGET_REPO=/Users/you/my-playwright-project
+
+# Start UI server
+cd ui-server && npm start
+
+# All operations (contract, cache, runs) will use the external repo
+# UI will show "External Repo" badge in System page
+```
+
+**Important:** The external repository must be a valid Playwright project with a `playwright.config.ts` file.
+
+---
+
 ## 🛠️ Development
 
 ```bash
@@ -333,6 +402,7 @@ Your codebase defines the contract. The contract governs execution. The UI makes
 - ✅ Phase 2 GSL: Governance Safety Layer (`@mindtrace/integrity-gates`)
 - ✅ Phase 3: Healing Engine (contract-aware selector ranking)
 - ✅ **Stage 5: Operational Clarity UI** (production-ready web interface)
+- ✅ **Stage 8: Trust & Polish** (runtime infrastructure + external repo support)
 
 ### **Next**
 - 🔄 Phase 4: Cross Framework Adapter (contract-driven mapping)
@@ -374,5 +444,5 @@ MIT License
 © 2026 MindTrace Inc.
 Building compliance-first test infrastructure with operational clarity.
 
-**Status:** Production-ready with Stage 5 complete
-**Version:** v1.0 (Operational Clarity Release)
+**Status:** Production-ready with Stage 8 complete
+**Version:** v1.1 (Trust & External Repo Support)
